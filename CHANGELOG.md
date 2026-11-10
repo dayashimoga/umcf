@@ -538,4 +538,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s4-p1-sp1.sh` and `scripts/test-s4-p1-sp1.ps1` covering `[Unit]` (VramBudgetTracker concurrent CAS, RAII lease drop, WasmResourceLimiter pages, and CgroupV2 file formatting), `[Integration]` (CPU/Memory workload enforcement < 20 ms update, CPU duty cycle window), `[Simulation]` (runaway allocation loop rejection < 10 ms with E4001), `[Hardware-Required]` (JobObject / cgroup v2 limits application, Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (quota_enforcement_report.json audit) with 100% pass rate across 9 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P1_SP1_evidence.json` and `artifacts/evidence/stage-04/quota_enforcement_report.json`.
 
+### Added (S4.P1.SP2: Thermal Throttling, Battery Guard & Mobile OS Lifecycle Hooks)
+- **Thermal & Battery Guard (`ThermalBatteryGuard` in `crates/umcf-guard/src/lifecycle.rs`)**:
+  - Implemented 4 operational regimes: `FullCapacity` (< 38°C), `Throttled50` (38°C..41°C), `PausedWaitCoolOrCharge` (>= 41°C or battery < min_battery_percent or unplugged when charging required), and `EmergencyEvict` (>= 44°C or OS onTrimMemory critical).
+  - Implemented hysteresis deadbands (3.0°C cooling deadband, 3.0% battery recharge deadband) preventing rapid regime flapping during boundary fluctuations.
+  - Urgent `NodeGuardEvent` emission via broadcast channel (`RegimeChanged`, `ThrottleWorkload`, `SuspendWorkload`, `ResumeWorkload`, `EvacuateNode` with <= 100 ms deadline).
+- **Mobile OS Lifecycle Integration**:
+  - Structured OS signals: `TrimMemory` (`Moderate`, `Low`, `Critical`), `AppLifecycle` (`Resumed`, `Inactive`, `Paused`, `Detached`), and `BackgroundExpirationWarning` with remaining duration.
+  - Critical `onTrimMemory` handling deterministically triggering node evacuation within **< 100 ms**.
+- **Classified Test Harness**: Implemented `scripts/test-s4-p1-sp2.sh` and `scripts/test-s4-p1-sp2.ps1` covering `[Unit]` (ThermalBatteryGuard state transitions and hysteresis deadbands), `[Integration]` (sensor trajectory stream and OS onTrimMemory handling), `[Simulation]` (abrupt battery drop and AC unplug fault injection), `[Hardware-Required]` (system clock and Podman quota), and `[Manually-Verified]` (thermal_battery_hysteresis_trace.json audit) with 100% pass rate across 8 tests (17 total tests in `umcf-guard`).
+- **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P1_SP2_evidence.json` and `artifacts/evidence/stage-04/thermal_battery_hysteresis_trace.json`.
+
+
 

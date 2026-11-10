@@ -1,0 +1,40 @@
+{
+  "subphase": "S4.P1.SP2",
+  "title": "Thermal Throttling, Battery Guard & Mobile OS Lifecycle Hooks",
+  "git_commit": "3fabd1667104b2b0ca8817684dd3fe14c77ea14f",
+  "timestamp_utc": "2026-11-10T15:00:00Z",
+  "podman_total_bytes": 15916126102,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "lifecycle_summary": {
+    "regimes": [
+      "FullCapacity",
+      "Throttled50",
+      "PausedWaitCoolOrCharge",
+      "EmergencyEvict"
+    ],
+    "cooling_deadband_deg_c": 3.0,
+    "recharge_deadband_percent": 3.0,
+    "thermal_throttle_threshold_deg_c": 38.0,
+    "thermal_pause_threshold_deg_c": 41.0,
+    "thermal_emergency_threshold_deg_c": 44.0,
+    "evacuation_deadline_ms": 100,
+    "state_flapping_prevented": true
+  },
+  "artifact_hashes": {
+    "thermal_battery_hysteresis_trace.json": "5B032E389D8B38165380BDD9958F6A32E400B5B4E8BAEC75FFA558256BC53BB1",
+    "crates/umcf-guard/src/error.rs": "642788AC86843C6961C761E26DDAC83173AB872FE974EEA0E9DC718A09E35F9E",
+    "crates/umcf-guard/src/lib.rs": "87422F0222CEC6D64D4BDF0594D9B873114F0C7F66F19EC3222C7F22DF6AFF17",
+    "crates/umcf-guard/src/lifecycle.rs": "35B2A415F291948B5CFD67D4C8DC8ED0F97E0E5AB81841466818D1B052D6E5D3",
+    "crates/umcf-guard/src/manager.rs": "AA45B194FEE757B2F00F36397F60074FAAAFB2867EAC93E996122083AAE0D84F",
+    "crates/umcf-guard/src/quota.rs": "421896E83EEDAF83F66C4A2D42C616C26E03C64A85E3BBF1446A381AF958D28A",
+    "crates/umcf-guard/src/vram.rs": "76A7ADABCCCADBDCD0E9B8035F345D17E54ADD7287DDE01588E6A75EADA6DFC6"
+  }
+}

@@ -5,11 +5,16 @@
 #![forbid(unsafe_code)]
 
 pub mod error;
+pub mod lifecycle;
 pub mod manager;
 pub mod quota;
 pub mod vram;
 
 pub use error::{ErrorCode, GuardError};
+pub use lifecycle::{
+    AppState, GuardHysteresisConfig, GuardRegime, GuardTransitionResult, NodeGuardEvent,
+    OsLifecycleSignal, SensorTelemetry, ThermalBatteryGuard, TrimMemoryLevel,
+};
 pub use manager::{QuotaManager, QuotaTelemetryReport, MAX_POLICY_UPDATE_LATENCY_MS};
 pub use quota::{
     AllocatorGuard, CgroupV2Enforcer, JobObjectEnforcer, PosixRlimitEnforcer, QuotaConfig,

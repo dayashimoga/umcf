@@ -1,0 +1,92 @@
+[
+  {
+    "current_regime": "FullCapacity",
+    "evaluation_latency_micros": 3,
+    "previous_regime": "FullCapacity",
+    "reason": "",
+    "step": 1,
+    "temperature_celsius": 28.0,
+    "transition_occurred": false
+  },
+  {
+    "current_regime": "FullCapacity",
+    "evaluation_latency_micros": 0,
+    "previous_regime": "FullCapacity",
+    "reason": "",
+    "step": 2,
+    "temperature_celsius": 35.0,
+    "transition_occurred": false
+  },
+  {
+    "current_regime": "Throttled50",
+    "evaluation_latency_micros": 16,
+    "previous_regime": "FullCapacity",
+    "reason": "Temperature 38.5°C >= throttle limit 38.0°C",
+    "step": 3,
+    "temperature_celsius": 38.5,
+    "transition_occurred": true
+  },
+  {
+    "current_regime": "PausedWaitCoolOrCharge",
+    "evaluation_latency_micros": 2,
+    "previous_regime": "Throttled50",
+    "reason": "Temperature 41.2°C >= pause limit 41.0°C",
+    "step": 4,
+    "temperature_celsius": 41.20000076293945,
+    "transition_occurred": true
+  },
+  {
+    "current_regime": "PausedWaitCoolOrCharge",
+    "evaluation_latency_micros": 0,
+    "previous_regime": "PausedWaitCoolOrCharge",
+    "reason": "",
+    "step": 5,
+    "temperature_celsius": 40.5,
+    "transition_occurred": false
+  },
+  {
+    "current_regime": "PausedWaitCoolOrCharge",
+    "evaluation_latency_micros": 0,
+    "previous_regime": "PausedWaitCoolOrCharge",
+    "reason": "Temperature 41.8°C >= pause limit 41.0°C",
+    "step": 6,
+    "temperature_celsius": 41.79999923706055,
+    "transition_occurred": false
+  },
+  {
+    "current_regime": "EmergencyEvict",
+    "evaluation_latency_micros": 0,
+    "previous_regime": "PausedWaitCoolOrCharge",
+    "reason": "Temperature 44.5°C >= critical limit 44.0°C",
+    "step": 7,
+    "temperature_celsius": 44.5,
+    "transition_occurred": true
+  },
+  {
+    "current_regime": "EmergencyEvict",
+    "evaluation_latency_micros": 0,
+    "previous_regime": "EmergencyEvict",
+    "reason": "",
+    "step": 8,
+    "temperature_celsius": 39.5,
+    "transition_occurred": false
+  },
+  {
+    "current_regime": "Throttled50",
+    "evaluation_latency_micros": 4,
+    "previous_regime": "EmergencyEvict",
+    "reason": "Cooled to 37.8°C <= 38.0°C after emergency evict",
+    "step": 9,
+    "temperature_celsius": 37.79999923706055,
+    "transition_occurred": true
+  },
+  {
+    "current_regime": "FullCapacity",
+    "evaluation_latency_micros": 1,
+    "previous_regime": "Throttled50",
+    "reason": "Cooled to 30.0°C < 37.0°C",
+    "step": 10,
+    "temperature_celsius": 30.0,
+    "transition_occurred": true
+  }
+]
