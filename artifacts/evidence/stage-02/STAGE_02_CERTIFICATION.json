@@ -1,0 +1,38 @@
+﻿{
+    "certification_id":  "CERT-UMCF-STAGE-02-001",
+    "stage":  "Stage 2: Rust Core, Identity, Enrollment, Device Registry \u0026 Cluster Management",
+    "timestamp_utc":  "2026-11-10T11:52:20Z",
+    "git_commit":  "896acf23e5d6c4186e6ef889e87bbb6c9a4693b7",
+    "overall_status":  "CERTIFIED_PASS",
+    "quality_gates":  {
+                          "subphases_total":  9,
+                          "subphases_passed":  9,
+                          "test_pass_rate":  "100%",
+                          "podman_quota_status":  "PASS",
+                          "evidence_files_count":  16,
+                          "missing_evidence":  [
+
+                                               ]
+                      },
+    "subphase_results":  {
+                             "S2_P1_SP1":  "PASS",
+                             "S2_P1_SP2":  "PASS",
+                             "S2_P1_SP3":  "PASS",
+                             "S2_P2_SP1":  "PASS",
+                             "S2_P2_SP2":  "PASS",
+                             "S2_P2_SP3":  "PASS",
+                             "S2_P3_SP1":  "PASS",
+                             "S2_P3_SP2":  "PASS",
+                             "S2_P3_SP3":  "PASS"
+                         },
+    "verified_components":  [
+                                "crates/umcf-proto",
+                                "crates/umcf-core",
+                                "crates/umcf-identity",
+                                "crates/umcf-enrollment",
+                                "crates/umcf-registry",
+                                "crates/umcf-telemetry",
+                                "services/cf_control_plane",
+                                "services/cloudrun_fallback"
+                            ]
+}

@@ -1,0 +1,15 @@
+{
+  "demoted_fitness": 620,
+  "demoted_master": "did:umcf:0000000000000masterB",
+  "demoted_term": 1,
+  "duration_ceiling_ms": 1000.0,
+  "duration_ms": 6.5861,
+  "reconciled_node_count": 4,
+  "states_converged": true,
+  "status": "PASS",
+  "subphase": "S2.P3.SP3",
+  "title": "Split-Brain Partition Reconciliation Trace",
+  "winner_fitness": 850,
+  "winner_master": "did:umcf:0000000000000masterA",
+  "winner_term": 2
+}

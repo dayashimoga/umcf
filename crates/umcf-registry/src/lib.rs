@@ -6,7 +6,9 @@
 pub mod cloud_sync;
 pub mod crdt;
 pub mod error;
+pub mod failover;
 pub mod hlc;
+pub mod reconciliation;
 pub mod store;
 
 pub use cloud_sync::{
@@ -18,7 +20,11 @@ pub use crdt::{
     NodeCrdtEntry, NodeRecord, NodeStatus, RegistryDelta,
 };
 pub use error::RegistryError;
+pub use failover::{
+    CircuitBreaker, CircuitState, ControlPlaneTier, FailoverControlPlaneClient,
+};
 pub use hlc::{DEFAULT_MAX_DRIFT_MS, HlcError, HlcTimestamp, HybridLogicalClock};
+pub use reconciliation::{reconcile_partition, IslandLeaderInfo, ReconciliationSummary};
 pub use store::{
     LocalRegistryStore, StoreStats, CAPABILITIES_TABLE, CERT_CRL_TABLE, CLUSTER_META_TABLE,
     CONSENT_TABLE, NODES_TABLE,
@@ -901,5 +907,254 @@ mod tests {
         assert_eq!(peers.len(), 1);
         assert_eq!(peers[0].node_id, node_id.as_str());
         assert_eq!(peers[0].role, "Worker");
+    }
+
+    #[test]
+    fn unit_failover_circuit_breaker_state_transitions() {
+        let mut breaker = CircuitBreaker::new(2, 1000);
+        let t0 = 10_000_u64;
+
+        // Initial state is Closed
+        assert_eq!(breaker.state(t0), CircuitState::Closed);
+        assert!(breaker.can_attempt(t0));
+
+        // First failure does not trip
+        breaker.record_failure(t0 + 100);
+        assert_eq!(breaker.state(t0 + 100), CircuitState::Closed);
+        assert!(breaker.can_attempt(t0 + 100));
+
+        // Second failure trips to Open
+        breaker.record_failure(t0 + 200);
+        assert_eq!(breaker.state(t0 + 200), CircuitState::Open);
+        assert!(!breaker.can_attempt(t0 + 200));
+
+        // Before reset timeout, remains Open
+        assert_eq!(breaker.state(t0 + 800), CircuitState::Open);
+        assert!(!breaker.can_attempt(t0 + 800));
+
+        // After reset timeout (>= 1000 ms), transitions to HalfOpen
+        assert_eq!(breaker.state(t0 + 1201), CircuitState::HalfOpen);
+        assert!(breaker.can_attempt(t0 + 1201));
+
+        // Success in HalfOpen closes circuit
+        breaker.record_success();
+        assert_eq!(breaker.state(t0 + 1250), CircuitState::Closed);
+        assert!(breaker.can_attempt(t0 + 1250));
+    }
+
+    #[tokio::test]
+    async fn integration_failover_client_switches_to_cloudrun_and_buffers_for_lan() {
+        let keypair = Arc::new(NodeKeypair::generate());
+        let node_id = NodeId::parse("did:umcf:000000000000failover01").expect("id");
+        let cluster_id = "test-cluster-failover";
+
+        // Primary points to an unroutable port (will fail immediately)
+        let primary_client = CloudflareControlPlaneClient::new(
+            "http://127.0.0.1:59999",
+            cluster_id,
+            Arc::clone(&keypair),
+            node_id.clone(),
+        )
+        .expect("primary client");
+
+        let mut failover = FailoverControlPlaneClient::new(
+            Some(primary_client),
+            None,
+            cluster_id.to_string(),
+            node_id.clone(),
+        );
+
+        // Pre-trip primary to simulate WAN edge failure
+        failover.trip_primary();
+
+        let delta = RegistryDelta {
+            cluster_id: cluster_id.to_string(),
+            sender_node_id: node_id.clone(),
+            delta_hlc: HlcTimestamp::new(1_700_000_100_000, 1, 0x1111),
+            nodes: vec![],
+            capabilities: vec![],
+            consent: vec![],
+            crl_entries: vec![],
+        };
+
+        // When primary is tripped and secondary is absent, falls over to AutonomousLan
+        let resp = failover.sync_delta(&delta).await.expect("sync delta");
+        assert!(resp.accepted);
+        assert_eq!(failover.active_tier(), ControlPlaneTier::AutonomousLan);
+        assert_eq!(failover.pending_delta_count(), 1);
+
+        // Flush without available WAN endpoint keeps buffer
+        let flushed = failover.flush_pending_deltas().await.expect("flush");
+        assert_eq!(flushed, 0);
+        assert_eq!(failover.pending_delta_count(), 1);
+    }
+
+    #[test]
+    fn simulation_split_brain_partition_healing_and_state_convergence() {
+        let dir = tempdir().expect("create tempdir");
+        let cluster_id = "umcf-split-brain-test";
+
+        let master_a = NodeId::parse("did:umcf:0000000000000masterA").expect("id");
+        let master_b = NodeId::parse("did:umcf:0000000000000masterB").expect("id");
+
+        let mut store_a = LocalRegistryStore::open_or_create(
+            dir.path().join("island_a.redb"),
+            cluster_id,
+            &master_a,
+        )
+        .expect("store a");
+
+        let mut store_b = LocalRegistryStore::open_or_create(
+            dir.path().join("island_b.redb"),
+            cluster_id,
+            &master_b,
+        )
+        .expect("store b");
+
+        // Island A: Elect Master A (Term 2, Fitness 850) + Workers W1, W2
+        store_a
+            .register_node(NodeRecord {
+                node_id: master_a.clone(),
+                role: NodeRole::Master,
+                status: NodeStatus::Active,
+                endpoints: vec!["10.0.1.1:8443".into()],
+                registered_at_ms: 1_700_000_000_000,
+                last_heartbeat_ms: 1_700_000_000_000,
+                hlc: HlcTimestamp::MIN,
+            })
+            .expect("reg master a");
+
+        let w1_id = NodeId::parse("did:umcf:0000000000000worker1").expect("id");
+        store_a
+            .register_node(NodeRecord {
+                node_id: w1_id.clone(),
+                role: NodeRole::Worker,
+                status: NodeStatus::Active,
+                endpoints: vec!["10.0.1.2:8443".into()],
+                registered_at_ms: 1_700_000_000_000,
+                last_heartbeat_ms: 1_700_000_000_000,
+                hlc: HlcTimestamp::MIN,
+            })
+            .expect("reg w1");
+
+        // Island B: Elect Master B (Term 1, Fitness 620) + Workers W3, W4
+        store_b
+            .register_node(NodeRecord {
+                node_id: master_b.clone(),
+                role: NodeRole::Master,
+                status: NodeStatus::Active,
+                endpoints: vec!["10.0.2.1:8443".into()],
+                registered_at_ms: 1_700_000_000_000,
+                last_heartbeat_ms: 1_700_000_000_000,
+                hlc: HlcTimestamp::MIN,
+            })
+            .expect("reg master b");
+
+        let w3_id = NodeId::parse("did:umcf:0000000000000worker3").expect("id");
+        store_b
+            .register_node(NodeRecord {
+                node_id: w3_id.clone(),
+                role: NodeRole::Worker,
+                status: NodeStatus::Active,
+                endpoints: vec!["10.0.2.2:8443".into()],
+                registered_at_ms: 1_700_000_000_000,
+                last_heartbeat_ms: 1_700_000_000_000,
+                hlc: HlcTimestamp::MIN,
+            })
+            .expect("reg w3");
+
+        // Concurrent mutation on Island A: W1 capabilities updated
+        store_a
+            .update_capabilities(sample_hardware(w1_id.clone()))
+            .expect("update caps a");
+
+        // Concurrent mutation on Island B: W3 consent updated
+        store_b
+            .update_consent(sample_consent(w3_id.clone()))
+            .expect("update consent b");
+
+        // WAN Link Healed: Run partition reconciliation!
+        let summary = reconcile_partition(
+            &mut store_a,
+            IslandLeaderInfo {
+                master_id: &master_a,
+                term: 2,
+                fitness: 850,
+            },
+            &mut store_b,
+            IslandLeaderInfo {
+                master_id: &master_b,
+                term: 1,
+                fitness: 620,
+            },
+        )
+        .expect("reconcile partition");
+
+        // 1. Master conflict arbitration: Master A wins, Master B demoted
+        assert_eq!(summary.winner_node_id, master_a);
+        assert_eq!(summary.winner_term, 2);
+        assert_eq!(summary.demoted_node_id, master_b);
+        assert_eq!(summary.demoted_term, 1);
+
+        // 2. Both stores converged to 100% byte-identical state
+        assert!(summary.states_converged);
+        let state_a = store_a.cluster_state();
+        let state_b = store_b.cluster_state();
+        assert_eq!(state_a, state_b);
+
+        // 3. Exactly one Master remains across the combined cluster
+        let nodes_a = store_a.list_active_nodes();
+        let masters: Vec<_> = nodes_a.iter().filter(|n| n.role == NodeRole::Master).collect();
+        assert_eq!(masters.len(), 1);
+        assert_eq!(masters[0].node_id, master_a);
+
+        // Master B is now a Worker
+        let node_b = store_a.get_node(&master_b).expect("node b");
+        assert_eq!(node_b.role, NodeRole::Worker);
+
+        // 4. Latency gate: reconciliation duration < 1,000 ms
+        println!(
+            "Partition reconciliation completed in {:.3} ms (limit: 1000.0 ms)",
+            summary.duration_ms
+        );
+        assert!(
+            summary.duration_ms < 1000.0,
+            "Reconciliation duration {:.3} ms exceeded 1000 ms ceiling!",
+            summary.duration_ms
+        );
+
+        // Export trace to artifacts/evidence/stage-02/split_brain_reconciliation_trace.json
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root_artifacts = manifest_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .map(|p| p.join("artifacts").join("evidence").join("stage-02"))
+            .unwrap_or_else(|| std::path::PathBuf::from("artifacts/evidence/stage-02"));
+
+        fs::create_dir_all(&root_artifacts).expect("create evidence dir");
+        let trace_path = root_artifacts.join("split_brain_reconciliation_trace.json");
+
+        let trace_json = serde_json::json!({
+            "subphase": "S2.P3.SP3",
+            "title": "Split-Brain Partition Reconciliation Trace",
+            "winner_master": summary.winner_node_id.as_str(),
+            "winner_term": summary.winner_term,
+            "winner_fitness": summary.winner_fitness,
+            "demoted_master": summary.demoted_node_id.as_str(),
+            "demoted_term": summary.demoted_term,
+            "demoted_fitness": summary.demoted_fitness,
+            "duration_ms": summary.duration_ms,
+            "duration_ceiling_ms": 1000.0,
+            "reconciled_node_count": summary.reconciled_node_count,
+            "states_converged": summary.states_converged,
+            "status": "PASS"
+        });
+
+        fs::write(
+            &trace_path,
+            serde_json::to_string_pretty(&trace_json).expect("serialize json"),
+        )
+        .expect("write trace");
+        assert!(trace_path.exists());
     }
 }

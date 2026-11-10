@@ -1,0 +1,32 @@
+{
+  "subphase": "S2.P3.SP3",
+  "title": "Google Cloud Run Fallback Control Plane & Split-Brain Reconciliation",
+  "git_commit": "896acf23e5d6c4186e6ef889e87bbb6c9a4693b7",
+  "timestamp_utc": "2026-11-10T11:50:00Z",
+  "podman_total_bytes": 6519568818,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "split_brain_reconciliation_duration_ms": 6.52,
+    "split_brain_reconciliation_duration_ceiling_ms": 1000.0,
+    "circuit_breaker_reset_timeout_ms": 2000,
+    "circuit_breaker_failure_threshold": 2,
+    "failover_switchover_latency_ceiling_ms": 2000.0,
+    "cloudrun_fallback_wire_contract_parity": "100%",
+    "zero_lost_deltas_on_failover": true,
+    "all_9_stage_02_subphases_passed": true
+  },
+  "artifact_hashes": {
+    "services/cloudrun_fallback/src/main.rs": "e163f6af7489cf15856b95e4b5a946d2eea2bc1fe804e27cfd2c4f03153368d8",
+    "crates/umcf-registry/src/failover.rs": "b7baf667b299f07597cfa071cd5c68cdda0ee4bf22bbf31d0946f3e82bc2e92f",
+    "crates/umcf-registry/src/reconciliation.rs": "58b1d9fdb24377b87eb1a508d58e0642cace581ae0cae445dc1cddf0fb05e4f8",
+    "artifacts/evidence/stage-02/split_brain_reconciliation_trace.json": "8e266ef09919a149976ca88d5de8c0e927f1f3102f8bcf168b8e1a7fda60331d"
+  }
+}

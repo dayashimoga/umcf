@@ -1,12 +1,12 @@
 {
-  "challenge_nonce_hex": "02cead790e79986829343e8d228953fd355ed70e87e6f182a9102213eba7557d",
-  "challenger_did": "did:key:z6MkuqB9q4r92siFwNVhbcVLLLwJhtLJW7amNA9FSuz386iu",
+  "challenge_nonce_hex": "f5f4f532cafdb0d4a5e022f18f56da3c81db85381a50fcc0b88afb1cc4a5e21c",
+  "challenger_did": "did:key:z6MkowWQmmEKi1xChbSFHTMwdimv3LU6cpxDtrLPtp2mVX47",
   "hardware_fingerprint_hex": "05df9043dafe3d7d539fe3a2fd3400332f1523bd4400f383060bfc6bf4488d4c",
   "protocol": "2-RTT Mutual Attestation",
-  "prover_did": "did:key:z6MknhuPPJP2HC7e8SB7xvvs6g5Rf1zJxvMsx32rJq8nUajJ",
-  "signature_hex": "f136f015188e31c753d9b54a0fde083eba98baf1edadfe4cb7e9c4d87f863fd2c9e46fe75d618cecf0b1309bc5a19996725efb84d2511dafa363a1f07acbba02",
+  "prover_did": "did:key:z6Mkfu6v5soEFv1Tezox2iKd152JaEe1SsZjonueYyXeiLd1",
+  "signature_hex": "4de29e5a289daaa6e07a6627b678f5f414337e864502395bb6409e2339104d3c286a7b6de1d5e24e326ec30791b2cd053deea129b2f9b2b83bbc3bc502a89306",
   "subphase": "S2.P1.SP3",
-  "timestamp_epoch_ms": 1794305272306,
+  "timestamp_epoch_ms": 1794311509741,
   "tls_exporter_hex": "cd5f237278c48caf27f3e486dcc8f5c3a260e802229412b94dd4cf5b92170aa6",
   "tls_exporter_label": "EXPORTER-UMCF-ATTEST-v1",
   "verification_status": "SUCCESS"
