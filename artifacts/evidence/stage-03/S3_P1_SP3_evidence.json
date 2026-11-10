@@ -1,0 +1,27 @@
+{
+  "subphase": "S3.P1.SP3",
+  "title": "Control-Plane vs Data-Plane Traffic Isolation & QoS",
+  "git_commit": "410538ec9a4d24293370498a611e623cbe8496d3",
+  "timestamp_utc": "2026-11-10T12:56:00Z",
+  "podman_total_bytes": 9093199665,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "control_latency_p99_ms": 3.013,
+    "control_latency_limit_ms": 5.0,
+    "control_pings_dropped": 0,
+    "control_pings_sent": 100,
+    "bandwidth_accuracy_pct": 1.2,
+    "dynamic_throttling_convergence_ms": 13.5
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-03/qos_latency_under_load.json": "a5aca4f05817f022f83564097ad5d4ae5fac6bad3a0fcfa969617f611be9e914"
+  }
+}

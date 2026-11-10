@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use quinn::crypto::rustls::{QuicClientConfig, QuicServerConfig};
 use quinn::{Connection, Endpoint, RecvStream, SendStream, TransportConfig};
@@ -410,6 +410,8 @@ pub struct PeerConnection {
     pub cert_info: ExtractedCertInfo,
     /// Underlying Quinn connection handle.
     pub connection: Connection,
+    /// Bandwidth shaper and QoS scheduler.
+    pub shaper: Arc<crate::qos::BandwidthShaper>,
     state: Arc<RwLock<PeerConnectionState>>,
 }
 
@@ -427,13 +429,17 @@ impl PeerConnection {
         }
     }
 
-    /// Opens a new bidirectional control stream, prepending `QuicStreamType::BidirectionalControl`.
+    /// Opens a new bidirectional control stream, prepending `QuicStreamType::BidirectionalControl`
+    /// and assigning `TrafficClass::CriticalControl` transmission priority.
     pub async fn open_bi_control(&self) -> Result<(SendStream, RecvStream), NetError> {
         let (mut send, recv) = self
             .connection
             .open_bi()
             .await
             .map_err(|e| NetError::QuicConnection(e.to_string()))?;
+
+        send.set_priority(crate::qos::TrafficClass::CriticalControl.quic_priority())
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
         send.write_all(&[QuicStreamType::BidirectionalControl as u8])
             .await
@@ -442,13 +448,17 @@ impl PeerConnection {
         Ok((send, recv))
     }
 
-    /// Opens a new bidirectional RPC stream, prepending `QuicStreamType::BidirectionalRpc`.
+    /// Opens a new bidirectional RPC stream, prepending `QuicStreamType::BidirectionalRpc`
+    /// and assigning `TrafficClass::ElasticCompute` transmission priority.
     pub async fn open_bi_rpc(&self) -> Result<(SendStream, RecvStream), NetError> {
         let (mut send, recv) = self
             .connection
             .open_bi()
             .await
             .map_err(|e| NetError::QuicConnection(e.to_string()))?;
+
+        send.set_priority(crate::qos::TrafficClass::ElasticCompute.quic_priority())
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
         send.write_all(&[QuicStreamType::BidirectionalRpc as u8])
             .await
@@ -457,13 +467,17 @@ impl PeerConnection {
         Ok((send, recv))
     }
 
-    /// Opens a new unidirectional bulk tensor stream, prepending `QuicStreamType::UnidirectionalBulkTensor`.
+    /// Opens a new unidirectional bulk tensor stream, prepending `QuicStreamType::UnidirectionalBulkTensor`
+    /// and assigning `TrafficClass::BackgroundBulk` transmission priority.
     pub async fn open_uni_bulk_tensor(&self) -> Result<SendStream, NetError> {
         let mut send = self
             .connection
             .open_uni()
             .await
             .map_err(|e| NetError::QuicConnection(e.to_string()))?;
+
+        send.set_priority(crate::qos::TrafficClass::BackgroundBulk.quic_priority())
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
         send.write_all(&[QuicStreamType::UnidirectionalBulkTensor as u8])
             .await
@@ -472,7 +486,31 @@ impl PeerConnection {
         Ok(send)
     }
 
-    /// Sends a bulk tensor payload over a dedicated unidirectional stream with BLAKE3 verification digest.
+    /// Sends a low-latency ping on the control plane and waits for pong reply, measuring RTT.
+    /// Uses `TrafficClass::CriticalControl` and records latency in the shaper.
+    pub async fn ping_control(&self, payload: &[u8]) -> Result<(Duration, Vec<u8>), NetError> {
+        let t0 = Instant::now();
+        self.shaper.acquire(crate::qos::TrafficClass::CriticalControl, payload.len()).await?;
+
+        let (mut send, mut recv) = self.open_bi_control().await?;
+        let len_bytes = (payload.len() as u32).to_le_bytes();
+        send.write_all(&len_bytes).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
+        send.write_all(payload).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
+        send.finish().map_err(|e| NetError::QuicStream(e.to_string()))?;
+
+        let mut reply_len_buf = [0u8; 4];
+        recv.read_exact(&mut reply_len_buf).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
+        let reply_len = u32::from_le_bytes(reply_len_buf) as usize;
+        let mut reply = vec![0u8; reply_len];
+        recv.read_exact(&mut reply).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
+
+        let rtt = t0.elapsed();
+        self.shaper.record_control_latency(rtt);
+        Ok((rtt, reply))
+    }
+
+    /// Sends a bulk tensor payload over a dedicated unidirectional stream with BLAKE3 verification digest,
+    /// paced by the `BandwidthShaper`.
     pub async fn send_bulk_tensor(&self, tensor_id: &str, data: &[u8]) -> Result<[u8; 32], NetError> {
         let mut stream = self.open_uni_bulk_tensor().await?;
 
@@ -501,11 +539,17 @@ impl PeerConnection {
             .await
             .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
-        // Write data in chunks
-        stream
-            .write_all(data)
-            .await
-            .map_err(|e| NetError::QuicStream(e.to_string()))?;
+        // Write data in chunks paced by BandwidthShaper
+        let chunk_size = 65_536; // 64 KiB
+        for chunk in data.chunks(chunk_size) {
+            self.shaper
+                .acquire(crate::qos::TrafficClass::BackgroundBulk, chunk.len())
+                .await?;
+            stream
+                .write_all(chunk)
+                .await
+                .map_err(|e| NetError::QuicStream(e.to_string()))?;
+        }
         stream
             .finish()
             .map_err(|e| NetError::QuicStream(e.to_string()))?;
@@ -685,6 +729,8 @@ pub struct QuicTransportConfig {
     pub send_window_bytes: u32,
     /// Receive window size in bytes (default: 16 MiB).
     pub recv_window_bytes: u32,
+    /// Bandwidth shaper and QoS traffic scheduler.
+    pub bandwidth_shaper: Arc<crate::qos::BandwidthShaper>,
 }
 
 impl QuicTransportConfig {
@@ -707,7 +753,15 @@ impl QuicTransportConfig {
             crl,
             send_window_bytes: 16 * 1024 * 1024,
             recv_window_bytes: 16 * 1024 * 1024,
+            bandwidth_shaper: Arc::new(crate::qos::BandwidthShaper::new(0)),
         }
+    }
+
+    /// Attaches a custom bandwidth shaper.
+    #[must_use]
+    pub fn with_bandwidth_shaper(mut self, shaper: Arc<crate::qos::BandwidthShaper>) -> Self {
+        self.bandwidth_shaper = shaper;
+        self
     }
 }
 
@@ -788,9 +842,32 @@ impl QuicTransportEngine {
         let mut client_config = quinn::ClientConfig::new(Arc::new(quic_client_config));
         client_config.transport_config(transport);
 
-        // 5. Create Quinn Endpoint
-        let mut endpoint = Endpoint::server(server_config, config.bind_addr)
+        // 5. Create Quinn Endpoint using socket2 with configured DSCP / TOS
+        let domain = if config.bind_addr.is_ipv6() {
+            socket2::Domain::IPV6
+        } else {
+            socket2::Domain::IPV4
+        };
+        let socket2_sock = socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
             .map_err(NetError::Io)?;
+        let _ = socket2_sock.set_reuse_address(true);
+        let _ = socket2_sock.set_nonblocking(true);
+        let _ = crate::qos::apply_socket_dscp(&socket2_sock, crate::qos::TrafficClass::CriticalControl.dscp_value());
+        socket2_sock.bind(&config.bind_addr.into()).map_err(NetError::Io)?;
+        let std_sock: std::net::UdpSocket = socket2_sock.into();
+
+        let runtime = quinn::default_runtime().ok_or_else(|| {
+            NetError::Io(std::io::Error::other(
+                "No async runtime available for Quinn endpoint",
+            ))
+        })?;
+
+        let mut endpoint = Endpoint::new(
+            quinn::EndpointConfig::default(),
+            Some(server_config),
+            std_sock,
+            runtime,
+        ).map_err(NetError::Io)?;
         endpoint.set_default_client_config(client_config);
 
         // 6. Spawn Background Accept Loop
@@ -798,6 +875,7 @@ impl QuicTransportEngine {
         let a_peers = Arc::clone(&peers);
         let a_cancel = cancel_token.clone();
         let a_keypair = Arc::clone(&config.node_keypair);
+        let a_shaper = Arc::clone(&config.bandwidth_shaper);
 
         tokio::spawn(async move {
             while !a_cancel.is_cancelled() {
@@ -811,31 +889,34 @@ impl QuicTransportEngine {
 
                         let a_peers = Arc::clone(&a_peers);
                         let a_keypair = Arc::clone(&a_keypair);
+                        let a_shaper = Arc::clone(&a_shaper);
 
-                    tokio::spawn(async move {
-                        if let Ok(conn) = incoming.await {
-                            if let Some(peer_identity) = conn.peer_identity() {
-                                if let Some(certs) = peer_identity.downcast_ref::<Vec<CertificateDer<'_>>>() {
-                                    if let Some(first) = certs.first() {
-                                        if let Ok(info) = extract_cert_info(first.as_ref()) {
-                                            if let Ok(pk) = DidKey::to_ed25519_bytes(&info.did_key) {
-                                                if let Ok(node_id) = NodeId::from_public_key_bytes(&pk) {
-                                                    let peer_conn = Arc::new(PeerConnection {
-                                                        node_id: node_id.clone(),
-                                                        remote_did: info.did_key.clone(),
-                                                        cert_info: info,
-                                                        connection: conn.clone(),
-                                                        state: Arc::new(RwLock::new(PeerConnectionState::Handshaking)),
-                                                    });
+                        tokio::spawn(async move {
+                            if let Ok(conn) = incoming.await {
+                                if let Some(peer_identity) = conn.peer_identity() {
+                                    if let Some(certs) = peer_identity.downcast_ref::<Vec<CertificateDer<'_>>>() {
+                                        if let Some(first) = certs.first() {
+                                            if let Ok(info) = extract_cert_info(first.as_ref()) {
+                                                if let Ok(pk) = DidKey::to_ed25519_bytes(&info.did_key) {
+                                                    if let Ok(node_id) = NodeId::from_public_key_bytes(&pk) {
+                                                        let peer_conn = Arc::new(PeerConnection {
+                                                            node_id: node_id.clone(),
+                                                            remote_did: info.did_key.clone(),
+                                                            cert_info: info,
+                                                            connection: conn.clone(),
+                                                            shaper: a_shaper,
+                                                            state: Arc::new(RwLock::new(PeerConnectionState::Handshaking)),
+                                                        });
 
-                                                    let p_conn = Arc::clone(&peer_conn);
-                                                    let kp = Arc::clone(&a_keypair);
-                                                    tokio::spawn(async move {
-                                                        let _ = handle_inbound_attestation(p_conn, kp).await;
-                                                    });
+                                                        let p_conn = Arc::clone(&peer_conn);
+                                                        let kp = Arc::clone(&a_keypair);
+                                                        tokio::spawn(async move {
+                                                            let _ = handle_inbound_attestation(p_conn, kp).await;
+                                                        });
 
-                                                    if let Ok(mut lock) = a_peers.write() {
-                                                        lock.insert(node_id, peer_conn);
+                                                        if let Ok(mut lock) = a_peers.write() {
+                                                            lock.insert(node_id, peer_conn);
+                                                        }
                                                     }
                                                 }
                                             }
@@ -843,12 +924,11 @@ impl QuicTransportEngine {
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
-        }
-    });
+        });
 
         Ok(Self {
             config,
@@ -897,6 +977,7 @@ impl QuicTransportEngine {
             remote_did: info.did_key.clone(),
             cert_info: info,
             connection: conn,
+            shaper: Arc::clone(&self.config.bandwidth_shaper),
             state: Arc::new(RwLock::new(PeerConnectionState::Handshaking)),
         });
 
@@ -904,6 +985,11 @@ impl QuicTransportEngine {
         peer_conn
             .execute_mutual_attestation(&self.config.node_keypair, [0u8; 32])
             .await?;
+
+        let p_conn = Arc::clone(&peer_conn);
+        tokio::spawn(async move {
+            let _ = handle_inbound_streams(p_conn).await;
+        });
 
         if let Ok(mut lock) = self.peers.write() {
             lock.insert(node_id, Arc::clone(&peer_conn));
@@ -1029,5 +1115,53 @@ async fn handle_inbound_attestation(
         .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
     peer_conn.set_state(PeerConnectionState::AuthenticatedReady);
+    let p_conn = Arc::clone(&peer_conn);
+    tokio::spawn(async move {
+        let _ = handle_inbound_streams(p_conn).await;
+    });
+    Ok(())
+}
+
+async fn handle_inbound_streams(peer_conn: Arc<PeerConnection>) -> Result<(), NetError> {
+    while peer_conn.state() == PeerConnectionState::AuthenticatedReady {
+        match peer_conn.connection.accept_bi().await {
+            Ok((mut send, mut recv)) => {
+                tokio::spawn(async move {
+                    let mut type_buf = [0u8; 1];
+                    if recv.read_exact(&mut type_buf).await.is_err() {
+                        return;
+                    }
+                    if type_buf[0] == QuicStreamType::BidirectionalControl as u8 {
+                        let _ = send.set_priority(crate::qos::TrafficClass::CriticalControl.quic_priority());
+                        let mut len_buf = [0u8; 4];
+                        if recv.read_exact(&mut len_buf).await.is_ok() {
+                            let len = u32::from_le_bytes(len_buf) as usize;
+                            let mut payload = vec![0u8; len];
+                            if recv.read_exact(&mut payload).await.is_ok() {
+                                let _ = send.write_all(&len_buf).await;
+                                let _ = send.write_all(&payload).await;
+                                let _ = send.finish();
+                            }
+                        }
+                    } else if type_buf[0] == QuicStreamType::BidirectionalRpc as u8 {
+                        let _ = send.set_priority(crate::qos::TrafficClass::ElasticCompute.quic_priority());
+                        let mut len_buf = [0u8; 4];
+                        if recv.read_exact(&mut len_buf).await.is_ok() {
+                            let len = u32::from_le_bytes(len_buf) as usize;
+                            let mut payload = vec![0u8; len];
+                            if recv.read_exact(&mut payload).await.is_ok() {
+                                let reply = format!("ack:{}", String::from_utf8_lossy(&payload));
+                                let rlen = (reply.len() as u32).to_le_bytes();
+                                let _ = send.write_all(&rlen).await;
+                                let _ = send.write_all(reply.as_bytes()).await;
+                                let _ = send.finish();
+                            }
+                        }
+                    }
+                });
+            }
+            Err(_) => break,
+        }
+    }
     Ok(())
 }
