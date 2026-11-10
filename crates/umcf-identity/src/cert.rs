@@ -15,6 +15,9 @@ use umcf_core::NodeRole;
 pub struct ClusterCa {
     cluster_id: String,
     ca_keypair: KeyPair,
+    ca_serial_bytes: [u8; 16],
+    ca_not_before: SystemTime,
+    ca_not_after: SystemTime,
     cert_der: Vec<u8>,
     cert_pem: String,
 }
@@ -91,6 +94,11 @@ impl ClusterCa {
         params.not_before = not_before.into();
         params.not_after = not_after.into();
 
+        let mut serial_bytes = [0u8; 16];
+        rand_core::RngCore::fill_bytes(&mut rand_core::OsRng, &mut serial_bytes);
+        serial_bytes[0] &= 0x7f;
+        params.serial_number = Some(SerialNumber::from_slice(&serial_bytes));
+
         let cert = params
             .self_signed(&ca_keypair)
             .map_err(|e| IdentityError::CertificateInvalid(e.to_string()))?;
@@ -101,6 +109,9 @@ impl ClusterCa {
         Ok(Self {
             cluster_id,
             ca_keypair,
+            ca_serial_bytes: serial_bytes,
+            ca_not_before: not_before,
+            ca_not_after: not_after,
             cert_der,
             cert_pem,
         })
@@ -205,16 +216,23 @@ impl ClusterCa {
             .unwrap_or_default()
             .as_millis() as u64;
 
-        // Reconstruct CA certificate reference to sign the leaf
+        // Reconstruct CA certificate reference with identical parameters to sign the leaf
         let mut ca_params =
             CertificateParams::new(vec![format!("{}.umcf.local", self.cluster_id)])
                 .map_err(|e| IdentityError::CertificateInvalid(e.to_string()))?;
+        ca_params.serial_number = Some(SerialNumber::from_slice(&self.ca_serial_bytes));
         ca_params.distinguished_name = DistinguishedName::new();
         ca_params.distinguished_name.push(
             DnType::CommonName,
             format!("UMCF Root Cluster CA - {}", self.cluster_id),
         );
+        ca_params
+            .distinguished_name
+            .push(DnType::OrganizationName, "Universal Mobile Compute Fabric");
         ca_params.is_ca = IsCa::Ca(BasicConstraints::Constrained(1));
+        ca_params.key_usages = vec![KeyUsagePurpose::KeyCertSign, KeyUsagePurpose::CrlSign];
+        ca_params.not_before = self.ca_not_before.into();
+        ca_params.not_after = self.ca_not_after.into();
 
         let ca_cert = ca_params
             .self_signed(&self.ca_keypair)

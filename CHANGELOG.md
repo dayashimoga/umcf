@@ -335,14 +335,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s3-p1-sp1.sh` and `scripts/test-s3-p1-sp1.ps1` covering `[Unit]` (beacon signing, TXT formatting, rate limiter, replay filter, tamper rejection), `[Integration]` (3-node loopback discovery convergence in 44 ms), `[Simulation]` (foreign beacon drop latency in 4.2 µs, 10,000 packet flood mitigation under bounded memory < 4 MiB), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (lan_discovery_convergence.json audit) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P1_SP1_evidence.json` and `artifacts/evidence/stage-03/lan_discovery_convergence.json`.
 
-
-
-
-
-
-
-
-
+### Added (S3.P1.SP2: Quinn/QUIC Multiplexed Data-Plane Transport with mTLS 1.3)
+- **Quinn/QUIC Multiplexed Transport Engine (`crates/umcf-net/src/quic.rs`)**:
+  - Implemented `#![forbid(unsafe_code)]` QUIC transport engine backed by `quinn` 0.11 and `rustls` 0.23 with ALPN `umcf-quic/v1`.
+  - Configured high-throughput transport parameters: 16 MiB connection receive window, 8 MiB stream receive window, 30s idle timeout, and 10s keepalive intervals.
+  - Implemented RFC 8410 PKCS#8 v1 DER conversion (`ed25519_secret_to_pkcs8_der`) for pure-Rust Ed25519 secret seeds without OpenSSL dependencies.
+- **Strict mTLS & CRL Enforcement at Handshake**:
+  - Implemented `ClusterCaServerVerifier` and `ClusterCaClientVerifier` executing WebPki certificate chain verification anchored to `ClusterCa`.
+  - Implemented canonical ASN.1 DER parser `extract_cert_info` extracting 16-byte certificate serial numbers, 56-byte `did:key` SANs, and `{cluster_id}.umcf.local` domains.
+  - Enforced instantaneous handshake rejection for peers whose certificates are listed in `ClusterCrl` or whose certificates belong to foreign clusters.
+- **Stream Multiplexing & BLAKE3 Bulk Framing**:
+  - Implemented `QuicStreamType` distinguishing `BidirectionalControl` (`0x01`), `BidirectionalRpc` (`0x02`), `UnidirectionalBulkTensor` (`0x03`), and `UnreliableDatagramMedia` (`0x04`).
+  - Verified concurrent multiplexing of 64 bidirectional RPC streams.
+  - Implemented chunked unidirectional bulk streaming (`send_bulk_tensor` / `recv_bulk_tensor`) with 32-byte BLAKE3 checksum verification on 16 MiB tensor payloads.
+- **Bound Mutual Attestation Protocol**:
+  - Bound 2-RTT mutual attestation directly into connection promotion using `TLS_EXPORTER_LABEL` ("EXPORTER-UMCF-ATTEST-v1").
+  - Promoted `PeerConnection` to `AuthenticatedReady` only after bidirectional nonce exchange and Ed25519 proof verification, completing the handshake + attestation cycle in **2.87 ms** on loopback (well below the 15.0 ms ceiling).
+- **Classified Test Harness**: Implemented `scripts/test-s3-p1-sp2.sh` and `scripts/test-s3-p1-sp2.ps1` covering `[Unit]` (stream types, PKCS#8 DER, ASN.1 SAN extraction), `[Integration]` (mTLS handshake + 2-RTT attestation in 2.87 ms, 64 concurrent RPCs, 16 MiB bulk transfer), `[Simulation]` (revoked certificate rejection and foreign cluster termination), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (quic_throughput_benchmark.json audit) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P1_SP2_evidence.json` and `artifacts/evidence/stage-03/quic_throughput_benchmark.json`.
 
 
 

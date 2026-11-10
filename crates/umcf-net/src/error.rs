@@ -38,6 +38,27 @@ pub enum NetError {
         count: usize,
     },
 
+    #[error("QUIC connection error: {0}")]
+    QuicConnection(String),
+
+    #[error("QUIC stream error: {0}")]
+    QuicStream(String),
+
+    #[error("TLS configuration or handshake error: {0}")]
+    Tls(String),
+
+    #[error("Invalid certificate: {0}")]
+    InvalidCertificate(String),
+
+    #[error("Certificate revoked by ClusterCrl: serial '{serial}', did '{did}'")]
+    CertificateRevoked {
+        serial: String,
+        did: String,
+    },
+
+    #[error("Mutual attestation failed: {0}")]
+    AttestationFailed(String),
+
     #[error("Network engine shutdown")]
     Shutdown,
 }

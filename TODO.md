@@ -48,7 +48,7 @@
 ## Stage 3 — LAN/Remote Networking, Security, Hardware Discovery & Benchmarking
 
 - [x] **[S3.P1.SP1]** (`2026-11-10`) Zero-Conf mDNS/DNS-SD & Signed UDP Broadcast LAN Discovery (Evidence: `artifacts/evidence/stage-03/S3_P1_SP1_evidence.json`, `artifacts/evidence/stage-03/lan_discovery_convergence.json`)
-- [ ] **[S3.P1.SP2]** Quinn/QUIC Multiplexed Data-Plane Transport with mTLS 1.3
+- [x] **[S3.P1.SP2]** (`2026-11-10`) Quinn/QUIC Multiplexed Data-Plane Transport with mTLS 1.3 (Evidence: `artifacts/evidence/stage-03/S3_P1_SP2_evidence.json`, `artifacts/evidence/stage-03/quic_throughput_benchmark.json`)
 - [ ] **[S3.P1.SP3]** Control-Plane vs Data-Plane Traffic Isolation & QoS Framing
 - [ ] **[S3.P2.SP1]** STUN/ICE Candidate Gathering & UDP Hole Punching
 - [ ] **[S3.P2.SP2]** Encrypted TURN/DERP-Style Relay Fallback Protocol

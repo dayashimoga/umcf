@@ -1,0 +1,28 @@
+{
+  "subphase": "S3.P1.SP2",
+  "title": "Quinn/QUIC Multiplexed Data-Plane Transport with mTLS",
+  "git_commit": "87d802a16e81ef53e5a4e7841e740b97c319409c",
+  "timestamp_utc": "2026-11-10T12:36:00Z",
+  "podman_total_bytes": 8928256457,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "handshake_attestation_ms": 2.872,
+    "handshake_attestation_limit_ms": 15.0,
+    "bulk_payload_bytes": 16777216,
+    "concurrent_rpc_streams": 64,
+    "blake3_integrity_verified": true,
+    "revoked_cert_handshake_rejected": true,
+    "foreign_cluster_handshake_rejected": true
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-03/quic_throughput_benchmark.json": "dd55fb6af9827c92995aa97c4b460a5a7211efe0d7d2b838db33edacfb9148ad"
+  }
+}
