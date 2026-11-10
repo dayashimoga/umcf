@@ -35,7 +35,7 @@
 
 ## Stage 2 — Rust Core, Identity, Enrollment, Device Registry & Cluster Management
 
-- [ ] **[S2.P1.SP1]** Ed25519/X25519 Node Identity & DID Generation
+- [x] **[S2.P1.SP1]** (`2026-11-10`) Ed25519/X25519 Node Identity & DID Generation (Evidence: `artifacts/evidence/stage-02/S2_P1_SP1_evidence.json`)
 - [ ] **[S2.P1.SP2]** Platform Keychain/Keystore & Encrypted Local Vault
 - [ ] **[S2.P1.SP3]** Mutual Attestation & Signed Identity Certificates
 - [ ] **[S2.P2.SP1]** Short-Lived QR Enrollment Token Generator & Scanner Flow

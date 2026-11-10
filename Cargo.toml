@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/umcf-proto",
     "crates/umcf-core",
+    "crates/umcf-identity",
     "crates/umcf-telemetry",
     "crates/umcf-coordinator",
     "crates/umcf-worker",
@@ -25,9 +26,15 @@ repository = "https://github.com/umcf/universal-mobile-compute-fabric"
 umcf-proto = { path = "crates/umcf-proto" }
 umcf-core = { path = "crates/umcf-core" }
 umcf-telemetry = { path = "crates/umcf-telemetry" }
+umcf-identity = { path = "crates/umcf-identity" }
 umcf-coordinator = { path = "crates/umcf-coordinator" }
 umcf-worker = { path = "crates/umcf-worker" }
 umcf-scheduler = { path = "crates/umcf-scheduler" }
+ed25519-dalek = { version = "2.1.1", features = ["rand_core", "zeroize"] }
+x25519-dalek = { version = "2.0.1", features = ["zeroize", "static_secrets"] }
+zeroize = { version = "1.8.1", features = ["derive"] }
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+bs58 = "0.5.1"
 blake3 = "1.8.7"
 bytes = "1.12.1"
 thiserror = "2.0.21"

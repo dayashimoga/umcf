@@ -140,6 +140,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p3-sp3.sh` and `scripts/test-s1-p3-sp3.ps1` covering `[Unit]` (manifest checksum validation and tampering detection), `[Integration]` (full Stage 1 verification pipeline and certification emission), `[Simulation]` (prohibited copyleft license policy rejection), `[Hardware-Required]` (14 hardware threads host probe), and `[Manually-Verified]` (STAGE_01_CERTIFICATION.json review) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P3_SP3_evidence.json`, `artifacts/evidence/stage-01/STAGE_01_CERTIFICATION.json`, `artifacts/sbom/stage-01-cyclonedx.json`, and `artifacts/manifests/stage-01-sha256sums.txt`.
 
+### Added (S2.P1.SP1: Ed25519/X25519 Node Identity & DID Generation)
+- **Node Cryptographic Keypairs (`crates/umcf-identity/src/keys.rs`)**:
+  - Implemented `NodeKeypair` managing dual asymmetric keys: Ed25519 signing keypair (`ed25519-dalek` v2) and X25519 key-agreement keypair (`x25519-dalek`).
+  - Cryptographically secure RNG initialization using `rand_core::OsRng`.
+  - Secure memory zeroization via `zeroize::ZeroizeOnDrop` for all private scalar material.
+  - Domain-separated signatures prefixed with `"UMCF-SIG-v1:"` to eliminate cross-protocol replay attacks.
+  - Deterministic X25519 derivation from Ed25519 secret seed using BLAKE3 KDF with RFC-7748 private scalar clamping.
+- **W3C Decentralized Identifiers & DID Documents (`crates/umcf-identity/src/did.rs`)**:
+  - Implemented `did:key` multicodec encoding and decoding with multicodec prefixes `0xed01` (Ed25519, `did:key:z6Mk...`) and `0xec01` (X25519, `did:key:z6LS...`) using Base58-BTC multibase encoding.
+  - Implemented W3C DID Core 1.0 compliant `DidDocument` serialization containing both `Ed25519VerificationKey2020` verification method and `X25519KeyAgreementKey2020` key agreement method.
+  - Exported canonical sample DID document to `artifacts/evidence/stage-02/did_document_sample.json`.
+- **WireEnvelope Signing & Verification (`crates/umcf-identity/src/envelope_auth.rs`)**:
+  - Implemented `sign_envelope` and `verify_envelope` binding `WireEnvelope` messages to the sender's Ed25519 public key.
+  - Strict sender DID verification matching the verifying public key.
+  - Tamper detection rejecting mutated headers, payloads, flags, or impersonated sender DIDs with `IdentityError::InvalidSignature`.
+- **Performance Microbenchmark**:
+  - Verified envelope signing and verification latency in release mode of **44.14 µs** per operation, well below the strict **80.0 µs** ceiling on standard multi-core hardware.
+- **Classified Test Harness**: Implemented `scripts/test-s2-p1-sp1.sh` and `scripts/test-s2-p1-sp1.ps1` covering `[Unit]` (keypair generation, DH agreement, did:key multicodec roundtrips), `[Integration]` (envelope sign & verify with DID document export), `[Simulation]` (tampered payload and impersonation rejection), `[Hardware-Required]` (release microbenchmark < 80 µs), and `[Manually-Verified]` (W3C DID Core 1.0 JSON inspection) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P1_SP1_evidence.json` and `artifacts/evidence/stage-02/did_document_sample.json`.
+
+
 
 
 

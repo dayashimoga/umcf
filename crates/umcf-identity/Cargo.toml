@@ -1,0 +1,25 @@
+[package]
+name = "umcf-identity"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Cryptographic device identity, Ed25519/X25519 keypairs, and W3C DID document generation for UMCF"
+
+[dependencies]
+umcf-proto.workspace = true
+umcf-core.workspace = true
+umcf-telemetry.workspace = true
+ed25519-dalek.workspace = true
+x25519-dalek.workspace = true
+zeroize.workspace = true
+rand_core.workspace = true
+bs58.workspace = true
+blake3.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

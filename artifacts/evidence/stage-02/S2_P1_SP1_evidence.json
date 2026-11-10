@@ -1,0 +1,66 @@
+{
+  "subphase": "S2.P1.SP1",
+  "title": "Ed25519/X25519 Node Identity & DID Generation",
+  "status": "PASS",
+  "requirements_traceability": [
+    "FR-001",
+    "FR-002",
+    "NFR-001"
+  ],
+  "test_classification": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "envelope_sign_verify_microsec": 44.14,
+    "latency_ceiling_microsec": 80.0,
+    "zeroize_on_drop": true,
+    "domain_separation": "UMCF-SIG-v1:",
+    "did_multicodec_ed25519": "0xed01",
+    "did_multicodec_x25519": "0xec01",
+    "w3c_did_core_version": "1.0",
+    "clippy_warnings": 0,
+    "compiler_warnings": 0
+  },
+  "artifacts": {
+    "crates/umcf-identity/Cargo.toml": {
+      "bytes": 640,
+      "sha256": "38b5f0d083f907626afedd45b948e7e726bcbe64b2bd6ce5e05b963ea252a6d5"
+    },
+    "crates/umcf-identity/src/lib.rs": {
+      "bytes": 6945,
+      "sha256": "a92edaf8e92df9bb38dd8d2a8f32baa5c4fcda36a5ec89717f443d1cfe4bcebb"
+    },
+    "crates/umcf-identity/src/error.rs": {
+      "bytes": 1574,
+      "sha256": "8c6c91383d45aa3e72e480558a4fa1a846b85685aae680a97a3b9298b7f73bc9"
+    },
+    "crates/umcf-identity/src/keys.rs": {
+      "bytes": 6113,
+      "sha256": "78312fb13ea620f072bbe96b2fb7aadc0591c6f4994e08ffa42357b5551be501"
+    },
+    "crates/umcf-identity/src/did.rs": {
+      "bytes": 6677,
+      "sha256": "56e94e65f068be74b6c7a290e1648dbd0bc6f7698786bc9a649a80a3913e3ff2"
+    },
+    "crates/umcf-identity/src/envelope_auth.rs": {
+      "bytes": 2344,
+      "sha256": "949a59f7904f6f2db6257117cdf3d364d0ae8113d9e81e07f23c2ae59261fef9"
+    },
+    "artifacts/evidence/stage-02/did_document_sample.json": {
+      "bytes": 1234,
+      "sha256": "4135c77ebf30972040765212975363de0a4c1dac06f20ad1aed67e5021376ce4"
+    },
+    "scripts/test-s2-p1-sp1.ps1": {
+      "bytes": 6350,
+      "sha256": "37e39ce57b1e829b34b6895107eedc29d5370e5d0dec361d073c2b148e02cb5c"
+    },
+    "scripts/test-s2-p1-sp1.sh": {
+      "bytes": 3059,
+      "sha256": "dc5ddfcf13cc22c93e867fd7d49e3d1a7380ebd179572ae85d03e44a0162db0c"
+    }
+  }
+}
