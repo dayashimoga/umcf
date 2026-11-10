@@ -1,0 +1,35 @@
+{
+  "subphase": "S4.P3.SP1",
+  "title": "Isolated Worker Execution Sandbox & Artifact Staging",
+  "git_commit": "c5883efa1ac156548ce31e97ed7027a26dc3148a",
+  "timestamp_utc": "2026-11-10T15:45:00Z",
+  "podman_total_bytes": 16857848061,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "sandbox_summary": {
+    "escape_vectors_tested": 5,
+    "all_escapes_trapped": true,
+    "max_trap_latency_ms": 2.616,
+    "target_latency_ceiling_ms": 20.0,
+    "blake3_artifact_validation_verified": true,
+    "scratch_directory_isolation_verified": true,
+    "preemption_token_interruption_verified": true,
+    "unauthorized_native_kernel_rejected": true
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-04/sandbox_escape_audit.json": "449107494746209DBBDC3B5F2B73382E74D4865AA4E4798A204C0109F5CD8C9D",
+    "crates/umcf-worker/src/error.rs": "4A5A68980F1FF0A8A95A3A907C26C73D490E392E241DE1626CB2470F1DB7EBC7",
+    "crates/umcf-worker/src/lib.rs": "8E43B658C85B3C6E072D92D83DA7D48A2DB03FA54F1AD86D377BA8B8C9968919",
+    "crates/umcf-worker/src/sandbox.rs": "5FE6DFEA03EC2FE085AE91FE13CE0A5592B93BC4FED979DD6A60C8F2A786DDB6",
+    "crates/umcf-worker/tests/worker_tests.rs": "E0E9298AD54396252B6DD80754F6868F19B480BC529473ED8037647A091039C4",
+    "scripts/test-s4-p3-sp1.ps1": "AEB0022EF6FB892361293EC5A78B1083F5BA9431B71184203436955FFACB6737",
+    "scripts/test-s4-p3-sp1.sh": "13DA2CCB184C9026F821A6757FFB4235588F28D883657BC092D1E54D075D1643"
+  }
+}

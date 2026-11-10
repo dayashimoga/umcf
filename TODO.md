@@ -65,7 +65,7 @@
 - [x] **[S4.P2.SP1]** (`2026-11-10`) Capability-Negotiated Constraint Solver & Heterogeneous Cost Model (Evidence: `artifacts/evidence/stage-04/S4_P2_SP1_evidence.json`, `artifacts/evidence/stage-04/scheduler_placement_explain.json`)
 - [x] **[S4.P2.SP2]** (`2026-11-10`) Bandwidth/Latency-Aware Workload DAG Partitioning (Evidence: `artifacts/evidence/stage-04/S4_P2_SP2_evidence.json`, `artifacts/evidence/stage-04/heterogeneous_partition_speedup.json`)
 - [x] **[S4.P2.SP3]** (`2026-11-10`) Queue Prioritization, Backpressure & Admission Control (Evidence: `artifacts/evidence/stage-04/S4_P2_SP3_evidence.json`, `artifacts/evidence/stage-04/queue_fairness_and_backpressure.json`, `artifacts/evidence/stage-04/S4_P2_PHASE_SUMMARY.json` — Phase S4.P2 100% Certified)
-- [ ] **[S4.P3.SP1]** Isolated Worker Execution Sandbox & Content-Addressed Artifact Staging
+- [x] **[S4.P3.SP1]** (`2026-11-10`) Isolated Worker Execution Sandbox & Content-Addressed Artifact Staging (Evidence: `artifacts/evidence/stage-04/S4_P3_SP1_evidence.json`, `artifacts/evidence/stage-04/sandbox_escape_audit.json`)
 - [ ] **[S4.P3.SP2]** Heartbeat Failure Detection, Checkpointing & Speculative Retry
 - [ ] **[S4.P3.SP3]** End-to-End Distributed Job Execution Verification
 

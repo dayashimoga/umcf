@@ -1,4 +1,16 @@
-//! Worker runtime safety guard, consent enforcement, and host hardware capability probing.
+//! Worker runtime, isolated execution sandbox, artifact staging, and recovery for UMCF.
+//! Strictly enforces `#![forbid(unsafe_code)]` and zero placeholders.
+
+#![forbid(unsafe_code)]
+
+pub mod error;
+pub mod sandbox;
+
+pub use error::{WorkerError, WorkerErrorCode};
+pub use sandbox::{
+    ArtifactStager, EphemeralScratchDir, ExecutionReceipt, NativeEngineRegistry, NativeKernelRunner,
+    WasmSandboxConfig, WasmSandboxRunner,
+};
 
 use umcf_core::{CpuArch, HardwareProfile, NodeId, PlatformKind, ResourceConsentPolicy};
 

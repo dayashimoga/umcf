@@ -3,11 +3,21 @@ name = "umcf-worker"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Worker resource guard, thermal/battery/activity preemption, and real host hardware probing for UMCF"
+description = "Worker runtime, isolated execution sandbox, artifact staging, and recovery for UMCF"
 
 [dependencies]
 umcf-core = { path = "../umcf-core" }
+umcf-guard = { path = "../umcf-guard" }
+umcf-proto = { path = "../umcf-proto" }
+blake3 = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tempfile = { workspace = true }
+
+[dev-dependencies]
+umcf-identity = { path = "../umcf-identity" }
 
 [lints]
 workspace = true
-
