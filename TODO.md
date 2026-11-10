@@ -55,7 +55,7 @@
 - [x] **[S3.P2.SP3]** (`2026-11-10`) Roaming, Network Interface Handover & QUIC Connection Migration (Evidence: `artifacts/evidence/stage-03/S3_P2_SP3_evidence.json`, `artifacts/evidence/stage-03/connection_migration_trace.json`)
 - [x] **[S3.P3.SP1]** (`2026-11-10`) Cross-Platform CPU/RAM/Storage/Battery/Thermal Probing (Evidence: `artifacts/evidence/stage-03/S3_P3_SP1_evidence.json`, `artifacts/evidence/stage-03/live_system_probe_report.json`)
 - [x] **[S3.P3.SP2]** (`2026-11-10`) GPU & NPU Compute Enumeration (Vulkan/Metal/DX12/OpenCL/NNAPI/CoreML) (Evidence: `artifacts/evidence/stage-03/S3_P3_SP2_evidence.json`, `artifacts/evidence/stage-03/accelerator_enumeration_report.json`)
-- [ ] **[S3.P3.SP3]** Real Compute/Memory/Network Micro-Benchmarks & Signed Attestation
+- [x] **[S3.P3.SP3]** (`2026-11-10`) Real Compute/Memory/Network Micro-Benchmarks & Signed Attestation (Evidence: `artifacts/evidence/stage-03/S3_P3_SP3_evidence.json`, `artifacts/evidence/stage-03/signed_hardware_attestation_sample.json`, `artifacts/evidence/stage-03/STAGE_03_CERTIFICATION.json` — Stage 3 100% Certified `CERT-UMCF-STAGE-03-001`)
 
 ## Stage 4 — Distributed Scheduler, Resource Management, Workload Execution & Recovery
 

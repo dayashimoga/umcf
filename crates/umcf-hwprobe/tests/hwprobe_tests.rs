@@ -13,10 +13,14 @@ use umcf_hwprobe::accelerator_probe::{
     AcceleratorProber, GpuEnumerator, PCI_VENDOR_AMD, PCI_VENDOR_APPLE, PCI_VENDOR_INTEL,
     PCI_VENDOR_NVIDIA, PCI_VENDOR_QUALCOMM,
 };
+use umcf_hwprobe::benchmark::{
+    BenchmarkScores, ComputeMicroBench, NetworkMicroBench, SignedHardwareAttestation,
+};
 use umcf_hwprobe::cpu::CpuProber;
 use umcf_hwprobe::memory_storage::MemoryStorageProber;
 use umcf_hwprobe::power_thermal::PowerThermalProber;
 use umcf_hwprobe::system_probe::SystemProber;
+use umcf_identity::NodeKeypair;
 
 // ---------------------------------------------------------------------------
 // 1. [Unit] Tests
@@ -443,5 +447,273 @@ fn test_manually_verified_accelerator_enumeration_report_audit() {
         accelerators.len(), duration, report_path
     );
     assert!(report_path.exists());
+    assert!(!json_bytes.is_empty());
+}
+
+// ---------------------------------------------------------------------------
+// S3.P3.SP3: Real Compute/Memory/Network Micro-Benchmarks & Signed Attestation Tests
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_unit_fp32_gemm_correctness_against_golden_reference() {
+    let n = 32;
+    let mut a = vec![0.0_f32; n * n];
+    let mut b = vec![0.0_f32; n * n];
+
+    for i in 0..(n * n) {
+        a[i] = ((i as f32) * 0.1).sin();
+        b[i] = ((i as f32) * 0.2).cos();
+    }
+
+    let expected = ComputeMicroBench::reference_fp32_gemm(&a, &b, n);
+    let (actual, gflops, checksum) = ComputeMicroBench::run_fp32_gemm_with_inputs(&a, &b, n);
+
+    assert_eq!(actual.len(), expected.len());
+    for idx in 0..actual.len() {
+        let diff = (actual[idx] - expected[idx]).abs();
+        assert!(
+            diff < 1e-4,
+            "FP32 GEMM mismatch at index {idx}: actual={}, expected={}",
+            actual[idx],
+            expected[idx]
+        );
+    }
+    assert!(gflops > 0.0);
+    assert!(checksum > 0);
+}
+
+#[test]
+fn test_unit_int8_gemm_correctness_against_golden_reference() {
+    let n = 32;
+    let mut a = vec![0_i8; n * n];
+    let mut b = vec![0_i8; n * n];
+
+    for i in 0..(n * n) {
+        a[i] = ((i * 3) % 127) as i8;
+        b[i] = ((i * 7) % 127) as i8;
+    }
+
+    let expected = ComputeMicroBench::reference_int8_gemm(&a, &b, n);
+    let (actual, tops, checksum) = ComputeMicroBench::run_int8_gemm_with_inputs(&a, &b, n);
+
+    assert_eq!(actual, expected, "Quantized INT8 GEMM must exactly match reference");
+    assert!(tops > 0.0);
+    assert!(checksum > 0);
+}
+
+#[test]
+fn test_unit_network_micro_bench_statistics_computation() {
+    let rtt_samples = vec![
+        Duration::from_millis(5),
+        Duration::from_millis(10),
+        Duration::from_millis(15),
+        Duration::from_millis(20),
+        Duration::from_millis(100),
+    ];
+    let burst_duration = Duration::from_millis(50);
+    let burst_bytes = 256 * 1024; // 256 KiB
+
+    let scores = NetworkMicroBench::compute_scores(&rtt_samples, burst_duration, burst_bytes)
+        .expect("compute network scores");
+
+    assert_eq!(scores.min_rtt_ms, 5.0);
+    assert!((scores.avg_rtt_ms - 30.0).abs() < 1e-3);
+    assert_eq!(scores.p95_rtt_ms, 100.0);
+    assert!(scores.jitter_ms > 0.0);
+    assert!(scores.burst_bandwidth_mbps > 0.0);
+    assert_eq!(scores.probe_train_bytes, burst_bytes);
+    assert_eq!(scores.rtt_samples_count, 5);
+}
+
+#[test]
+fn test_unit_signed_hardware_attestation_signature_verification() {
+    let keypair = NodeKeypair::generate();
+    let node_id = keypair.node_id();
+    let capability = SystemProber::probe_all(node_id).expect("probe all");
+
+    let scores = BenchmarkScores {
+        fp32_gflops: 25.5,
+        int8_tops: 50.2,
+        memory_bandwidth_gbps: 42.0,
+        storage_write_mbps: 300.0,
+        storage_read_mbps: 600.0,
+        execution_duration_ms: 120.0,
+        deterministic_seed_hash: "deadbeefcafe0001".to_string(),
+        network_scores: None,
+    };
+
+    let attestation = SignedHardwareAttestation::create(&keypair, capability, scores, 0x12345678)
+        .expect("create attestation");
+
+    assert_eq!(attestation.node_id, keypair.node_id());
+    assert!(attestation.verify().expect("verify attestation"));
+}
+
+#[tokio::test]
+async fn test_integration_network_probe_train_async_duplex() {
+    let (mut client_stream, mut server_stream) = tokio::io::duplex(64 * 1024);
+    let sample_count = 5;
+
+    let server_handle = tokio::spawn(async move {
+        let (mut r, mut w) = tokio::io::split(&mut server_stream);
+        NetworkMicroBench::echo_server_handler(&mut r, &mut w, sample_count).await
+    });
+
+    let (mut cr, mut cw) = tokio::io::split(&mut client_stream);
+    let scores = NetworkMicroBench::run_probe_train(&mut cr, &mut cw, sample_count)
+        .await
+        .expect("client probe train");
+
+    server_handle.await.expect("join server").expect("echo server finished");
+
+    assert_eq!(scores.rtt_samples_count, sample_count);
+    assert_eq!(scores.probe_train_bytes, NetworkMicroBench::PROBE_TRAIN_BYTES);
+    assert!(scores.burst_bandwidth_mbps > 0.0);
+}
+
+#[test]
+fn test_integration_full_micro_benchmark_suite_execution() {
+    let t0 = std::time::Instant::now();
+    let scores = ComputeMicroBench::run_all(42).expect("run micro benchmark suite");
+    let total_elapsed = t0.elapsed();
+
+    #[cfg(not(debug_assertions))]
+    assert!(
+        total_elapsed <= Duration::from_millis(500),
+        "Full benchmark suite took {:?}, exceeding 500 ms ceiling in release mode",
+        total_elapsed
+    );
+    #[cfg(debug_assertions)]
+    assert!(
+        total_elapsed <= Duration::from_millis(1500),
+        "Full benchmark suite took {:?}, exceeding debug ceiling",
+        total_elapsed
+    );
+
+    assert!(scores.fp32_gflops > 0.0);
+    assert!(scores.int8_tops > 0.0);
+    assert!(scores.memory_bandwidth_gbps > 0.0);
+    assert!(scores.storage_write_mbps > 0.0);
+    assert!(scores.storage_read_mbps > 0.0);
+    assert!(!scores.deterministic_seed_hash.is_empty());
+}
+
+#[test]
+fn test_integration_attestation_to_cluster_registry_crdt_sync() {
+    let keypair = NodeKeypair::generate();
+    let node_id = keypair.node_id();
+
+    let mut capability = SystemProber::probe_all(node_id.clone()).expect("probe all");
+    let scores = ComputeMicroBench::run_all(99).expect("micro bench");
+
+    scores.apply_to_descriptor(&mut capability);
+
+    let attestation = SignedHardwareAttestation::create(&keypair, capability.clone(), scores.clone(), 0xAABBCCDD)
+        .expect("create attestation");
+
+    assert!(attestation.verify().expect("verify attestation"));
+
+    let mut registry = umcf_registry::ClusterRegistryState::new("test-cluster-s3");
+    let hlc = umcf_registry::HlcTimestamp::new(1_700_000_000_000, 1, 0x1234);
+    registry.update_capabilities(node_id.clone(), attestation.capability.clone(), hlc);
+
+    let cap_entry = registry.capabilities.get(&node_id).expect("capability in registry");
+    assert_eq!(cap_entry.node_id, node_id);
+    assert_eq!(
+        cap_entry.descriptor.memory.bandwidth_mbps.as_mbps(),
+        (scores.memory_bandwidth_gbps * 1024.0) as u32
+    );
+}
+
+#[test]
+fn test_simulation_forged_or_tampered_attestation_rejection() {
+    let keypair = NodeKeypair::generate();
+    let capability = SystemProber::probe_all(keypair.node_id()).expect("probe all");
+    let scores = BenchmarkScores {
+        fp32_gflops: 10.0,
+        int8_tops: 20.0,
+        memory_bandwidth_gbps: 15.0,
+        storage_write_mbps: 100.0,
+        storage_read_mbps: 200.0,
+        execution_duration_ms: 50.0,
+        deterministic_seed_hash: "seed123".to_string(),
+        network_scores: None,
+    };
+
+    let mut attestation = SignedHardwareAttestation::create(&keypair, capability, scores, 777)
+        .expect("create attestation");
+    assert!(attestation.verify().expect("initial verification passes"));
+
+    // 1. Tamper with benchmark scores (inflate GFLOPS to fake 99999.0)
+    attestation.benchmark_scores.fp32_gflops = 99999.0;
+    assert!(!attestation.verify().expect("tampered scores must fail verification"));
+
+    // Revert scores
+    attestation.benchmark_scores.fp32_gflops = 10.0;
+    assert!(attestation.verify().expect("reverted scores pass"));
+
+    // 2. Tamper with node ID
+    let rogue_keypair = NodeKeypair::generate();
+    attestation.node_id = rogue_keypair.node_id();
+    assert!(!attestation.verify().expect("tampered node_id must fail verification"));
+
+    // Revert node_id
+    attestation.node_id = keypair.node_id();
+
+    // 3. Corrupt signature hex
+    let orig_sig = attestation.signature_hex.clone();
+    attestation.signature_hex = "00".repeat(64);
+    assert!(!attestation.verify().expect("zeroed signature must fail verification"));
+    attestation.signature_hex = orig_sig;
+
+    // 4. Corrupt public key
+    attestation.public_key_hex = "ff".repeat(32);
+    let res = attestation.verify();
+    assert!(res.is_err() || !res.unwrap_or(true));
+}
+
+#[test]
+fn test_hardware_required_real_cpu_gemm_and_stream_kernel() {
+    let (gflops, checksum) = ComputeMicroBench::run_fp32_gemm(256, 12345);
+    println!("Host CPU FP32 GEMM: {:.2} GFLOPS (checksum: {checksum:016x})", gflops);
+    assert!(gflops >= 0.1);
+
+    let (tops, int8_check) = ComputeMicroBench::run_int8_gemm(256, 54321);
+    println!("Host CPU INT8 GEMM: {:.2} TOPS (checksum: {int8_check:016x})", tops);
+    assert!(tops >= 0.2);
+
+    let triad_bw = ComputeMicroBench::run_stream_triad(1_000_000);
+    println!("Host Memory STREAM Triad: {:.2} GB/s", triad_bw);
+    assert!(triad_bw >= 1.0);
+}
+
+#[test]
+fn test_manually_verified_signed_attestation_sample_export() {
+    let keypair = NodeKeypair::generate();
+    let mut capability = SystemProber::probe_all(keypair.node_id()).expect("probe all");
+    let scores = ComputeMicroBench::run_all(0xFEEDFACE).expect("micro bench");
+
+    scores.apply_to_descriptor(&mut capability);
+    let attestation = SignedHardwareAttestation::create(&keypair, capability, scores, 0xFEEDFACE)
+        .expect("create attestation");
+
+    assert!(attestation.verify().expect("attestation valid"));
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workspace_root = manifest_dir.join("../..");
+    let out_path = workspace_root.join("artifacts/evidence/stage-03/signed_hardware_attestation_sample.json");
+
+    if let Some(parent) = out_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let json_bytes = serde_json::to_vec_pretty(&attestation).expect("serialize attestation");
+    fs::write(&out_path, &json_bytes).expect("write sample attestation");
+
+    println!(
+        "[Manually-Verified] Exported signed hardware attestation sample to {:?}",
+        out_path
+    );
+    assert!(out_path.exists());
     assert!(!json_bytes.is_empty());
 }

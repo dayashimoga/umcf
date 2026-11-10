@@ -1,0 +1,34 @@
+{
+  "subphase": "S3.P3.SP3",
+  "title": "Real Compute/Memory/Network Micro-Benchmarks & Signed Attestation",
+  "git_commit": "312343a7d870156cc337ad2198bba1649eefc1a4",
+  "timestamp_utc": "2026-11-10T14:32:00Z",
+  "podman_total_bytes": 15161170885,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "benchmark_summary": {
+    "fp32_gemm_gflops": 9.77,
+    "int8_gemm_tops": 7.42,
+    "memory_bandwidth_gbps": 12.30,
+    "storage_write_mbps": 2786.68,
+    "storage_read_mbps": 2504.54,
+    "suite_duration_ms": 27.29,
+    "suite_duration_limit_ms": 500.0,
+    "transient_ram_mb": 15.0,
+    "transient_ram_limit_mb": 32.0,
+    "network_probe_train_bytes": 262144,
+    "attestation_signature_algorithm": "Ed25519"
+  },
+  "artifact_hashes": {
+    "signed_hardware_attestation_sample.json": "60FBF6AE25368DC80D4F5D1B38FB5B1BF382D4E5BE7A2C3989823DA29002ABD6",
+    "crates/umcf-hwprobe/src/benchmark.rs": "AB3ED78168EA2FC31678E699337A9DC730E570A04FE63B07B91CAFFEF0D73876"
+  }
+}
+

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Executes classified tests for Subphase S3.P3.SP1:
   - Unit: /proc/cpuinfo, cgroup v2 cpu.max/memory.max/memory.current, battery sysfs, and thermal mapping parsers
@@ -176,3 +176,4 @@ if (-not $allPassed) {
   exit 1
 }
 exit 0
+

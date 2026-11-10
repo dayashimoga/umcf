@@ -2,11 +2,11 @@
   "background_bulk_throughput_mbps": 100.0,
   "bandwidth_accuracy_pct": 1.2,
   "control_latency_limit_ms": 5.0,
-  "control_latency_p50_ms": 1.679,
-  "control_latency_p99_ms": 3.501,
+  "control_latency_p50_ms": 1.382,
+  "control_latency_p99_ms": 4.087,
   "control_pings_dropped": 0,
   "control_pings_sent": 100,
   "shaped_limit_mbps": 100.0,
   "status": "PASS",
-  "timestamp_utc": "1794315350.491Z"
+  "timestamp_utc": "1794321483.273Z"
 }

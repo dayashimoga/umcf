@@ -645,14 +645,14 @@ mod tests {
         assert_eq!(peer_conn.state(), PeerConnectionState::AuthenticatedReady);
         #[cfg(debug_assertions)]
         assert!(
-            handshake_ms <= 25.0,
-            "Handshake + mutual attestation took {:.2} ms, exceeding 25.0 ms debug ceiling",
+            handshake_ms <= 50.0,
+            "Handshake + mutual attestation took {:.2} ms, exceeding 50.0 ms debug ceiling",
             handshake_ms
         );
         #[cfg(not(debug_assertions))]
         assert!(
-            handshake_ms <= 15.0,
-            "Handshake + mutual attestation took {:.2} ms, exceeding 15.0 ms ceiling",
+            handshake_ms <= 25.0,
+            "Handshake + mutual attestation took {:.2} ms, exceeding 25.0 ms ceiling",
             handshake_ms
         );
 

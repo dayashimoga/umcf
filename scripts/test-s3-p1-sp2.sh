@@ -24,3 +24,4 @@ echo "[5/5] Running [Manually-Verified] tests..."
 cargo test -p umcf-net -j 2 --lib tests::test_quic_throughput_benchmark_manifest_audit -- --nocapture
 
 echo "=== All Subphase S3.P1.SP2 Tests PASSED ==="
+

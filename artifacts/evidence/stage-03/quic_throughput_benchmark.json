@@ -1,11 +1,11 @@
 {
-  "elapsed_ms": 155,
+  "elapsed_ms": 164,
   "handshake_attestation_limit_ms": 15.0,
-  "handshake_attestation_ms": 4.005,
+  "handshake_attestation_ms": 4.066,
   "integrity_verified": true,
   "payload_bytes_total": 16777216,
   "status": "PASS",
   "streams_count": 4,
-  "throughput_gbps": 0.8659208258064517,
-  "timestamp_utc": "1794314122.570Z"
+  "throughput_gbps": 0.8184007804878048,
+  "timestamp_utc": "1794321475.921Z"
 }

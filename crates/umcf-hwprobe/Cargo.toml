@@ -9,14 +9,19 @@ description = "Real OS CPU/RAM/Storage/Battery/Thermal hardware probing and cgro
 
 [dependencies]
 umcf-core = { path = "../umcf-core" }
+umcf-identity = { path = "../umcf-identity" }
+bincode = { workspace = true }
+ed25519-dalek = { workspace = true }
+tempfile = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "io-util", "rt", "macros"] }
 sysinfo = "0.33"
 wgpu = { version = "24", default-features = false, features = ["wgsl"] }
 
 [dev-dependencies]
-tempfile.workspace = true
+umcf-registry = { path = "../umcf-registry" }
 
 [lints]
 workspace = true

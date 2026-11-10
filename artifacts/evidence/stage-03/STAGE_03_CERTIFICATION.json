@@ -1,0 +1,37 @@
+﻿{
+    "certification_id":  "CERT-UMCF-STAGE-03-001",
+    "stage":  "Stage 3: LAN/Remote Networking, Security, Hardware Discovery and Benchmarking",
+    "timestamp_utc":  "2026-11-10T14:38:46Z",
+    "git_commit":  "312343a7d870156cc337ad2198bba1649eefc1a4",
+    "overall_status":  "CERTIFIED_PASS",
+    "quality_gates":  {
+                          "subphases_total":  9,
+                          "subphases_passed":  9,
+                          "test_pass_rate":  "100%",
+                          "podman_quota_status":  "PASS",
+                          "placeholder_status":  "PASS",
+                          "evidence_files_count":  18,
+                          "missing_evidence":  [
+
+                                               ]
+                      },
+    "subphase_results":  {
+                             "S3_P1_SP1":  "PASS",
+                             "S3_P1_SP2":  "PASS",
+                             "S3_P1_SP3":  "PASS",
+                             "S3_P2_SP1":  "PASS",
+                             "S3_P2_SP2":  "PASS",
+                             "S3_P2_SP3":  "PASS",
+                             "S3_P3_SP1":  "PASS",
+                             "S3_P3_SP2":  "PASS",
+                             "S3_P3_SP3":  "PASS"
+                         },
+    "verified_components":  [
+                                "crates/umcf-proto",
+                                "crates/umcf-core",
+                                "crates/umcf-identity",
+                                "crates/umcf-registry",
+                                "crates/umcf-net",
+                                "crates/umcf-hwprobe"
+                            ]
+}

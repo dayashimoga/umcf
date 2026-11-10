@@ -24,3 +24,4 @@ echo "[5/5] Running [Manually-Verified] tests..."
 cargo test -p umcf-net -j 2 --lib -- test_qos_openmetrics test_qos_latency_under_load_manifest_audit -- --nocapture
 
 echo "=== All Subphase S3.P1.SP3 Tests PASSED ==="
+

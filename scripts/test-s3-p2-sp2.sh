@@ -29,3 +29,4 @@ echo "[5/5] Running [Manually-Verified] tests..."
 cargo test -p umcf-net -j 2 --lib -- test_relay_fallback_and_upgrade_trace_audit
 
 echo "All S3.P2.SP2 tests PASSED successfully."
+

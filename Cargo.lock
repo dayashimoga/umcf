@@ -2804,12 +2804,17 @@ dependencies = [
 name = "umcf-hwprobe"
 version = "0.1.0"
 dependencies = [
+ "bincode",
+ "ed25519-dalek",
  "serde",
  "serde_json",
  "sysinfo",
  "tempfile",
  "thiserror",
+ "tokio",
  "umcf-core",
+ "umcf-identity",
+ "umcf-registry",
  "wgpu",
 ]
 

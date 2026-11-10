@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Executes classified tests for Subphase S3.P1.SP3:
   - Unit: TrafficClass priority mapping, DSCP byte values, and BandwidthShaper token accounting (±3.5% accuracy)
@@ -168,3 +168,4 @@ if (-not $allPass) {
   exit 1
 }
 exit 0
+

@@ -26,6 +26,12 @@ pub enum HwProbeError {
     #[error("Accelerator probe failed: {0}")]
     AcceleratorProbe(String),
 
+    #[error("Benchmark execution failed: {0}")]
+    Benchmark(String),
+
+    #[error("Attestation verification failed: {0}")]
+    Attestation(String),
+
     #[error("Cgroup limit parse error: {0}")]
     CgroupParse(String),
 }

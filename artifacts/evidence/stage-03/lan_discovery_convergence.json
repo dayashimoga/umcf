@@ -1,19 +1,19 @@
 {
-  "convergence_duration_ms": 44,
+  "convergence_duration_ms": 37,
   "convergence_threshold_ms": 500,
   "nodes": [
     {
-      "node_id": "did:umcf:42afc256c273555c60725c59f9d3b81f",
+      "node_id": "did:umcf:7bca1e59562b5ca875e15c2c6d1b191b",
       "port": 44881,
       "role": "Master"
     },
     {
-      "node_id": "did:umcf:4088ba3b3831ee5aac083f4b80e59ef7",
+      "node_id": "did:umcf:65cbfdf9858648bff3f19da4edc4f20f",
       "port": 44882,
       "role": "Worker"
     },
     {
-      "node_id": "did:umcf:c214d66b592d84f2d14343dee9cc4c71",
+      "node_id": "did:umcf:b43a04dfd920dd5652b615c747f15a2a",
       "port": 44883,
       "role": "Worker"
     }
@@ -21,5 +21,5 @@
   "pairs_discovered": 6,
   "status": "CONVERGED_SUCCESSFULLY",
   "target_pairs": 6,
-  "timestamp_utc": "1794312428.771Z"
+  "timestamp_utc": "1794321455.919Z"
 }
