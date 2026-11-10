@@ -1,0 +1,57 @@
+name: "Feature Request / Architecture Proposal"
+description: "Propose a new capability, compute adapter, scheduler policy, or UX enhancement for UMCF."
+title: "[FEAT] "
+labels: ["enhancement", "proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        All feature proposals must preserve UMCF's core invariants: zero-trust sandbox isolation, strict `<= 30 GB` Podman container storage quota enforcement, explicit user opt-in for resource sharing, and zero-cost/free-tier cloud control-plane compatibility.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: "Target Architectural Domain"
+      options:
+        - "Core Scheduler & Capability Marketplace (umcf-core)"
+        - "Daemon & Execution Sandboxes (umcf-daemon / umcf-sandbox)"
+        - "Peer-to-Peer Mesh Transport (umcf-mesh)"
+        - "CLI & Automation Tooling (umcf-cli)"
+        - "Control Plane Services (Cloudflare Workers / Cloud Run)"
+        - "Svelte 5 Web Dashboard & WebGPU Compute Worker"
+        - "Flutter Mobile & Desktop Client"
+        - "CI/CD, Supply Chain Security & Release Engineering"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: "Problem Statement & Motivation"
+      description: "What user or system limitation does this feature solve?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_design
+    attributes:
+      label: "Proposed Technical Design"
+      description: "Detail the data models, API/IPC contracts, security posture, and failure modes."
+    validations:
+      required: true
+
+  - type: textarea
+    id: quota_and_security_impact
+    attributes:
+      label: "Quota, Resource & Security Impact Analysis"
+      description: "Explain how this feature interacts with the 30 GB Podman storage cap, CPU/RAM/GPU thermal guards, mTLS authentication, and free-tier control-plane limits."
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification_plan
+    attributes:
+      label: "Verification & Test Plan (>= 95% Coverage)"
+      description: "Describe the unit, integration, E2E, and hardware certification tests required to validate this feature."
+    validations:
+      required: true

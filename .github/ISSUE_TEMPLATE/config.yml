@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "Security Vulnerability Advisory (Private Reporting)"
+    url: "https://github.com/umcf-org/ucf/security/advisories/new"
+    about: "Report critical vulnerabilities in sandbox isolation, mTLS mesh transport, capability tokens, or quota enforcement privately."
+  - name: "Architecture & Engineering Governance Specification"
+    url: "https://github.com/umcf-org/ucf/blob/main/ARCHITECTURE.md"
+    about: "Review the UMCF system architecture, Podman 30 GB quota invariants, and multi-platform build specification before opening architectural proposals."

@@ -1,0 +1,82 @@
+name: "Hardware & GPU Certification Evidence"
+description: "Submit physical hardware, OS, rootless Podman 30GB quota, or GPU compute backend certification evidence."
+title: "[HW-CERT] "
+labels: ["hardware-certification", "verification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Per the **UMCF Engineering Contract**, capabilities requiring physical GPU drivers, mobile OS runtimes, or host-level storage/quota enforcement must distinguish between **CI-simulated verification** and **Physical Hardware Certification**. Use this template to submit verifiable hardware execution evidence.
+
+  - type: dropdown
+    id: hardware_tier
+    attributes:
+      label: "Target Platform & Architecture"
+      options:
+        - "Linux x86_64 Physical Host"
+        - "Linux ARM64 (aarch64 / Raspberry Pi / Ampere / Jetson)"
+        - "Windows 11 x86_64 Physical Host (Native + WSL2 Podman)"
+        - "macOS Apple Silicon (M1 / M2 / M3 / M4)"
+        - "macOS Intel x86_64"
+        - "Android Physical Device (ARM64)"
+        - "iOS Physical Device (ARM64 Signed IPA)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: compute_backend
+    attributes:
+      label: "Certified Compute / Sandbox Backend"
+      options:
+        - "Podman Rootless Container + 30 GB Hard Quota Enforcement"
+        - "NVIDIA CUDA Compute Backend"
+        - "AMD ROCm Compute Backend"
+        - "Cross-Vendor Vulkan / wgpu Compute Backend"
+        - "Apple Metal Compute Backend"
+        - "Browser WebGPU Compute Worker"
+        - "WASM (Wasmtime) Deterministic Sandbox"
+        - "Mobile On-Device Idle Compute Profile (Battery/Thermal Gated)"
+    validations:
+      required: true
+
+  - type: input
+    id: release_or_commit
+    attributes:
+      label: "Certified Release Tag or Commit SHA + Artifact SHA-256"
+      placeholder: "e.g., v0.1.0 / SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware_specs
+    attributes:
+      label: "Hardware & Driver Environment Specification"
+      description: "Provide exact CPU, RAM, GPU model, driver version, OS kernel version, and Podman version."
+      placeholder: |
+        - OS / Kernel: Ubuntu 24.04 LTS (Linux 6.8.0-45-generic)
+        - CPU / RAM: AMD Ryzen 9 7950X / 64 GB DDR5
+        - GPU / Driver: NVIDIA RTX 4090 (Driver 560.35.03, CUDA 12.6)
+        - Podman Version: podman 5.2.2 (rootless, XFS/ext4 loopback 30GB quota)
+    validations:
+      required: true
+
+  - type: textarea
+    id: certification_output
+    attributes:
+      label: "Execution Logs, Quota Verification & Telemetry Evidence"
+      description: "Paste the output of `umcf doctor --json`, `scripts/enforce-podman-quota.sh --verify`, and benchmark/job execution logs."
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: invariants_verified
+    attributes:
+      label: "Certified Hardware Invariants"
+      options:
+        - label: "Podman storage quota hard limit (`<= 30 GB`) was tested under write-pressure and rejected writes above 30 GB without host disk spillover."
+          required: true
+        - label: "Thermal, battery, and idle-revocation triggers halted workload execution within the SLA window (< 500ms)."
+          required: true
+        - label: "Workload result hashes matched deterministic reference verification hashes."
+          required: true

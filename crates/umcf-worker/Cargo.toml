@@ -1,0 +1,13 @@
+[package]
+name = "umcf-worker"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Worker resource guard, thermal/battery/activity preemption, and real host hardware probing for UMCF"
+
+[dependencies]
+umcf-core = { path = "../umcf-core" }
+
+[lints]
+workspace = true
+

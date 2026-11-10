@@ -1,0 +1,107 @@
+version: 2
+updates:
+  # 1. Rust Workspace (root Cargo.toml and all workspace crates)
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "rust"
+      - "security"
+    commit-message:
+      prefix: "chore(deps-rust)"
+      include: "scope"
+    groups:
+      rust-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 2. Svelte 5 Web Dashboard (/apps/web-dashboard)
+  - package-ecosystem: "npm"
+    directory: "/apps/web-dashboard"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:30"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "web-dashboard"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps-web)"
+      include: "scope"
+    groups:
+      web-dashboard-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 3. Cloudflare Workers Control Plane (/services/control-plane-cf)
+  - package-ecosystem: "npm"
+    directory: "/services/control-plane-cf"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "control-plane-cf"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps-cf)"
+      include: "scope"
+    groups:
+      control-plane-cf-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 4. Flutter Multi-Platform Client (/apps/mobile-desktop)
+  - package-ecosystem: "pub"
+    directory: "/apps/mobile-desktop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:30"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "flutter"
+      - "pub"
+    commit-message:
+      prefix: "chore(deps-flutter)"
+      include: "scope"
+
+  # 5. GitHub Actions Workflows (/.github/workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci-cd"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(deps-actions)"
+      include: "scope"

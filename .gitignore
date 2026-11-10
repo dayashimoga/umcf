@@ -1,0 +1,64 @@
+# Rust / Cargo
+/target/
+**/target/
+**/*.rs.bk
+*.pdb
+*.profraw
+*.profdata
+lcov.info
+
+# Node / Web / Cloudflare
+node_modules/
+**/node_modules/
+.svelte-kit/
+**/dist/
+**/.wrangler/
+.env
+.env.*
+!.env.example
+npm-debug.log*
+pnpm-debug.log*
+
+# Flutter / Dart / Mobile / Desktop
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+**/build/
+apps/mobile-desktop/android/.gradle/
+apps/mobile-desktop/android/local.properties
+apps/mobile-desktop/ios/Pods/
+apps/mobile-desktop/macos/Pods/
+
+# Credentials, Signing Keys & Secrets (NEVER COMMIT)
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+secrets/
+credentials.json
+service-account*.json
+
+# Podman / Container Local Volumes & Temp Artifacts
+.podman/
+artifacts/
+coverage/
+*.tar.gz
+*.zip
+*.apk
+*.aab
+*.ipa
+*.AppImage
+*.msi
+*.exe
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+

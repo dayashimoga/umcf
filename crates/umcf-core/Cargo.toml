@@ -1,0 +1,13 @@
+[package]
+name = "umcf-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Core identity, dynamic role state machine, explicit hardware descriptors, and consent policies for UMCF"
+
+[dependencies]
+umcf-proto = { path = "../umcf-proto" }
+
+[lints]
+workspace = true
+

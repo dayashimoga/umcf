@@ -1,0 +1,50 @@
+version: "3.9"
+
+# Reproducible Podman Compose specification for Universal Mobile Compute Fabric (UMCF)
+# Strictly capped within the 30 GB total Podman storage allocation.
+
+services:
+  umcf-rust-dev:
+    build:
+      context: ../..
+      dockerfile: infra/podman/Containerfile
+      target: rust-toolchain
+    working_dir: /workspace
+    volumes:
+      - ../../:/workspace:Z
+      - umcf-cargo-cache:/usr/local/cargo/registry:Z
+    environment:
+      - RUST_BACKTRACE=1
+      - UMCF_PODMAN_MAX_STORAGE_GB=30
+    command: ["cargo", "test", "--workspace"]
+
+  umcf-web-dev:
+    build:
+      context: ../..
+      dockerfile: infra/podman/Containerfile
+      target: web-toolchain
+    working_dir: /workspace/apps/web-dashboard
+    volumes:
+      - ../../:/workspace:Z
+    environment:
+      - NODE_ENV=development
+      - UMCF_PODMAN_MAX_STORAGE_GB=30
+    ports:
+      - "5173:5173"
+    command: ["npm", "test"]
+
+  umcf-flutter-dev:
+    build:
+      context: ../..
+      dockerfile: infra/podman/Containerfile
+      target: flutter-toolchain
+    working_dir: /workspace/apps/mobile-desktop
+    volumes:
+      - ../../:/workspace:Z
+    environment:
+      - UMCF_PODMAN_MAX_STORAGE_GB=30
+    command: ["flutter", "test"]
+
+volumes:
+  umcf-cargo-cache:
+

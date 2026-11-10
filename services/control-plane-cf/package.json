@@ -1,0 +1,12 @@
+{
+  "name": "@umcf/control-plane-cf",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Workers + Durable Objects Edge Control Plane for UMCF",
+  "scripts": {
+    "test": "node --test ./test/control-plane.test.mjs",
+    "build": "node ./scripts/build.mjs"
+  }
+}
+

@@ -1,0 +1,14 @@
+[package]
+name = "umcf-coordinator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Cluster registry, single-use enrollment gatekeeper, and lease coordinator for UMCF"
+
+[dependencies]
+umcf-core = { path = "../umcf-core" }
+umcf-proto = { path = "../umcf-proto" }
+
+[lints]
+workspace = true
+

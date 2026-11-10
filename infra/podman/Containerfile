@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+# Multi-target Reproducible Development & Build Containerfile for UMCF
+# Enforces zero-host-dependency builds while staying well within the 30 GB Podman cap.
+
+FROM docker.io/library/rust:1.85-slim-bookworm AS rust-toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config libssl-dev clang cmake git curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && rustup component add rustfmt clippy llvm-tools-preview
+WORKDIR /workspace
+
+FROM docker.io/library/node:20-bookworm-slim AS web-toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /workspace
+
+FROM ghcr.io/cirruslabs/flutter:stable AS flutter-toolchain
+WORKDIR /workspace
+
+FROM rust-toolchain AS umcf-dev
+COPY --from=web-toolchain /usr/local/bin/node /usr/local/bin/node
+COPY --from=web-toolchain /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+ENV UMCF_PODMAN_MAX_STORAGE_GB=30
+WORKDIR /workspace
+CMD ["bash"]
+

@@ -1,0 +1,21 @@
+[package]
+name = "umcf-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Node runtime daemon (`umcfd`) for Universal Mobile Compute Fabric"
+
+[[bin]]
+name = "umcfd"
+path = "src/main.rs"
+
+[dependencies]
+umcf-coordinator = { path = "../umcf-coordinator" }
+umcf-core = { path = "../umcf-core" }
+umcf-proto = { path = "../umcf-proto" }
+umcf-scheduler = { path = "../umcf-scheduler" }
+umcf-worker = { path = "../umcf-worker" }
+
+[lints]
+workspace = true
+

@@ -1,0 +1,187 @@
+name: "CI — Svelte 5 Web Dashboard & Cloudflare Workers Control Plane"
+
+on:
+  push:
+    branches: ["main", "release/**"]
+    tags: ["v*.*.*"]
+    paths:
+      - "apps/web-dashboard/**"
+      - "services/control-plane-cf/**"
+      - ".github/workflows/ci-web.yml"
+  pull_request:
+    branches: ["main", "release/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  # ============================================================================
+  # JOB 1: Svelte 5 Web Dashboard (`apps/web-dashboard`)
+  # ============================================================================
+  web-dashboard:
+    name: "Svelte 5 Web Dashboard — Check, Test, Build & Package"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web-dashboard
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: apps/web-dashboard/package-lock.json
+
+      - name: Install Dependencies (Deterministic Clean Install)
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run Type Checking & Svelte 5 Static Analysis (`npm run check`)
+        run: npm run check
+
+      - name: Execute Unit & Integration Tests (`npm test`)
+        run: npm test
+
+      - name: Build Production Web Deployment Artifact (`npm run build`)
+        run: npm run build
+
+      - name: Generate SBOM, Build Metadata & SHA-256 Checksums for Web Dashboard
+        working-directory: .
+        run: |
+          OUT_DIR="dist-artifacts/umcf-web-dashboard-dist"
+          mkdir -p "${OUT_DIR}"
+
+          if [ -d "apps/web-dashboard/build" ]; then
+            cp -R apps/web-dashboard/build/* "${OUT_DIR}/"
+          elif [ -d "apps/web-dashboard/dist" ]; then
+            cp -R apps/web-dashboard/dist/* "${OUT_DIR}/"
+          fi
+
+          # Generate CycloneDX SBOM from npm dependency tree
+          cd apps/web-dashboard
+          npm sbom --sbom-format cyclonedx > "../../${OUT_DIR}/sbom.cdx.json" 2>/dev/null || \
+            npm list --json --all > "../../${OUT_DIR}/sbom.cdx.json" || true
+          cd ../..
+
+          cat <<EOF > "${OUT_DIR}/build-metadata.json"
+          {
+            "artifact_id": "umcf-web-dashboard-dist",
+            "component": "apps/web-dashboard",
+            "framework": "Svelte 5",
+            "git_commit_sha": "${GITHUB_SHA}",
+            "git_ref": "${GITHUB_REF}",
+            "git_tag": "${GITHUB_REF_NAME}",
+            "github_run_id": "${GITHUB_RUN_ID}",
+            "node_version": "$(node --version)",
+            "npm_version": "$(npm --version)",
+            "built_at_utc": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+
+          cd "${OUT_DIR}"
+          find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload Production Web Dashboard Artifact (`umcf-web-dashboard-dist`)
+        uses: actions/upload-artifact@v4
+        with:
+          name: umcf-web-dashboard-dist
+          path: dist-artifacts/umcf-web-dashboard-dist/
+          if-no-files-found: error
+          retention-days: 90
+
+  # ============================================================================
+  # JOB 2: Cloudflare Workers Control Plane (`services/control-plane-cf`)
+  # ============================================================================
+  control-plane-cf:
+    name: "Cloudflare Workers Control Plane — Test, Build & Package"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/control-plane-cf
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: services/control-plane-cf/package-lock.json
+
+      - name: Install Dependencies (Deterministic Clean Install)
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run Control Plane Unit & Free-Tier Quota Guard Tests (`npm test`)
+        run: npm test
+
+      - name: Build Cloudflare Worker Deployment Bundle (`npm run build`)
+        run: npm run build
+
+      - name: Generate SBOM, Build Metadata & SHA-256 Checksums for Control Plane Worker
+        working-directory: .
+        run: |
+          OUT_DIR="dist-artifacts/umcf-control-plane-cf-bundle"
+          mkdir -p "${OUT_DIR}"
+
+          if [ -d "services/control-plane-cf/dist" ]; then
+            cp -R services/control-plane-cf/dist/* "${OUT_DIR}/"
+          fi
+          if [ -f "services/control-plane-cf/wrangler.toml" ]; then
+            cp services/control-plane-cf/wrangler.toml "${OUT_DIR}/wrangler.toml"
+          fi
+          if [ -d "services/control-plane-cf/migrations" ]; then
+            cp -R services/control-plane-cf/migrations "${OUT_DIR}/migrations"
+          fi
+
+          cd services/control-plane-cf
+          npm sbom --sbom-format cyclonedx > "../../${OUT_DIR}/sbom.cdx.json" 2>/dev/null || \
+            npm list --json --all > "../../${OUT_DIR}/sbom.cdx.json" || true
+          cd ../..
+
+          cat <<EOF > "${OUT_DIR}/build-metadata.json"
+          {
+            "artifact_id": "umcf-control-plane-cf-bundle",
+            "component": "services/control-plane-cf",
+            "runtime": "Cloudflare Workers (D1 + KV + Durable Objects Free-Tier Enforced)",
+            "git_commit_sha": "${GITHUB_SHA}",
+            "git_ref": "${GITHUB_REF}",
+            "git_tag": "${GITHUB_REF_NAME}",
+            "github_run_id": "${GITHUB_RUN_ID}",
+            "node_version": "$(node --version)",
+            "npm_version": "$(npm --version)",
+            "built_at_utc": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+
+          cd "${OUT_DIR}"
+          find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload Cloudflare Worker Bundle Artifact (`umcf-control-plane-cf-bundle`)
+        uses: actions/upload-artifact@v4
+        with:
+          name: umcf-control-plane-cf-bundle
+          path: dist-artifacts/umcf-control-plane-cf-bundle/
+          if-no-files-found: error
+          retention-days: 90

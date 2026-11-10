@@ -1,0 +1,10 @@
+[package]
+name = "umcf-proto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Versioned wire protocol, plane isolation, and capability negotiation envelopes for UMCF"
+
+[lints]
+workspace = true
+

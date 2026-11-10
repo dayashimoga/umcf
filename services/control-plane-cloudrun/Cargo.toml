@@ -1,0 +1,19 @@
+[package]
+name = "umcf-control-plane-cloudrun"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Google Cloud Run stateless fallback control plane for UMCF"
+
+[[bin]]
+name = "umcf-cloudrun-control-plane"
+path = "src/main.rs"
+
+[dependencies]
+umcf-coordinator = { path = "../../crates/umcf-coordinator" }
+umcf-core = { path = "../../crates/umcf-core" }
+umcf-proto = { path = "../../crates/umcf-proto" }
+
+[lints]
+workspace = true
+

@@ -1,0 +1,40 @@
+# ==============================================================================
+# UMCF (Universal Mesh Compute Fabric) - Code Ownership Configuration
+# ==============================================================================
+# Every Pull Request touching protected domains must receive approval from the
+# designated engineering owners before merge is permitted.
+
+# Default fallback owners across the entire repository
+*                                       @umcf-org/core-architecture @umcf-org/release-engineering
+
+# Governance, Engineering Contracts, and Specifications
+/AGENTS.md                              @umcf-org/core-architecture @umcf-org/security-council
+/ARCHITECTURE.md                        @umcf-org/core-architecture
+/SECURITY.md                            @umcf-org/security-council
+/TODO.md                                @umcf-org/core-architecture
+/CHANGELOG.md                           @umcf-org/release-engineering
+
+# CI/CD Workflows, Supply Chain Security & GitHub Governance
+/.github/                               @umcf-org/release-engineering @umcf-org/security-council
+/.github/workflows/                     @umcf-org/release-engineering @umcf-org/security-council
+
+# Core Rust Workspace, CLI, Daemon, Sandboxing & Mesh Networking
+/Cargo.toml                             @umcf-org/rust-systems
+/crates/                                @umcf-org/rust-systems
+/crates/umcf-core/                      @umcf-org/rust-systems @umcf-org/security-council
+/crates/umcf-daemon/                    @umcf-org/rust-systems @umcf-org/security-council
+/crates/umcf-cli/                       @umcf-org/rust-systems
+/crates/umcf-sandbox/                   @umcf-org/rust-systems @umcf-org/security-council
+/crates/umcf-mesh/                      @umcf-org/rust-systems @umcf-org/network-security
+
+# Control Plane Services (Cloudflare Workers & Cloud Run Fallback)
+/services/control-plane-cf/             @umcf-org/cloud-control-plane @umcf-org/security-council
+/services/control-plane-cloudrun/       @umcf-org/cloud-control-plane @umcf-org/rust-systems
+
+# Client Applications (Svelte 5 Web Dashboard & Flutter Multi-Platform App)
+/apps/web-dashboard/                    @umcf-org/web-frontend
+/apps/mobile-desktop/                   @umcf-org/client-platforms
+
+# Quota Enforcement, Runtime Scripts & Hardware Verification
+/scripts/                               @umcf-org/release-engineering @umcf-org/security-council
+/docs/                                  @umcf-org/core-architecture

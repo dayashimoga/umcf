@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/umcf-proto",
+    "crates/umcf-core",
+    "crates/umcf-coordinator",
+    "crates/umcf-worker",
+    "crates/umcf-scheduler",
+    "crates/umcf-cli",
+    "crates/umcf-daemon",
+    "services/control-plane-cloudrun",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+license = "Apache-2.0"
+authors = ["UMCF Engineering Team"]
+repository = "https://github.com/umcf/universal-mobile-compute-fabric"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "deny"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+all = "deny"
+unwrap_used = "deny"
+

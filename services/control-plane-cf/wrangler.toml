@@ -1,0 +1,12 @@
+name = "umcf-control-plane-cf"
+main = "src/index.mjs"
+compatibility_date = "2025-01-01"
+
+[[durable_objects.bindings]]
+name = "CLUSTER_REGISTRY"
+class_name = "ClusterRegistryDurableObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ClusterRegistryDurableObject"]
+

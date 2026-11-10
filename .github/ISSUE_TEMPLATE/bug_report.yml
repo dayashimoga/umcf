@@ -1,0 +1,93 @@
+name: "Bug Report"
+description: "Report a reproducible defect in UMCF CLI, Daemon, Sandbox, Mesh, Control Plane, Web Dashboard, or Flutter Client."
+title: "[BUG] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a defect in the **Universal Mesh Compute Fabric (UMCF)**. Please provide complete diagnostic information so the issue can be reproduced deterministically.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Affected Component / Subsystem"
+      description: "Select the primary UMCF subsystem where the defect occurs."
+      options:
+        - "crates/umcf-daemon (Node Agent & Sandbox Orchestrator)"
+        - "crates/umcf-cli (Command-Line Interface `umcf`)"
+        - "crates/umcf-core (Models, Crypto, Capability Tokens, Scheduler)"
+        - "crates/umcf-sandbox (Podman 30GB Quota, Rootless Container / WASM / Native GPU)"
+        - "crates/umcf-mesh (WireGuard / QUIC / mTLS Peer Mesh)"
+        - "services/control-plane-cf (Cloudflare Workers Control Plane)"
+        - "services/control-plane-cloudrun (Cloud Run Fallback Control Plane)"
+        - "apps/web-dashboard (Svelte 5 Web Dashboard & WebGPU Worker)"
+        - "apps/mobile-desktop (Flutter Android / iOS / Windows / macOS / Linux Client)"
+        - ".github/workflows (CI/CD, Packaging, SBOM, Release Pipelines)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: "Target Operating System & Architecture"
+      options:
+        - "Linux x86_64 (x86_64-unknown-linux-gnu)"
+        - "Linux ARM64 (aarch64-unknown-linux-gnu)"
+        - "Windows x86_64 (x86_64-pc-windows-msvc)"
+        - "macOS Apple Silicon (aarch64-apple-darwin)"
+        - "macOS Intel (x86_64-apple-darwin)"
+        - "Android (APK / AAB)"
+        - "iOS (IPA / Unsigned Archive)"
+        - "Web Browser (Chromium / Firefox / WebKit / WebGPU)"
+        - "Cloudflare Workers / Cloud Run Edge Runtime"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: "UMCF Version / Commit SHA"
+      description: "Output of `umcf --version` or the Git commit SHA / release tag."
+      placeholder: "e.g., v0.1.0 (commit 8f3a9d2)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: "Deterministic Steps to Reproduce"
+      description: "Provide exact commands, configuration flags, or UI interactions to trigger the defect."
+      placeholder: |
+        1. Start daemon with `umcfd --config /etc/umcf/config.toml`
+        2. Submit job via `umcf job submit --runtime podman ...`
+        3. Observe error code / panic / unexpected state
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "Describe what should happen according to the UMCF specification."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: "Actual Behavior & Diagnostic Logs"
+      description: "Paste structured JSON logs, stack traces, or CLI output (ensure all tokens/keys are redacted)."
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: regression_check
+    attributes:
+      label: "Pre-Submission Verification"
+      options:
+        - label: "I have verified that no secrets, private keys, or credentials are included in the logs above."
+          required: true
+        - label: "I have searched existing issues and `TODO.md` to confirm this is not a duplicate."
+          required: true

@@ -1,0 +1,519 @@
+name: "Release — Multi-Platform Artifact Orchestration, SBOM & Signed Manifest Publication"
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version tag (e.g., v0.1.0)"
+        required: true
+        default: "v0.1.0"
+      prerelease:
+        description: "Mark release as pre-release"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.24.0"
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  # ============================================================================
+  # STAGE 1: Pre-Release Quality, Security & Quota Gate Verification
+  # ============================================================================
+  verify-release-gates:
+    name: "Gate 1 — Verify Rust, Web, Flutter & 30GB Quota Release Readiness"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      release_tag: ${{ steps.meta.outputs.release_tag }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine Canonical Release Version Tag
+        id: meta
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="${{ inputs.release_version }}"
+          fi
+          echo "release_tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release tag: ${TAG}"
+
+      - name: Install Rust Toolchain & Verify Workspace Formatting, Clippy & Tests
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo Build Artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Rust Quality & Security Gate
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+          cargo test --workspace --all-features
+
+      - name: Verify Podman 30 GB Quota Scripts & Governance Files
+        run: |
+          bash -n scripts/enforce-podman-quota.sh
+          grep -E "(30|32212254720)" scripts/enforce-podman-quota.sh >/dev/null
+          grep -E "(30|32212254720)" scripts/enforce-podman-quota.ps1 >/dev/null
+          test -f ENGINEERING_CONTRACT.md && test -f AGENTS.md && test -f docs/architecture/SYSTEM_OVERVIEW.md && test -f TODO.md && test -f CHANGELOG.md && test -f SECURITY.md
+
+  # ============================================================================
+  # STAGE 2A: Build Rust Native Binaries Across All 5 Targets
+  # ============================================================================
+  release-rust-binaries:
+    name: "Release Rust CLI & Daemon (${{ matrix.target }})"
+    needs: [verify-release-gates]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            use_cross: false
+            bin_ext: ""
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            use_cross: true
+            bin_ext: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            use_cross: false
+            bin_ext: ".exe"
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            use_cross: false
+            bin_ext: ""
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            use_cross: false
+            bin_ext: ""
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain for ${{ matrix.target }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo Artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Install ARM64 Cross-Compiler on Linux
+        if: matrix.use_cross == true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Build & Package Release Binaries (`umcf` and `umcfd`)
+        shell: bash
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: |
+          cargo build --release --target "${{ matrix.target }}" --bin umcf --bin umcfd
+          OUT="release-assets/umcf-rust-cli-${{ matrix.target }}"
+          mkdir -p "${OUT}"
+          cp "target/${{ matrix.target }}/release/umcf${{ matrix.bin_ext }}" "${OUT}/umcf-${{ matrix.target }}${{ matrix.bin_ext }}"
+          cp "target/${{ matrix.target }}/release/umcfd${{ matrix.bin_ext }}" "${OUT}/umcfd-${{ matrix.target }}${{ matrix.bin_ext }}"
+          cp scripts/enforce-podman-quota.sh "${OUT}/"
+          cp scripts/enforce-podman-quota.ps1 "${OUT}/"
+
+          cat <<EOF > "${OUT}/build-metadata-${{ matrix.target }}.json"
+          {
+            "artifact_id": "umcf-rust-cli-${{ matrix.target }}",
+            "version": "${{ needs.verify-release-gates.outputs.release_tag }}",
+            "target": "${{ matrix.target }}",
+            "commit_sha": "${GITHUB_SHA}",
+            "built_at_utc": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+
+          cd "${OUT}"
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum * > "SHA256SUMS-${{ matrix.target }}.txt"
+          else
+            shasum -a 256 * > "SHA256SUMS-${{ matrix.target }}.txt"
+          fi
+
+      - name: Upload Independent Rust Platform Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: umcf-rust-cli-${{ matrix.target }}
+          path: release-assets/umcf-rust-cli-${{ matrix.target }}/
+          if-no-files-found: error
+          retention-days: 90
+
+  # ============================================================================
+  # STAGE 2B: Build Web Dashboard & Cloudflare Worker Control Plane Bundles
+  # ============================================================================
+  release-web-and-control-plane:
+    name: "Release Web Dashboard & Cloudflare Control Plane"
+    needs: [verify-release-gates]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build & Package Web Dashboard (`umcf-web-dashboard-dist`)
+        run: |
+          cd apps/web-dashboard
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run check
+          npm test
+          npm run build
+          cd ../..
+
+          mkdir -p release-assets/umcf-web-dashboard-dist
+          if [ -d apps/web-dashboard/build ]; then
+            cp -R apps/web-dashboard/build/* release-assets/umcf-web-dashboard-dist/
+          elif [ -d apps/web-dashboard/dist ]; then
+            cp -R apps/web-dashboard/dist/* release-assets/umcf-web-dashboard-dist/
+          fi
+          cat <<EOF > release-assets/umcf-web-dashboard-dist/build-metadata.json
+          {
+            "artifact_id": "umcf-web-dashboard-dist",
+            "version": "${{ needs.verify-release-gates.outputs.release_tag }}",
+            "commit_sha": "${GITHUB_SHA}",
+            "built_at_utc": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+          (cd release-assets/umcf-web-dashboard-dist && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
+
+      - name: Build & Package Cloudflare Worker (`umcf-control-plane-cf-bundle`)
+        run: |
+          cd services/control-plane-cf
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm test
+          npm run build
+          cd ../..
+
+          mkdir -p release-assets/umcf-control-plane-cf-bundle
+          if [ -d services/control-plane-cf/dist ]; then
+            cp -R services/control-plane-cf/dist/* release-assets/umcf-control-plane-cf-bundle/
+          fi
+          if [ -f services/control-plane-cf/wrangler.toml ]; then
+            cp services/control-plane-cf/wrangler.toml release-assets/umcf-control-plane-cf-bundle/
+          fi
+          cat <<EOF > release-assets/umcf-control-plane-cf-bundle/build-metadata.json
+          {
+            "artifact_id": "umcf-control-plane-cf-bundle",
+            "version": "${{ needs.verify-release-gates.outputs.release_tag }}",
+            "commit_sha": "${GITHUB_SHA}",
+            "built_at_utc": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+          (cd release-assets/umcf-control-plane-cf-bundle && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
+
+      - name: Upload Web Dashboard Artifact (`umcf-web-dashboard-dist`)
+        uses: actions/upload-artifact@v4
+        with:
+          name: umcf-web-dashboard-dist
+          path: release-assets/umcf-web-dashboard-dist/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload Cloudflare Worker Artifact (`umcf-control-plane-cf-bundle`)
+        uses: actions/upload-artifact@v4
+        with:
+          name: umcf-control-plane-cf-bundle
+          path: release-assets/umcf-control-plane-cf-bundle/
+          if-no-files-found: error
+          retention-days: 90
+
+  # ============================================================================
+  # STAGE 2C: Build Flutter Client Artifacts (Android APK/AAB, Windows, Linux, macOS, iOS)
+  # ============================================================================
+  release-flutter-android:
+    name: "Release Flutter Android (APK & AAB)"
+    needs: [verify-release-gates]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/mobile-desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+      - name: Build Android Release APK & AAB
+        run: |
+          flutter pub get
+          flutter build apk --release
+          flutter build appbundle --release
+          mkdir -p dist-apk dist-aab
+          cp build/app/outputs/flutter-apk/app-release.apk dist-apk/umcf-android-release.apk
+          cp build/app/outputs/bundle/release/app-release.aab dist-aab/umcf-android-release.aab
+          (cd dist-apk && sha256sum umcf-android-release.apk > SHA256SUMS.txt)
+          (cd dist-aab && sha256sum umcf-android-release.aab > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: umcf-android-apk
+          path: apps/mobile-desktop/dist-apk/
+          if-no-files-found: error
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: umcf-android-aab
+          path: apps/mobile-desktop/dist-aab/
+          if-no-files-found: error
+          retention-days: 90
+
+  release-flutter-windows:
+    name: "Release Flutter Windows x64 Portable"
+    needs: [verify-release-gates]
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/mobile-desktop
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+      - name: Build Windows Release
+        run: |
+          flutter config --enable-windows-desktop
+          flutter pub get
+          flutter build windows --release
+          mkdir -p dist-windows
+          cp -R build/windows/x64/runner/Release/* dist-windows/
+          (cd dist-windows && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: umcf-windows-x64-portable
+          path: apps/mobile-desktop/dist-windows/
+          if-no-files-found: error
+          retention-days: 90
+
+  release-flutter-linux:
+    name: "Release Flutter Linux x64 Bundle"
+    needs: [verify-release-gates]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/mobile-desktop
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GTK3 Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+      - name: Build Linux Release
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          flutter build linux --release
+          mkdir -p dist-linux
+          cp -R build/linux/x64/release/bundle/* dist-linux/
+          (cd dist-linux && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: umcf-linux-x64-bundle
+          path: apps/mobile-desktop/dist-linux/
+          if-no-files-found: error
+          retention-days: 90
+
+  release-flutter-macos-ios:
+    name: "Release Flutter macOS App & iOS Archive"
+    needs: [verify-release-gates]
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/mobile-desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+      - name: Build macOS Release & iOS Archive
+        run: |
+          flutter config --enable-macos-desktop
+          flutter pub get
+          flutter build macos --release
+          mkdir -p dist-macos
+          cp -R build/macos/Build/Products/Release/*.app dist-macos/
+          (cd dist-macos && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS.txt)
+
+          flutter build ios --release --no-codesign
+          mkdir -p dist-ios
+          cp -R build/ios/iphoneos/Runner.app dist-ios/Runner.app
+          cat <<EOF > dist-ios/ios-build-manifest.json
+          {
+            "artifact_id": "umcf-ios-unsigned-archive",
+            "version": "${{ needs.verify-release-gates.outputs.release_tag }}",
+            "signed": false,
+            "signing_limitation": "Unsigned .xcarchive/.app bundle; valid Apple Developer signing credentials required for installable IPA",
+            "git_commit_sha": "${GITHUB_SHA}",
+            "built_at_utc": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+          (cd dist-ios && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: umcf-macos-universal-app
+          path: apps/mobile-desktop/dist-macos/
+          if-no-files-found: error
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: umcf-ios-unsigned-archive
+          path: apps/mobile-desktop/dist-ios/
+          if-no-files-found: error
+          retention-days: 90
+
+  # ============================================================================
+  # STAGE 3: Unified Release Manifest, SHA256SUMS & GitHub Release Publication
+  # ============================================================================
+  publish-release:
+    name: "Publish Unified Manifest, SHA256SUMS & GitHub Release"
+    needs:
+      - verify-release-gates
+      - release-rust-binaries
+      - release-web-and-control-plane
+      - release-flutter-android
+      - release-flutter-windows
+      - release-flutter-linux
+      - release-flutter-macos-ios
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download All Independent Platform Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: collected-artifacts
+
+      - name: Package Release Assets, Unified `release-manifest.json` & Master `SHA256SUMS`
+        run: |
+          mkdir -p github-release-publish
+
+          # Package each directory artifact into a clearly named standalone release asset while keeping direct binaries/APKs/AABs standalone
+          cp collected-artifacts/umcf-android-apk/umcf-android-release.apk github-release-publish/
+          cp collected-artifacts/umcf-android-aab/umcf-android-release.aab github-release-publish/
+
+          for target in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-pc-windows-msvc aarch64-apple-darwin x86_64-apple-darwin; do
+            cp collected-artifacts/umcf-rust-cli-${target}/umcf* github-release-publish/
+          done
+
+          tar -czf github-release-publish/umcf-web-dashboard-dist.tar.gz -C collected-artifacts/umcf-web-dashboard-dist .
+          tar -czf github-release-publish/umcf-control-plane-cf-bundle.tar.gz -C collected-artifacts/umcf-control-plane-cf-bundle .
+          tar -czf github-release-publish/umcf-linux-x64-bundle.tar.gz -C collected-artifacts/umcf-linux-x64-bundle .
+          tar -czf github-release-publish/umcf-macos-universal-app.tar.gz -C collected-artifacts/umcf-macos-universal-app .
+          tar -czf github-release-publish/umcf-ios-unsigned-archive.tar.gz -C collected-artifacts/umcf-ios-unsigned-archive .
+          cp collected-artifacts/umcf-ios-unsigned-archive/ios-build-manifest.json github-release-publish/ios-build-manifest.json
+          (cd collected-artifacts/umcf-windows-x64-portable && zip -r ../../github-release-publish/umcf-windows-x64-portable.zip .)
+
+          # Generate unified release-manifest.json
+          python3 - << 'PYEOF' "github-release-publish" "${{ needs.verify-release-gates.outputs.release_tag }}" "${GITHUB_SHA}" "${GITHUB_RUN_ID}"
+          import os, sys, json, hashlib, datetime
+
+          pub_dir, version, commit_sha, run_id = sys.argv[1:5]
+          assets = []
+          for fname in sorted(os.listdir(pub_dir)):
+              fpath = os.path.join(pub_dir, fname)
+              if os.path.isfile(fpath):
+                  h = hashlib.sha256()
+                  with open(fpath, "rb") as f:
+                      for chunk in iter(lambda: f.read(65536), b""):
+                          h.update(chunk)
+                  assets.append({
+                      "name": fname,
+                      "size_bytes": os.path.getsize(fpath),
+                      "sha256": h.hexdigest()
+                  })
+
+          manifest = {
+              "schema_version": "1.0",
+              "project": "UMCF (Universal Mesh Compute Fabric)",
+              "release_version": version,
+              "git_commit_sha": commit_sha,
+              "github_run_id": run_id,
+              "published_at_utc": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "security_and_quota_invariants": {
+                  "podman_max_storage_quota_gb": 30,
+                  "podman_max_storage_quota_bytes": 32212254720,
+                  "ios_signing_status": "unsigned-archive-documented-in-ios-build-manifest.json"
+              },
+              "assets": assets
+          }
+          with open(os.path.join(pub_dir, "release-manifest.json"), "w", encoding="utf-8") as out:
+              json.dump(manifest, out, indent=2)
+          PYEOF
+
+          cd github-release-publish
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload Unified Release Manifest & Master SHA256SUMS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: umcf-release-manifest-and-checksums
+          path: |
+            github-release-publish/release-manifest.json
+            github-release-publish/ios-build-manifest.json
+            github-release-publish/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish GitHub Release with All Independent Platform Assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.verify-release-gates.outputs.release_tag }}
+          name: "UMCF ${{ needs.verify-release-gates.outputs.release_tag }}"
+          prerelease: ${{ inputs.prerelease == true }}
+          generate_release_notes: true
+          files: github-release-publish/*
