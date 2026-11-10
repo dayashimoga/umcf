@@ -1,0 +1,25 @@
+[package]
+name = "umcf-guard"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Local Resource Guard, Cgroups v2 & Job Object Quota Enforcement, and Consent Policy Lifecycle for UMCF"
+
+[dependencies]
+umcf-core = { path = "../umcf-core" }
+umcf-enrollment = { path = "../umcf-enrollment" }
+thiserror = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "rt", "macros"] }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+umcf-identity = { path = "../umcf-identity" }
+
+[lints]
+workspace = true
+

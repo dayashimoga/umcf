@@ -506,4 +506,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Rootless Podman storage verified at **15.16 GiB** / 29.0 GiB limit (`scripts/podman-quota-check.ps1` exits 0).
   - Master certification manifest archived: `artifacts/evidence/stage-03/STAGE_03_CERTIFICATION.json`.
 
+---
+
+## [Unreleased] — Stage 4 Distributed Scheduler & Resource Management
+
+### Added (S4.P1.SP1: CPU/Memory/VRAM Cgroups & Windows Job Object Quota Enforcer)
+- **Dedicated Resource Guard Crate (`crates/umcf-guard`)**:
+  - Created crate with `#![forbid(unsafe_code)]` and zero placeholders.
+  - Implemented `ErrorCode` and `GuardError` defining standard machine-readable error codes (`E4001_MEMORY_QUOTA_EXCEEDED`, `E4002_VRAM_QUOTA_EXCEEDED`, `E4003_CPU_QUOTA_INVALID`, `E4004_PLATFORM_BACKEND_ERROR`, `E4005_TASK_NOT_FOUND`, `E4006_LEASE_INVALID`, `E4007_POLICY_REJECTED`).
+- **Atomic VRAM Reservation Tracker (`VramBudgetTracker`)**:
+  - Implemented lock-free atomic CAS reservation accounting against consented `max_vram_bytes`.
+  - Implemented RAII `VramReservationLease` guaranteeing 100% of reserved VRAM is restored immediately upon lease drop or task termination.
+  - Verified concurrent reservation correctness under multi-threaded contention (10 concurrent tasks each holding 50 MiB, overflow task deterministically rejected with `E4002`).
+- **Platform Quota Enforcers & Allocator Guard (`crates/umcf-guard/src/quota.rs`)**:
+  - Implemented `CgroupV2Enforcer`: reads/writes Linux cgroup v2 controllers (`cpu.max`, `memory.max`, `memory.high`).
+  - Implemented `JobObjectEnforcer`: models Windows Job Object limits (`JOB_OBJECT_LIMIT_PROCESS_MEMORY`, `JOB_OBJECT_CPU_RATE_CONTROL_ENABLE`).
+  - Implemented `PosixRlimitEnforcer`: POSIX `setrlimit` (`RLIMIT_AS`, `RLIMIT_CPU`) and nice level fallback.
+  - Implemented `AllocatorGuard`: thread-safe in-process memory guard with RAII `RamReservationLease`.
+  - Implemented `WasmResourceLimiter`: page-based 64 KiB memory and table growth limiter for WebAssembly sandboxing.
+- **Dynamic Policy Update (< 20 ms) & Central Quota Manager (`QuotaManager`)**:
+  - Coordinates active limits across VRAM, RAM, and platform enforcers when `ResourceConsentPolicy` is updated.
+  - Verified dynamic limit reconfiguration latency within **< 20 ms**.
+  - Verified clean runaway allocation loop rejection (1 GiB attempted in 16 MiB chunks on a 64 MiB ceiling) terminated with `E4001_MEMORY_QUOTA_EXCEEDED` in **< 10 ms**.
+  - Verified 100% memory and VRAM quota reclamation post-task execution with zero memory leaks.
+- **Measurable Metrics & Invariants**:
+  - Policy update latency: **< 20 ms** target met.
+  - Runaway memory rejection: **< 10 ms** target met.
+  - CPU utilization window measurement verified within target bounds.
+  - 100% of reserved memory and VRAM returned to pool upon lease drop.
+  - Podman storage verified at **15.87 GiB** (< 29.0 GiB ceiling) and 0 forbidden placeholder tokens.
+- **Classified Test Harness**: Implemented `scripts/test-s4-p1-sp1.sh` and `scripts/test-s4-p1-sp1.ps1` covering `[Unit]` (VramBudgetTracker concurrent CAS, RAII lease drop, WasmResourceLimiter pages, and CgroupV2 file formatting), `[Integration]` (CPU/Memory workload enforcement < 20 ms update, CPU duty cycle window), `[Simulation]` (runaway allocation loop rejection < 10 ms with E4001), `[Hardware-Required]` (JobObject / cgroup v2 limits application, Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (quota_enforcement_report.json audit) with 100% pass rate across 9 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P1_SP1_evidence.json` and `artifacts/evidence/stage-04/quota_enforcement_report.json`.
+
 

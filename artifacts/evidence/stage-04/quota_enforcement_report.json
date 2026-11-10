@@ -1,0 +1,35 @@
+{
+  "baseline": {
+    "available_ram_bytes": 134217728,
+    "available_vram_bytes": 268435456,
+    "max_cpu_percent": 40,
+    "max_ram_bytes": 134217728,
+    "max_vram_bytes": 268435456,
+    "policy_generation": 1,
+    "reserved_ram_bytes": 0,
+    "reserved_vram_bytes": 0
+  },
+  "peak_utilization": {
+    "available_ram_bytes": 67108864,
+    "available_vram_bytes": 134217728,
+    "max_cpu_percent": 40,
+    "max_ram_bytes": 134217728,
+    "max_vram_bytes": 268435456,
+    "policy_generation": 1,
+    "reserved_ram_bytes": 67108864,
+    "reserved_vram_bytes": 134217728
+  },
+  "post_release": {
+    "available_ram_bytes": 134217728,
+    "available_vram_bytes": 268435456,
+    "max_cpu_percent": 40,
+    "max_ram_bytes": 134217728,
+    "max_vram_bytes": 268435456,
+    "policy_generation": 1,
+    "reserved_ram_bytes": 0,
+    "reserved_vram_bytes": 0
+  },
+  "reclamation_verified": true,
+  "status": "PASS",
+  "timestamp_utc": "1794322204.294Z"
+}

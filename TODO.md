@@ -59,7 +59,7 @@
 
 ## Stage 4 — Distributed Scheduler, Resource Management, Workload Execution & Recovery
 
-- [ ] **[S4.P1.SP1]** CPU/Memory/VRAM Cgroups & Windows Job Object Quota Enforcer
+- [x] **[S4.P1.SP1]** (`2026-11-10`) CPU/Memory/VRAM Cgroups & Windows Job Object Quota Enforcer (Evidence: `artifacts/evidence/stage-04/S4_P1_SP1_evidence.json`, `artifacts/evidence/stage-04/quota_enforcement_report.json`)
 - [ ] **[S4.P1.SP2]** Thermal Throttling, Battery Guard & Mobile OS Lifecycle Hooks
 - [ ] **[S4.P1.SP3]** Interactive User Activity Detector & Instant Preemption
 - [ ] **[S4.P2.SP1]** Capability-Negotiated Constraint Solver & Heterogeneous Cost Model

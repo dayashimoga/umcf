@@ -2801,6 +2801,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "umcf-guard"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "umcf-core",
+ "umcf-enrollment",
+ "umcf-identity",
+]
+
+[[package]]
 name = "umcf-hwprobe"
 version = "0.1.0"
 dependencies = [

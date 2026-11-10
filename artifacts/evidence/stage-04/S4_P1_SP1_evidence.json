@@ -1,0 +1,32 @@
+{
+  "subphase": "S4.P1.SP1",
+  "title": "CPU/Memory/VRAM Cgroups & Job Object Quota Enforcer",
+  "git_commit": "44b5aae310bb83fdad6e4988758e42dec52ce6f9",
+  "timestamp_utc": "2026-11-10T14:50:00Z",
+  "podman_total_bytes": 15867641972,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "quota_summary": {
+    "vram_concurrency_tested": 10,
+    "memory_denial_code": "E4001_MEMORY_QUOTA_EXCEEDED",
+    "vram_denial_code": "E4002_VRAM_QUOTA_EXCEEDED",
+    "policy_update_latency_target_ms": 20.0,
+    "runaway_rejection_latency_target_ms": 10.0,
+    "reclamation_verified": true
+  },
+  "artifact_hashes": {
+    "quota_enforcement_report.json": "AF70029E41021B60C81E6A3726226F09B1C0B680DBB3778B35D3B23C441EA807",
+    "crates/umcf-guard/src/error.rs": "642788AC86843C6961C761E26DDAC83173AB872FE974EEA0E9DC718A09E35F9E",
+    "crates/umcf-guard/src/lib.rs": "167AFF922F234C1978277B075D2F42CE057718D1EE36EBE4E22B26A504647E65",
+    "crates/umcf-guard/src/manager.rs": "AA45B194FEE757B2F00F36397F60074FAAAFB2867EAC93E996122083AAE0D84F",
+    "crates/umcf-guard/src/quota.rs": "421896E83EEDAF83F66C4A2D42C616C26E03C64A85E3BBF1446A381AF958D28A",
+    "crates/umcf-guard/src/vram.rs": "76A7ADABCCCADBDCD0E9B8035F345D17E54ADD7287DDE01588E6A75EADA6DFC6"
+  }
+}
