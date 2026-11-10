@@ -23,6 +23,9 @@ pub enum HwProbeError {
     #[error("Power/thermal probe failed: {0}")]
     PowerThermalProbe(String),
 
+    #[error("Accelerator probe failed: {0}")]
+    AcceleratorProbe(String),
+
     #[error("Cgroup limit parse error: {0}")]
     CgroupParse(String),
 }

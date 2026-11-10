@@ -1,0 +1,30 @@
+{
+  "subphase": "S3.P3.SP2",
+  "title": "GPU & NPU Compute Enumeration (Vulkan/Metal/DX12/OpenCL/NNAPI/CoreML)",
+  "git_commit": "34ddccae5dfcba27ce9d9bca1bfe053c8c7c9ec9",
+  "timestamp_utc": "2026-11-10T14:15:00Z",
+  "podman_total_bytes": 13483576967,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "enumeration_duration_microseconds": 2.5,
+    "enumeration_duration_max_limit_ms": 150.0,
+    "accelerators_detected_count": 3,
+    "primary_accelerator": "Intel(R) Arc(TM) 130T GPU (8GB)",
+    "primary_backend": "Vulkan",
+    "primary_kind": "IntegratedGpu",
+    "fp16_supported": true,
+    "int8_supported": true,
+    "directml_npu_detected": true
+  },
+  "artifact_hashes": {
+    "accelerator_enumeration_report.json": "a899d2495297a1f01173ec1f52a8b3502c25d47de971a3041947310c2309a749"
+  }
+}

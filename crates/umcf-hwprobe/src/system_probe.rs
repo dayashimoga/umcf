@@ -10,12 +10,8 @@ use crate::power_thermal::PowerThermalProber;
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
-use umcf_core::capabilities::{
-    AcceleratorCapability, AcceleratorKind, ComputeBackend, HardwareCapabilityDescriptor,
-    NetworkCapability, NetworkLinkType,
-};
+use umcf_core::capabilities::{HardwareCapabilityDescriptor, NetworkCapability, NetworkLinkType};
 use umcf_core::types::{DeviceClass, NodeId, OperatingSystem};
-use umcf_core::units::TeraFlopsFp16;
 
 static GLOBAL_SYSTEM: OnceLock<Mutex<System>> = OnceLock::new();
 
@@ -64,6 +60,7 @@ impl SystemProber {
         let sys_lock = Self::get_system();
         crate::memory_storage::warmup_disks();
         crate::power_thermal::warmup_components();
+        crate::accelerator_probe::AcceleratorProber::warmup();
 
         let start = Instant::now();
 
@@ -89,25 +86,8 @@ impl SystemProber {
         let os = Self::detect_operating_system();
         let device_class = Self::infer_device_class(os, power_thermal.battery_percent.is_some(), cpu.physical_cores);
 
-        // 5. Build Default CPU Accelerator Entry
-        // (Discrete/Integrated GPU and NPU accelerators are enumerated in S3.P3.SP2)
-        let mut accelerators = Vec::new();
-        accelerators.push(AcceleratorCapability {
-            name: format!("Host CPU ({})", cpu.architecture),
-            kind: AcceleratorKind::Cpu,
-            backend: ComputeBackend::CpuSimd,
-            vram_bytes: memory.available_ram,
-            dedicated_memory_mb: 0,
-            shared_memory_mb: memory.available_ram.0 / (1024 * 1024),
-            compute_units: cpu.physical_cores,
-            fp32_tflops: (cpu.physical_cores as f32 * 0.05).max(0.01),
-            fp16_tflops: TeraFlopsFp16::from_tflops((cpu.physical_cores / 10).max(1)),
-            int8_tops: (cpu.physical_cores * 2).max(1),
-            supports_fp16: cpu.simd_neon || cpu.simd_avx512,
-            supports_int8: true,
-            supports_int4: true,
-            verified_on_hardware: true,
-        });
+        // 5. Build Accelerator Entries (Discrete/Integrated GPUs, NPUs, CPU SIMD)
+        let accelerators = crate::accelerator_probe::AcceleratorProber::enumerate()?;
 
         // 6. Network Capability Initial Baseline
         let network = NetworkCapability {

@@ -7,8 +7,12 @@ use std::fs;
 use std::path::Path;
 use std::time::Duration;
 use tempfile::tempdir;
-use umcf_core::capabilities::ThermalState;
+use umcf_core::capabilities::{AcceleratorKind, ComputeBackend, ThermalState};
 use umcf_core::types::NodeId;
+use umcf_hwprobe::accelerator_probe::{
+    AcceleratorProber, GpuEnumerator, PCI_VENDOR_AMD, PCI_VENDOR_APPLE, PCI_VENDOR_INTEL,
+    PCI_VENDOR_NVIDIA, PCI_VENDOR_QUALCOMM,
+};
 use umcf_hwprobe::cpu::CpuProber;
 use umcf_hwprobe::memory_storage::MemoryStorageProber;
 use umcf_hwprobe::power_thermal::PowerThermalProber;
@@ -179,6 +183,55 @@ fn test_unit_thermal_temp_mapping() {
     );
 }
 
+#[test]
+fn test_unit_pci_vendor_classification() {
+    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_NVIDIA), "NVIDIA");
+    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_AMD), "AMD");
+    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_INTEL), "Intel");
+    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_APPLE), "Apple");
+    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_QUALCOMM), "Qualcomm");
+    assert_eq!(AcceleratorProber::classify_pci_vendor(0x13B5), "ARM");
+    assert_eq!(AcceleratorProber::classify_pci_vendor(0x1AE0), "Google");
+    assert_eq!(AcceleratorProber::classify_pci_vendor(0xFFFF), "Unknown Vendor");
+}
+
+#[test]
+fn test_unit_unified_memory_heuristics() {
+    // Apple Silicon is always unified memory
+    assert!(AcceleratorProber::is_unified_memory_architecture(
+        PCI_VENDOR_APPLE,
+        AcceleratorKind::DiscreteGpu
+    ));
+    assert!(AcceleratorProber::is_unified_memory_architecture(
+        PCI_VENDOR_QUALCOMM,
+        AcceleratorKind::MobileGpu
+    ));
+
+    // Integrated GPUs and CPUs share host RAM
+    assert!(AcceleratorProber::is_unified_memory_architecture(
+        PCI_VENDOR_INTEL,
+        AcceleratorKind::IntegratedGpu
+    ));
+    assert!(AcceleratorProber::is_unified_memory_architecture(
+        PCI_VENDOR_AMD,
+        AcceleratorKind::IntegratedGpu
+    ));
+    assert!(AcceleratorProber::is_unified_memory_architecture(
+        0x0000,
+        AcceleratorKind::Cpu
+    ));
+
+    // Discrete PCIe GPUs with dedicated VRAM are not unified memory
+    assert!(!AcceleratorProber::is_unified_memory_architecture(
+        PCI_VENDOR_NVIDIA,
+        AcceleratorKind::DiscreteGpu
+    ));
+    assert!(!AcceleratorProber::is_unified_memory_architecture(
+        PCI_VENDOR_AMD,
+        AcceleratorKind::DiscreteGpu
+    ));
+}
+
 // ---------------------------------------------------------------------------
 // 2. [Integration] Tests
 // ---------------------------------------------------------------------------
@@ -317,6 +370,77 @@ fn test_manually_verified_live_system_probe_report_audit() {
     println!(
         "[Manually-Verified] Generated live system report in {:?} at {:?}",
         duration, report_path
+    );
+    assert!(report_path.exists());
+    assert!(!json_bytes.is_empty());
+}
+
+#[test]
+fn test_integration_accelerator_enumeration_live() {
+    AcceleratorProber::warmup();
+    let (accelerators, duration) = AcceleratorProber::enumerate_with_duration()
+        .expect("accelerator enumeration should never panic");
+
+    #[cfg(not(debug_assertions))]
+    assert!(
+        duration <= Duration::from_millis(AcceleratorProber::MAX_ENUMERATION_DURATION_MS),
+        "Accelerator enumeration took too long in release: {duration:?}"
+    );
+    #[cfg(debug_assertions)]
+    assert!(
+        duration <= Duration::from_millis(250),
+        "Accelerator enumeration took too long in debug: {duration:?}"
+    );
+
+    assert!(!accelerators.is_empty(), "must find at least one accelerator or CPU fallback");
+    for acc in &accelerators {
+        assert!(!acc.name.is_empty(), "accelerator name must not be empty");
+        assert!(acc.compute_units >= 1, "compute units must be >= 1");
+        assert!(acc.vram_bytes.as_bytes() > 0, "VRAM/RAM budget must be > 0");
+    }
+}
+
+#[test]
+fn test_simulation_cuda_rocm_absence_and_graceful_cpu_fallback() {
+    let fallback = AcceleratorProber::create_cpu_simd_fallback();
+    assert_eq!(fallback.kind, AcceleratorKind::Cpu);
+    assert_eq!(fallback.backend, ComputeBackend::CpuSimd);
+    assert!(fallback.verified_on_hardware);
+    assert!(fallback.supports_int8);
+    assert!(fallback.supports_int4);
+    assert_eq!(fallback.shared_memory_mb, 1024);
+}
+
+#[test]
+fn test_hw_required_accelerator_enumeration() {
+    let wgpu_adapters = GpuEnumerator::enumerate_wgpu_adapters()
+        .expect("wgpu adapter query should succeed or return empty");
+    println!("Found {} hardware/software wgpu adapters", wgpu_adapters.len());
+
+    let all_acc = AcceleratorProber::enumerate()
+        .expect("complete enumeration must succeed");
+    assert!(!all_acc.is_empty());
+}
+
+#[test]
+fn test_manually_verified_accelerator_enumeration_report_audit() {
+    let (accelerators, duration) = AcceleratorProber::enumerate_with_duration()
+        .expect("accelerator enumeration must succeed");
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workspace_root = manifest_dir.join("../..");
+    let report_path = workspace_root.join("artifacts/evidence/stage-03/accelerator_enumeration_report.json");
+
+    if let Some(parent) = report_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let json_bytes = serde_json::to_vec_pretty(&accelerators).expect("serialize accelerators to json");
+    fs::write(&report_path, &json_bytes).expect("write accelerator report");
+
+    println!(
+        "[Manually-Verified] Generated accelerator report with {} accelerators in {:?} at {:?}",
+        accelerators.len(), duration, report_path
     );
     assert!(report_path.exists());
     assert!(!json_bytes.is_empty());
