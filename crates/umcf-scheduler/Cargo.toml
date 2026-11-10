@@ -3,12 +3,23 @@ name = "umcf-scheduler"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Heterogeneous capability-aware DAG scheduler and distributed llama.cpp layer partitioner for UMCF"
+description = "Heterogeneous capability-aware DAG scheduler, Roofline cost model, and layer partitioner for UMCF"
 
 [dependencies]
-umcf-coordinator = { path = "../umcf-coordinator" }
 umcf-core = { path = "../umcf-core" }
+umcf-coordinator = { path = "../umcf-coordinator" }
+umcf-enrollment = { path = "../umcf-enrollment" }
+umcf-guard = { path = "../umcf-guard" }
+umcf-hwprobe = { path = "../umcf-hwprobe" }
+thiserror = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+proptest = { workspace = true }
+umcf-identity = { path = "../umcf-identity" }
 
 [lints]
 workspace = true
-

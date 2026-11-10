@@ -1,5 +1,21 @@
-//! Heterogeneous capability-aware workload scheduler and distributed AI inference layer partitioner.
+//! Heterogeneous capability-aware workload scheduler, Roofline cost model, and distributed AI layer partitioner.
 //! Never assumes transparent memory/GPU pooling across nodes (`ENGINEERING_CONTRACT.md` §1.1.2).
+//! Strictly enforces `#![forbid(unsafe_code)]` and zero placeholders.
+
+#![forbid(unsafe_code)]
+
+pub mod cost;
+pub mod dag;
+pub mod error;
+pub mod solver;
+
+pub use cost::{CostBreakdown, LinkProfile, NodeCandidateProfile, RooflineCostModel};
+pub use dag::{
+    HardRequirements, JobDag, PlacementConstraint, SoftPreferences, TaskEdge, TaskNode, TaskSpec,
+    WorkloadKind,
+};
+pub use error::{SchedulingError, UnschedulableReason};
+pub use solver::{ConstraintSolver, PlacementDecision, PlacementPlan};
 
 use std::fmt;
 use umcf_coordinator::RegisteredNode;

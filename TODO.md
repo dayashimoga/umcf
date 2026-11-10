@@ -62,7 +62,7 @@
 - [x] **[S4.P1.SP1]** (`2026-11-10`) CPU/Memory/VRAM Cgroups & Windows Job Object Quota Enforcer (Evidence: `artifacts/evidence/stage-04/S4_P1_SP1_evidence.json`, `artifacts/evidence/stage-04/quota_enforcement_report.json`)
 - [x] **[S4.P1.SP2]** (`2026-11-10`) Thermal Throttling, Battery Guard & Mobile OS Lifecycle Hooks (Evidence: `artifacts/evidence/stage-04/S4_P1_SP2_evidence.json`, `artifacts/evidence/stage-04/thermal_battery_hysteresis_trace.json`)
 - [x] **[S4.P1.SP3]** (`2026-11-10`) Interactive User Activity Detector & Instant Preemption (Evidence: `artifacts/evidence/stage-04/S4_P1_SP3_evidence.json`, `artifacts/evidence/stage-04/preemption_latency_histogram.json`, `artifacts/evidence/stage-04/S4_P1_PHASE_SUMMARY.json` — Phase S4.P1 100% Certified)
-- [ ] **[S4.P2.SP1]** Capability-Negotiated Constraint Solver & Heterogeneous Cost Model
+- [x] **[S4.P2.SP1]** (`2026-11-10`) Capability-Negotiated Constraint Solver & Heterogeneous Cost Model (Evidence: `artifacts/evidence/stage-04/S4_P2_SP1_evidence.json`, `artifacts/evidence/stage-04/scheduler_placement_explain.json`)
 - [ ] **[S4.P2.SP2]** Bandwidth/Latency-Aware Workload DAG Partitioning
 - [ ] **[S4.P2.SP3]** Queue Prioritization, Backpressure & Admission Control
 - [ ] **[S4.P3.SP1]** Isolated Worker Execution Sandbox & Content-Addressed Artifact Staging

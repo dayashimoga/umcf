@@ -1,0 +1,33 @@
+{
+  "subphase": "S4.P2.SP1",
+  "title": "Capability-Negotiated Constraint Solver & Cost Model",
+  "git_commit": "338bf13d6a2f3e8f8102ff9ee3e7efef54580ca0",
+  "timestamp_utc": "2026-11-10T15:20:00Z",
+  "podman_total_bytes": 16608497030,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "solver_summary": {
+    "benchmark_100_tasks_32_nodes_latency_us": 352,
+    "target_latency_us": 10000,
+    "constraint_satisfaction_percent": 100.0,
+    "random_dags_tested": 1000,
+    "zero_panics_verified": true,
+    "roofline_lan_vs_wan_verified": true,
+    "privacy_enclave_boundary_enforced": true
+  },
+  "artifact_hashes": {
+    "scheduler_placement_explain.json": "B5D8BFB8BCF359FF8DC79D8AF7228044F5B9CB2F8A331D35403DDD03BB5E6627",
+    "crates/umcf-scheduler/src/cost.rs": "23CAB8D4257E6CCBCDAAA45CAB5D79FE36436A64368A0B8FDFB4882084FEEAE7",
+    "crates/umcf-scheduler/src/dag.rs": "51B6D7C3DAB7EC7163D95B669B589772C75A394A37C9F95DEEF0F10769E9C681",
+    "crates/umcf-scheduler/src/error.rs": "21D6C97BE6BDF34FF7D7DA0EBB9D9DC390A2DA1F7B2B8A2C28A937AF42974D84",
+    "crates/umcf-scheduler/src/lib.rs": "FC55DE5DD2C402E73B69FA917E63C2A2E58A7AD338FE0C35BF4D2AA2A0F9C4A9",
+    "crates/umcf-scheduler/src/solver.rs": "C1443513C62E0971C8193253DA8D7967D95444DD3C3A5A6F9C8769D765C37B89"
+  }
+}

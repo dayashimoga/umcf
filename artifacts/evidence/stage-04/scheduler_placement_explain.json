@@ -1,0 +1,57 @@
+{
+  "job_id": "job-explainable-pipeline",
+  "assignments": {
+    "heavy_neural_inference": {
+      "task_id": "heavy_neural_inference",
+      "assigned_node_id": "did:umcf:f71f30ddc1b1d1a5882033b960ff8661",
+      "selected_backend": "Vulkan",
+      "cost_breakdown": {
+        "compute_time_ms": 133.33333333333334,
+        "memory_time_ms": 5.36870912,
+        "roofline_execution_ms": 133.33333333333334,
+        "transfer_time_ms": 0.0,
+        "reliability_penalty_ms": 0.0,
+        "total_cost_score": 133.33333333333334
+      },
+      "is_local_execution": false,
+      "reason": "Remote node NodeId(\"did:umcf:f71f30ddc1b1d1a5882033b960ff8661\") selected: execution 133.33 ms + transfer 0.00 ms (total score: 133.33)"
+    },
+    "preprocess_data": {
+      "task_id": "preprocess_data",
+      "assigned_node_id": "did:umcf:07295c91aa94b371882018b960ff5880",
+      "selected_backend": "CpuSimd",
+      "cost_breakdown": {
+        "compute_time_ms": 0.4,
+        "memory_time_ms": 2.62144,
+        "roofline_execution_ms": 2.62144,
+        "transfer_time_ms": 0.0,
+        "reliability_penalty_ms": 0.0,
+        "total_cost_score": 2.62144
+      },
+      "is_local_execution": true,
+      "reason": "Local node selected: execution time 2.62 ms, transfer overhead 0 ms"
+    },
+    "render_output": {
+      "task_id": "render_output",
+      "assigned_node_id": "did:umcf:07295c91aa94b371882018b960ff5880",
+      "selected_backend": "CpuSimd",
+      "cost_breakdown": {
+        "compute_time_ms": 2.0,
+        "memory_time_ms": 1.0485760000000002,
+        "roofline_execution_ms": 2.0,
+        "transfer_time_ms": 0.0,
+        "reliability_penalty_ms": 0.0,
+        "total_cost_score": 2.0
+      },
+      "is_local_execution": true,
+      "reason": "Local node selected: execution time 2.00 ms, transfer overhead 0 ms"
+    }
+  },
+  "topological_task_order": [
+    "preprocess_data",
+    "heavy_neural_inference",
+    "render_output"
+  ],
+  "total_estimated_makespan_ms": 137.95477333333335,
+  "solver_duration_micros": 109
+}

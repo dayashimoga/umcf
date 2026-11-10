@@ -2928,8 +2928,18 @@ dependencies = [
 name = "umcf-scheduler"
 version = "0.1.0"
 dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tracing",
  "umcf-coordinator",
  "umcf-core",
+ "umcf-enrollment",
+ "umcf-guard",
+ "umcf-hwprobe",
+ "umcf-identity",
 ]
 
 [[package]]

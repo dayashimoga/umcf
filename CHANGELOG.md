@@ -562,6 +562,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Phase Completion**: Phase `S4.P1` (Local Resource Guard, Consent Enforcement & Lifecycle Monitor) 100% Certified. Archived `artifacts/evidence/stage-04/S4_P1_PHASE_SUMMARY.json`.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P1_SP3_evidence.json`, `artifacts/evidence/stage-04/preemption_latency_histogram.json`, and `artifacts/evidence/stage-04/S4_P1_PHASE_SUMMARY.json`.
 
+### Added (S4.P2.SP1: Capability-Negotiated Constraint Solver & Heterogeneous Cost Model)
+- **DAG Definition & Topological Sorter (`JobDag` in `crates/umcf-scheduler/src/dag.rs`)**:
+  - Implemented `JobDag`, `TaskNode`, `TaskEdge`, `TaskSpec`, and `PlacementConstraint` (`HardRequirements` + `SoftPreferences`).
+  - Implemented Kahn's algorithm topological sorting with cycle detection and self-loop rejection.
+- **Roofline Execution & Transfer Cost Model (`RooflineCostModel` in `crates/umcf-scheduler/src/cost.rs`)**:
+  - Combines compute time ($T_{\text{compute}} = \text{FLOPs} / \text{GFLOPS}$), memory time ($T_{\text{mem}} = \text{Bytes} / \text{Bandwidth}$), Roofline execution bound ($\max(T_{\text{compute}}, T_{\text{mem}})$), network data transfer latency ($\text{Bytes} / \text{Bandwidth} + \text{RTT}$ with relay hop accounting), and reliability penalties (battery, thermal throttling, metered link).
+  - Accurately balances compute savings against data transfer overhead, preferring LAN GPUs for compute-heavy tasks and preferring local execution when transfer cost dominates.
+- **Multi-Dimensional Constraint Solver (`ConstraintSolver` in `crates/umcf-scheduler/src/solver.rs`)**:
+  - Multi-dimensional hard constraint filtering pruning any node violating `PrivateAiLocalOnly`, thermal/battery halts (`PausedWaitCoolOrCharge`, `EmergencyEvict`), required `ComputeBackend`, consented RAM/VRAM ceilings, missing SIMD instruction sets, or role policies.
+  - Generates full `PlacementPlan` with explainability records and makespan projections.
+  - Schedular performance: 100-task DAG scheduled across 32 heterogeneous nodes in **352 µs (< 10.0 ms target)** with 100% hard constraint satisfaction.
+- **Classified Test Harness**: Implemented `scripts/test-s4-p2-sp1.sh` and `scripts/test-s4-p2-sp1.ps1` covering `[Unit]` (topological sort, 15 synthetic node constraint pruning matrix, Roofline LAN vs WAN tradeoffs), `[Integration]` (100-task DAG across 32 nodes in 352 µs), `[Simulation]` (1,000 randomized DAGs with 100% constraint adherence), `[Hardware-Required]` (monotonic timer and Podman quota), and `[Manually-Verified]` (scheduler_placement_explain.json audit) with 100% pass rate across 7 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P2_SP1_evidence.json` and `artifacts/evidence/stage-04/scheduler_placement_explain.json`.
+
+
 
 
 
