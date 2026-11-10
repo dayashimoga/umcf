@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 description = "Node runtime daemon (`umcfd`) for Universal Mobile Compute Fabric"
 
+[lib]
+name = "umcf_daemon"
+path = "src/lib.rs"
+
 [[bin]]
 name = "umcfd"
 path = "src/main.rs"
@@ -15,7 +19,15 @@ umcf-core = { path = "../umcf-core" }
 umcf-proto = { path = "../umcf-proto" }
 umcf-scheduler = { path = "../umcf-scheduler" }
 umcf-worker = { path = "../umcf-worker" }
+umcf-gguf = { path = "../umcf-gguf" }
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
 
 [lints]
 workspace = true
-

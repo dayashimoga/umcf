@@ -1,0 +1,30 @@
+[package]
+name = "umcf-gguf"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Content-addressed GGUF model registry, resumable P2P shard distribution, metadata inspector, and memory estimator for UMCF"
+
+[dependencies]
+umcf-core.workspace = true
+umcf-proto.workspace = true
+blake3.workspace = true
+ed25519-dalek.workspace = true
+rayon.workspace = true
+thiserror.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio = { workspace = true, features = ["net", "sync", "time", "rt", "macros", "fs", "io-util"] }
+tokio-util.workspace = true
+tracing.workspace = true
+tempfile.workspace = true
+bytes.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true
+

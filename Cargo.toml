@@ -13,6 +13,7 @@ members = [
     "crates/umcf-net",
     "crates/umcf-hwprobe",
     "crates/umcf-guard",
+    "crates/umcf-gguf",
     "crates/umcf-cli",
     "crates/umcf-daemon",
     "services/control-plane-cloudrun",
@@ -40,7 +41,9 @@ umcf-scheduler = { path = "crates/umcf-scheduler" }
 umcf-net = { path = "crates/umcf-net" }
 umcf-hwprobe = { path = "crates/umcf-hwprobe" }
 umcf-guard = { path = "crates/umcf-guard" }
+umcf-gguf = { path = "crates/umcf-gguf" }
 redb = "2.3.0"
+rayon = "1.12.0"
 smallvec = { version = "1.13.2", features = ["serde"] }
 proptest = "1.6.0"
 qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }

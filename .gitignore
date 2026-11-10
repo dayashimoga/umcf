@@ -45,6 +45,7 @@ service-account*.json
 .podman/
 artifacts/*
 !artifacts/evidence/
+!artifacts/stage-05/
 !artifacts/sbom/
 !artifacts/manifests/
 coverage/

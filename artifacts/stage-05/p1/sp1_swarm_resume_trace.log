@@ -1,0 +1,19 @@
+[2026-11-10T21:55:01.002Z INFO umcf_gguf::store] Ingested model 'source_model.gguf' into ContentAddressedModelStore. Root: 0da9fe6e8d2d83208e27e0d2c6630fd0376c5e4512d1a1fe0f14d99a7ae89567 Total Size: 8388608 bytes (2 chunks)
+[2026-11-10T21:55:01.005Z INFO umcf_gguf::p2p_sync] Starting ResumableShardDownloader for model 0da9fe6e... Scope: FullModel. Required chunks: [0, 1]
+[2026-11-10T21:55:01.006Z DEBUG umcf_gguf::p2p_sync] Swarm peers available: [seeder-1 (score: 50.0), seeder-2 (score: 50.0), seeder-3 (score: 50.0)]
+[2026-11-10T21:55:01.007Z INFO umcf_gguf::p2p_sync] Requesting chunk 0 (offset: 0, size: 4194304) from peer 'seeder-1'
+[2026-11-10T21:55:01.018Z INFO umcf_gguf::p2p_sync] Chunk 0 received from 'seeder-1' in 11ms. BLAKE3 hash verified: 4a2b91...
+[2026-11-10T21:55:01.020Z DEBUG umcf_gguf::p2p_sync] Wrote chunk 0 to .part.data at offset 0. Updated .part.bitfield. Progress: 1/2 chunks (50.0%)
+[2026-11-10T21:55:01.021Z INFO umcf_gguf::p2p_sync] Requesting chunk 1 (offset: 4194304, size: 4194304) from peer 'seeder-1'
+[2026-11-10T21:55:01.022Z WARN umcf_gguf::p2p_sync] Peer 'seeder-1' failed to deliver chunk 1: PeerUnavailable("injected failure"). Recording failure.
+[2026-11-10T21:55:01.023Z INFO umcf_gguf::p2p_sync] Re-scheduling chunk 1 to next priority peer 'seeder-2'
+[2026-11-10T21:55:01.024Z DEBUG umcf_gguf::p2p_sync] Chunk 1 payload received from 'seeder-2' (4 bytes received). Calculating in-memory BLAKE3 digest...
+[2026-11-10T21:55:01.025Z WARN umcf_gguf::p2p_sync] Corrupted chunk detected from peer 'seeder-2'. Expected hash: 8f3c7e..., Computed: c992d1...
+[2026-11-10T21:55:01.025Z WARN umcf_gguf::p2p_sync] Penalizing peer 'seeder-2' for 30000ms. Priority score reduced to 0.0.
+[2026-11-10T21:55:01.026Z INFO umcf_gguf::p2p_sync] Failover: Re-scheduling chunk 1 to healthy peer 'seeder-3'
+[2026-11-10T21:55:01.038Z INFO umcf_gguf::p2p_sync] Chunk 1 received from 'seeder-3' in 12ms. BLAKE3 hash verified: 8f3c7e...
+[2026-11-10T21:55:01.040Z DEBUG umcf_gguf::p2p_sync] Wrote chunk 1 to .part.data at offset 4194304. Updated .part.bitfield. Progress: 2/2 chunks (100.0%)
+[2026-11-10T21:55:01.042Z INFO umcf_gguf::p2p_sync] All required chunks [0, 1] completed and verified.
+[2026-11-10T21:55:01.044Z INFO umcf_gguf::p2p_sync] Verifying full-file BLAKE3 Merkle root against manifest model_id: 0da9fe6e... -> MATCH
+[2026-11-10T21:55:01.045Z INFO umcf_gguf::p2p_sync] Atomically promoted .part.data to models/0da9fe6e8d2d83208e27e0d2c6630fd0376c5e4512d1a1fe0f14d99a7ae89567.gguf. Removed .part.bitfield.
+[2026-11-10T21:55:01.046Z INFO umcf_gguf::p2p_sync] Sync session completed successfully. Total verified: 8388608 bytes. Redundant chunks re-downloaded: 0.

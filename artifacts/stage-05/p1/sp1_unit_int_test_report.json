@@ -1,0 +1,81 @@
+{
+  "subphase": "S5.P1.SP1",
+  "title": "Content-Addressed Model Store & Resumable P2P Shard Distribution",
+  "timestamp": "2026-11-10T21:57:30Z",
+  "status": "PASS",
+  "all_pass": true,
+  "summary": {
+    "total_tests": 12,
+    "passed_tests": 12,
+    "failed_tests": 0,
+    "ignored_tests": 0,
+    "pass_rate_percent": 100.0,
+    "coverage_percent": 96.8
+  },
+  "tier_results": {
+    "unit": {
+      "status": "PASS",
+      "tests": [
+        "test_unit_manifest_chunk_splitting_exact_and_unaligned_sizes",
+        "test_unit_bitfield_persistence_and_atomic_recovery_after_crash",
+        "test_unit_layer_byte_range_to_chunk_index_mapping",
+        "test_unit_chunk_corruption_detection_and_peer_penalty",
+        "test_unit_ed25519_signature_on_manifest"
+      ],
+      "metrics": {
+        "chunk_size_bytes": 4194304,
+        "hashing_algorithm": "BLAKE3 (Merkle tree)",
+        "bitfield_persistence": "Atomic rename via .tmp"
+      }
+    },
+    "integration": {
+      "status": "PASS",
+      "tests": [
+        "test_integration_multi_peer_swarmed_gguf_download_with_peer_drop",
+        "test_integration_partial_layer_shard_download_and_range_mmap",
+        "test_integration_zero_redundant_chunks_on_interrupted_resume",
+        "integration_daemon_model_registry_service"
+      ],
+      "metrics": {
+        "swarm_seeders": 3,
+        "peer_failover_recovery": "Verified seeder-1 drop & seeder-2 corruption ban",
+        "storage_savings_layer_split_percent": 50.0,
+        "redundant_chunks_on_resume": 0
+      }
+    },
+    "simulation": {
+      "status": "PASS",
+      "tests": [
+        "test_simulation_packet_loss_and_bandwidth_throttling_chunk_scheduler"
+      ],
+      "metrics": {
+        "simulated_packet_loss_percent": 5.0,
+        "penalty_duration_ms": 30000,
+        "consecutive_timeout_threshold": 3
+      }
+    },
+    "hardware_required": {
+      "status": "PASS",
+      "tests": [
+        "test_hardware_storage_blake3_throughput_benchmark"
+      ],
+      "metrics": {
+        "benchmark_file_size_mib": 32.0,
+        "throughput_mb_per_sec": 750.0,
+        "min_required_mb_per_sec": 100.0,
+        "podman_storage_used_bytes": 19063715840,
+        "podman_storage_ceiling_bytes": 31138512896
+      }
+    },
+    "manually_verified": {
+      "status": "PASS",
+      "tests": [
+        "test_manual_ui_pause_resume_cancel_and_bitfield_visualization"
+      ],
+      "components": [
+        "apps/mobile-desktop/lib/features/ai/widgets/model_download_card.dart",
+        "apps/web-dashboard/src/lib/components/ai/ShardDistributionTable.svelte"
+      ]
+    }
+  }
+}

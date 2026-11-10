@@ -2771,8 +2771,15 @@ dependencies = [
 name = "umcf-daemon"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
  "umcf-coordinator",
  "umcf-core",
+ "umcf-gguf",
  "umcf-proto",
  "umcf-scheduler",
  "umcf-worker",
@@ -2798,6 +2805,25 @@ dependencies = [
  "umcf-proto",
  "umcf-telemetry",
  "x25519-dalek",
+]
+
+[[package]]
+name = "umcf-gguf"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "bytes",
+ "ed25519-dalek",
+ "rayon",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "umcf-core",
+ "umcf-proto",
 ]
 
 [[package]]

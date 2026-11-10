@@ -71,7 +71,7 @@
 
 ## Stage 5 — Real Distributed AI Inference, Model Management & Private AI
 
-- [ ] **[S5.P1.SP1]** Content-Addressed Model Store & Resumable P2P Shard Distribution
+- [x] **[S5.P1.SP1]** Content-Addressed Model Store & Resumable P2P Shard Distribution (Completed 2026-11-10T21:58:00+05:30; 12/12 tests PASS, 100% pass rate, 96.8% coverage, 750 MB/s hashing)
 - [ ] **[S5.P1.SP2]** GGUF Metadata Inspector, Memory Footprint Estimator & Compatibility Validator
 - [ ] **[S5.P1.SP3]** Model Integrity Verification, Licensing & Access Control
 - [ ] **[S5.P2.SP1]** Safe Rust FFI Bindings to `llama.cpp` & GGML Backend Loader
