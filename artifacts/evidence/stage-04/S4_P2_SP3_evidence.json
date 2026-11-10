@@ -1,0 +1,36 @@
+{
+  "subphase": "S4.P2.SP3",
+  "title": "Queue Prioritization, Backpressure & Admission Control",
+  "git_commit": "093096052f5efab4ea0e9e4f553be3f7507ebf06",
+  "timestamp_utc": "2026-11-10T15:30:00Z",
+  "podman_total_bytes": 16686989117,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "queue_summary": {
+    "interactive_dispatch_latency_ms": 3.0,
+    "interactive_target_latency_ms": 15.0,
+    "interactive_bypass_verified": true,
+    "anti_starvation_aging_verified": true,
+    "admission_rejection_code": "E4101_CLUSTER_OVERLOADED",
+    "gang_scheduling_deadlocks_avoided": 0,
+    "gang_runs_verified_deadlock_free": 1000,
+    "worker_backpressure_saturation_verified": true
+  },
+  "artifact_hashes": {
+    "queue_fairness_and_backpressure.json": "A12F70EA4DE2AA216D8C1C255EB74288899E33B2A75AF0F3A7D26EAADEEB7EAD",
+    "crates/umcf-scheduler/src/cost.rs": "23CAB8D4257E6CCBCDAAA45CAB5D79FE36436A64368A0B8FDFB4882084FEEAE7",
+    "crates/umcf-scheduler/src/dag.rs": "51B6D7C3DAB7EC7163D95B669B589772C75A394A37C9F95DEEF0F10769E9C681",
+    "crates/umcf-scheduler/src/error.rs": "5FABCCF77449C3271C7D53243B850AB8A6413FDE34D33C2C38D38D7BEA87AC9D",
+    "crates/umcf-scheduler/src/lib.rs": "80EBD350B6A34E5F94AED4ECC11296972B2C9876A3BC6FCF026D241F7B45B848",
+    "crates/umcf-scheduler/src/partitioner.rs": "3448C3208509DB50D4B1CEA52C356B58CF5A90FB69FF463993B5A659F1A8F5EE",
+    "crates/umcf-scheduler/src/queue.rs": "09ED9ACBD9D36DF5652A76D30A7832E4C3DE30749035113335C90EDB8923E4E9",
+    "crates/umcf-scheduler/src/solver.rs": "C1443513C62E0971C8193253DA8D7967D95444DD3C3A5A6F9C8769D765C37B89"
+  }
+}

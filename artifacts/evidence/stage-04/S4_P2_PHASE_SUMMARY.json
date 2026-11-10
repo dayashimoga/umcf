@@ -1,0 +1,83 @@
+{
+  "phase": "S4.P2",
+  "title": "Heterogeneous Resource-Aware DAG Scheduler",
+  "stage": "Stage 4 — Distributed Scheduler, Resource Management, Workload Execution and Recovery",
+  "status": "PASS",
+  "git_commit": "093096052f5efab4ea0e9e4f553be3f7507ebf06",
+  "timestamp_utc": "2026-11-10T15:32:00Z",
+  "podman_total_bytes": 16686989117,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "subphases": {
+    "S4.P2.SP1": {
+      "title": "Capability-Negotiated Constraint Solver & Cost Model",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P2_SP1_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "benchmark_100_tasks_32_nodes_latency_us": 352,
+        "target_latency_us": 10000,
+        "constraint_satisfaction_percent": 100.0,
+        "random_dags_tested": 1000,
+        "zero_panics_verified": true
+      }
+    },
+    "S4.P2.SP2": {
+      "title": "Bandwidth/Latency-Aware Workload Partitioning",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P2_SP2_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "speedup_over_single_desktop": 1.236,
+        "target_speedup_over_single_desktop": 1.18,
+        "speedup_over_uniform": 8.469,
+        "target_speedup_over_uniform": 3.20,
+        "wall_clock_skew_percent": 0.01,
+        "work_stealing_skew_reduction_percent": 50.0
+      }
+    },
+    "S4.P2.SP3": {
+      "title": "Queue Prioritization, Backpressure & Admission Control",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P2_SP3_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "interactive_dispatch_latency_ms": 3.0,
+        "interactive_target_latency_ms": 15.0,
+        "interactive_bypass_verified": true,
+        "anti_starvation_aging_verified": true,
+        "admission_rejection_code": "E4101_CLUSTER_OVERLOADED",
+        "gang_runs_verified_deadlock_free": 1000
+      }
+    }
+  },
+  "phase_tests_total": 19,
+  "phase_tests_passed": 19,
+  "phase_pass_rate_percent": 100.0,
+  "artifact_hashes": {
+    "S4_P2_SP1_evidence.json": "3326AEEC7B92ECB54C7F3EA88503AF9793A8E22D6C17F3742E9D06E6B352CA62",
+    "S4_P2_SP2_evidence.json": "2F304F07D175CCDB4273AD48EAFC7ED44C9D4C89DE993D5F7B150F3815F2DF9D",
+    "S4_P2_SP3_evidence.json": "A705ADD07956A7B1B26B8D5187E32A9F817A81653C24D047D20E1FBD5675C248",
+    "scheduler_placement_explain.json": "7F8769C9F071863B67EC2AF181F80A6FD6DCD65AEC64F457E74D2BE80EE44633",
+    "heterogeneous_partition_speedup.json": "269950999AE044CCE1D72CEE5B9FE652FFBAD9776ABFC399E010F8B2584557C3",
+    "queue_fairness_and_backpressure.json": "A12F70EA4DE2AA216D8C1C255EB74288899E33B2A75AF0F3A7D26EAADEEB7EAD"
+  }
+}

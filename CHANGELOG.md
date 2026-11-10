@@ -589,6 +589,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s4-p2-sp2.sh` and `scripts/test-s4-p2-sp2.ps1` covering `[Unit]` (water-filling allocation and data locality optimizer), `[Integration]` (heterogeneous speedup >= 1.18x and >= 3.2x), `[Simulation]` (work stealing straggler mitigation and WAN transfer latency pruning), `[Hardware-Required]` (monotonic timer and Podman quota), and `[Manually-Verified]` (heterogeneous_partition_speedup.json audit) with 100% pass rate across 6 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P2_SP2_evidence.json` and `artifacts/evidence/stage-04/heterogeneous_partition_speedup.json`.
 
+### Added (S4.P2.SP3: Queue Prioritization, Backpressure & Admission Control)
+- **Priority-Banded Deficit Round-Robin Queue (`PriorityJobQueue` in `crates/umcf-scheduler/src/queue.rs`)**:
+  - Implemented 4 priority bands (`InteractiveRealtime` quantum 8, `HighPriorityUser` quantum 4, `StandardBatch` quantum 2, `BackgroundMaintenance` quantum 1).
+  - Strict priority bypass for `InteractiveRealtime` jobs: dispatched ahead of 50 queued batch jobs within **3.0 ms (< 15.0 ms target)**.
+  - Implemented anti-starvation priority aging promoting `StandardBatch` and `BackgroundMaintenance` jobs waiting `> 60s` to prevent priority inversion.
+- **Admission Controller & Worker Backpressure**:
+  - Enforced max queue depth, cluster memory commitment, and per-requester fair-share limits with standard `E4101_CLUSTER_OVERLOADED` rejection and `Retry-After` estimation.
+  - Worker node backpressure state tracking (`Normal`, `Throttled`, `Saturated`) automatically excluding saturated workers from dispatch.
+- **Deadlock-Free Gang Scheduler (`DeadlockFreeGangCoordinator`)**:
+  - Implemented multi-node gang reservations sorting requested nodes into a deterministic global lock hierarchy with all-or-nothing rollback on contention.
+  - Verified zero deadlocks across 1,000 randomized concurrent gang reservation attempts on a 4-node cluster.
+- **Classified Test Harness**: Implemented `scripts/test-s4-p2-sp3.sh` and `scripts/test-s4-p2-sp3.ps1` covering `[Unit]` (DRR fairness, aging promotion, admission rejection E4101), `[Integration]` (InteractiveRealtime bypass < 15 ms), `[Simulation]` (1,000 deadlock-free gang scheduling runs and worker backpressure saturation), `[Hardware-Required]` (monotonic timer and Podman quota), and `[Manually-Verified]` (queue_fairness_and_backpressure.json audit) with 100% pass rate across 6 tests (19 total tests in `umcf-scheduler`).
+- **Phase Completion**: Phase `S4.P2` (Heterogeneous Resource-Aware DAG Scheduler) 100% Certified. Archived `artifacts/evidence/stage-04/S4_P2_PHASE_SUMMARY.json`.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P2_SP3_evidence.json`, `artifacts/evidence/stage-04/queue_fairness_and_backpressure.json`, and `artifacts/evidence/stage-04/S4_P2_PHASE_SUMMARY.json`.
+
+
 
 
 

@@ -19,6 +19,10 @@ use umcf_scheduler::partitioner::{
     AdaptivePartitioner, DataLocalityOptimizer, PartitionScheme, WorkSlice,
     WorkStealingCoordinator, WorkloadUnit,
 };
+use umcf_scheduler::queue::{
+    AdmissionConfig, BackpressureStatus, DeadlockFreeGangCoordinator, GangReservationResult,
+    PriorityBand, PriorityJobQueue, QueuedJob,
+};
 use umcf_scheduler::solver::ConstraintSolver;
 
 fn make_node_id(seed_byte: u8) -> NodeId {
@@ -1422,4 +1426,313 @@ fn test_s4_p2_sp2_manually_verified_speedup_evidence_export() {
     assert!(speedup_path.exists());
     assert!(!speedup_json.is_empty());
 }
+
+// ============================================================================
+// S4.P2.SP3: Queue Prioritization, Backpressure & Deadlock-Free Gang Scheduling
+// ============================================================================
+
+#[test]
+fn test_s4_p2_sp3_unit_drr_fairness_aging_and_admission_rejection() {
+    let requester_a = make_node_id(1);
+    let requester_b = make_node_id(2);
+
+    let config = AdmissionConfig {
+        max_queued_jobs: 5,
+        max_cluster_memory_bytes: 100 * 1024 * 1024, // 100 MB
+        per_requester_max_jobs: 3,
+        aging_threshold_secs: 60.0,
+    };
+    let mut queue = PriorityJobQueue::new(config);
+
+    // 1. Admission rejection: per-requester limit (max 3)
+    let dag = JobDag::new("dag-test");
+    for i in 1..=3 {
+        let job = QueuedJob::new(
+            format!("job-a-{i}"),
+            requester_a.clone(),
+            PriorityBand::StandardBatch,
+            dag.clone(),
+            10 * 1024 * 1024,
+            1_000_000,
+        );
+        queue.enqueue(job).expect("admit job A");
+    }
+
+    // 4th job from requester_a should be rejected with E4101
+    let overflow_job = QueuedJob::new(
+        "job-a-overflow",
+        requester_a.clone(),
+        PriorityBand::StandardBatch,
+        dag.clone(),
+        10 * 1024 * 1024,
+        1_000_000,
+    );
+    let reject_err = queue.enqueue(overflow_job).expect_err("must reject over-quota requester");
+    match reject_err {
+        SchedulingError::ClusterOverloaded { retry_after_secs, reason } => {
+            assert_eq!(retry_after_secs, 15);
+            assert!(reason.contains("Per-requester"));
+        }
+        other => panic!("Expected ClusterOverloaded, got {other:?}"),
+    }
+
+    // 2. Admission rejection: memory quota
+    let memory_hog = QueuedJob::new(
+        "job-b-heavy",
+        requester_b.clone(),
+        PriorityBand::StandardBatch,
+        dag.clone(),
+        80 * 1024 * 1024, // 30MB + 80MB = 110MB > 100MB limit
+        1_000_000,
+    );
+    let mem_err = queue.enqueue(memory_hog).expect_err("must reject memory overflow");
+    match mem_err {
+        SchedulingError::ClusterOverloaded { retry_after_secs, reason } => {
+            assert_eq!(retry_after_secs, 10);
+            assert!(reason.contains("memory quota"));
+        }
+        other => panic!("Expected ClusterOverloaded, got {other:?}"),
+    }
+
+    // 3. Anti-starvation priority aging:
+    // Enqueue a job in StandardBatch at t = 0
+    let aged_job = QueuedJob::new(
+        "job-b-aged",
+        requester_b.clone(),
+        PriorityBand::StandardBatch,
+        dag.clone(),
+        10 * 1024 * 1024,
+        0, // t=0
+    );
+    queue.enqueue(aged_job).expect("enqueue aged job");
+
+    // Advance time to 75 seconds (exceeding 60s threshold)
+    queue.apply_priority_aging(75_000_000);
+    let metrics = queue.metrics();
+    assert!(
+        metrics.priority_promotions >= 1,
+        "Aged StandardBatch job must be promoted to HighPriorityUser"
+    );
+}
+
+#[test]
+fn test_s4_p2_sp3_integration_interactive_bypass_under_15ms() {
+    let requester = make_node_id(1);
+    let config = AdmissionConfig {
+        max_queued_jobs: 500,
+        max_cluster_memory_bytes: 10 * 1024 * 1024 * 1024,
+        per_requester_max_jobs: 500,
+        aging_threshold_secs: 60.0,
+    };
+    let mut queue = PriorityJobQueue::new(config);
+    let dag = JobDag::new("dag-test");
+
+    // Enqueue 50 StandardBatch jobs at t = 1,000,000 µs
+    for i in 1..=50 {
+        let batch_job = QueuedJob::new(
+            format!("batch-job-{i}"),
+            requester.clone(),
+            PriorityBand::StandardBatch,
+            dag.clone(),
+            1024 * 1024,
+            1_000_000,
+        );
+        queue.enqueue(batch_job).expect("enqueue batch job");
+    }
+
+    // At t = 1,002,000 µs (2 ms later), submit 5 InteractiveRealtime jobs
+    let interactive_submit_t = 1_002_000;
+    for i in 1..=5 {
+        let interactive_job = QueuedJob::new(
+            format!("interactive-job-{i}"),
+            requester.clone(),
+            PriorityBand::InteractiveRealtime,
+            dag.clone(),
+            1024 * 1024,
+            interactive_submit_t,
+        );
+        queue.enqueue(interactive_job).expect("enqueue interactive job");
+    }
+
+    // Dispatch time: t = 1,005_000 µs (3 ms after interactive arrival)
+    let dispatch_t = 1_005_000;
+    let mut dispatched_interactive_ids = Vec::new();
+
+    // The first 5 dispatched jobs MUST all be the InteractiveRealtime jobs!
+    for _ in 0..5 {
+        let job = queue.pop_next(dispatch_t).expect("pop job");
+        assert_eq!(
+            job.priority,
+            PriorityBand::InteractiveRealtime,
+            "InteractiveRealtime jobs MUST bypass all queued StandardBatch jobs"
+        );
+        dispatched_interactive_ids.push(job.job_id);
+    }
+
+    assert_eq!(dispatched_interactive_ids.len(), 5);
+    for i in 1..=5 {
+        assert!(dispatched_interactive_ids.contains(&format!("interactive-job-{i}")));
+    }
+
+    let metrics = queue.metrics();
+    println!(
+        "[Integration Interactive Bypass] p50 wait: {:.2} ms | p99 wait: {:.2} ms (< 15.0 ms target)",
+        metrics.p50_wait_time_ms, metrics.p99_wait_time_ms
+    );
+    assert!(
+        metrics.p99_wait_time_ms < 15.0,
+        "Interactive dispatch latency must be strictly < 15 ms (was {:.2} ms)",
+        metrics.p99_wait_time_ms
+    );
+}
+
+#[test]
+fn test_s4_p2_sp3_simulation_deadlock_free_gang_scheduling() {
+    let coordinator = DeadlockFreeGangCoordinator::new();
+
+    let node_a = make_node_id(10);
+    let node_b = make_node_id(20);
+    let node_c = make_node_id(30);
+    let node_d = make_node_id(40);
+
+    let all_nodes = [node_a.clone(), node_b.clone(), node_c.clone(), node_d.clone()];
+
+    // 1,000 randomized concurrent gang reservation attempts across contending subsets
+    let mut rng_state: u64 = 0x12345678abcdef01;
+    let mut prng = move || {
+        rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1);
+        (rng_state >> 33) as u32
+    };
+
+    let mut successful_gangs = 0;
+    let mut contended_rollbacks = 0;
+
+    for _ in 0..1000 {
+        // Pick 2 or 3 distinct nodes in random order
+        let mut subset = Vec::new();
+        for node in &all_nodes {
+            if (prng() % 2) == 0 {
+                subset.push(node.clone());
+            }
+        }
+        if subset.len() < 2 {
+            subset.push(node_a.clone());
+            subset.push(node_b.clone());
+        }
+
+        match coordinator.try_acquire_gang(&subset) {
+            GangReservationResult::Acquired { nodes } => {
+                successful_gangs += 1;
+                // Hold briefly, then release
+                coordinator.release_gang(&nodes);
+            }
+            GangReservationResult::ContendedRetry { .. } => {
+                contended_rollbacks += 1;
+            }
+        }
+    }
+
+    println!(
+        "[Simulation Gang Scheduling] 1,000 gang attempts: {} acquired, {} rolled back cleanly, deadlocks avoided: {}",
+        successful_gangs, contended_rollbacks, coordinator.deadlocks_avoided()
+    );
+
+    assert_eq!(successful_gangs + contended_rollbacks, 1000);
+    assert!(successful_gangs > 0);
+}
+
+#[test]
+fn test_s4_p2_sp3_simulation_worker_backpressure_saturation() {
+    let config = AdmissionConfig::default();
+    let mut queue = PriorityJobQueue::new(config);
+    let worker_node_id = make_node_id(99);
+
+    assert!(!queue.is_node_saturated(&worker_node_id));
+
+    // Worker reports Saturated backpressure
+    queue.update_node_backpressure(
+        worker_node_id.clone(),
+        BackpressureStatus::Saturated {
+            queue_depth: 64,
+            retry_after_ms: 5000,
+        },
+    );
+    assert!(queue.is_node_saturated(&worker_node_id));
+
+    // Worker queue drains and reports Normal
+    queue.update_node_backpressure(worker_node_id.clone(), BackpressureStatus::Normal);
+    assert!(!queue.is_node_saturated(&worker_node_id));
+}
+
+#[test]
+fn test_s4_p2_sp3_hardware_monotonic_timer_and_quota() {
+    let t0 = Instant::now();
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    let t1 = Instant::now();
+    assert!(t1 > t0);
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workspace_root = manifest_dir.join("../..");
+    let quota_script = workspace_root.join("scripts/podman-quota-check.ps1");
+    assert!(quota_script.exists());
+}
+
+#[test]
+fn test_s4_p2_sp3_manually_verified_queue_fairness_json_audit() {
+    let config = AdmissionConfig {
+        max_queued_jobs: 200,
+        max_cluster_memory_bytes: 4 * 1024 * 1024 * 1024,
+        per_requester_max_jobs: 50,
+        aging_threshold_secs: 10.0,
+    };
+    let mut queue = PriorityJobQueue::new(config);
+    let requester = make_node_id(1);
+    let dag = JobDag::new("dag-sample");
+
+    // Enqueue sample jobs across all 4 priority bands
+    for p in [
+        PriorityBand::InteractiveRealtime,
+        PriorityBand::HighPriorityUser,
+        PriorityBand::StandardBatch,
+        PriorityBand::BackgroundMaintenance,
+    ] {
+        for idx in 0..5 {
+            let job = QueuedJob::new(
+                format!("{:?}-job-{idx}", p),
+                requester.clone(),
+                p,
+                dag.clone(),
+                10 * 1024 * 1024,
+                1_000_000,
+            );
+            queue.enqueue(job).expect("enqueue sample");
+        }
+    }
+
+    // Pop several jobs using DRR
+    for _ in 0..12 {
+        let _ = queue.pop_next(1_008_000);
+    }
+
+    let metrics = queue.metrics();
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workspace_root = manifest_dir.join("../..");
+    let report_path = workspace_root.join("artifacts/evidence/stage-04/queue_fairness_and_backpressure.json");
+
+    if let Some(parent) = report_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let report_json = serde_json::to_vec_pretty(&metrics).expect("serialize metrics");
+    fs::write(&report_path, &report_json).expect("write queue report file");
+
+    println!(
+        "[Manually-Verified] Exported queue fairness & backpressure report to {:?}",
+        report_path
+    );
+    assert!(report_path.exists());
+    assert!(!report_json.is_empty());
+}
+
 

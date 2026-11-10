@@ -32,8 +32,8 @@
     }
   ],
   "node_allocation_counts": {
-    "did:umcf:9cdc31cb7d828219881fdcb960fef28c": 40453,
     "did:umcf:a78e0598c36fbe05881feeb960ff1122": 1961,
+    "did:umcf:9cdc31cb7d828219881fdcb960fef28c": 40453,
     "did:umcf:ace6d17f66662901881fe5b960ff01d7": 7586
   },
   "estimated_makespan_ms": 1011.3945120000001,

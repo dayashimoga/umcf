@@ -8,6 +8,7 @@ pub mod cost;
 pub mod dag;
 pub mod error;
 pub mod partitioner;
+pub mod queue;
 pub mod solver;
 
 pub use cost::{CostBreakdown, LinkProfile, NodeCandidateProfile, RooflineCostModel};
@@ -19,6 +20,10 @@ pub use error::{SchedulingError, UnschedulableReason};
 pub use partitioner::{
     AdaptivePartitioner, DataLocalityOptimizer, GanttBar, PartitionPlan, PartitionScheme,
     StealDecision, WorkSlice, WorkStealingCoordinator, WorkloadUnit,
+};
+pub use queue::{
+    AdmissionConfig, AdmissionController, BackpressureStatus, DeadlockFreeGangCoordinator,
+    GangReservationResult, PriorityBand, PriorityJobQueue, QueueMetrics, QueuedJob,
 };
 pub use solver::{ConstraintSolver, PlacementDecision, PlacementPlan};
 

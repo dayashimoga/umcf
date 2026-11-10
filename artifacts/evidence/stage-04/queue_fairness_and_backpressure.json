@@ -1,0 +1,15 @@
+{
+  "queued_counts_by_priority": {
+    "StandardBatch": 3,
+    "BackgroundMaintenance": 5,
+    "HighPriorityUser": 0,
+    "InteractiveRealtime": 0
+  },
+  "total_enqueued": 20,
+  "total_dispatched": 12,
+  "total_rejected": 0,
+  "priority_promotions": 0,
+  "p50_wait_time_ms": 8.0,
+  "p99_wait_time_ms": 8.0,
+  "gang_deadlocks_avoided": 0
+}

@@ -29,6 +29,12 @@ pub enum SchedulingError {
 
     #[error("Cluster has zero registered candidate nodes")]
     NoNodesInCluster,
+
+    #[error("E4101: Cluster overloaded: {reason} (Retry-After: {retry_after_secs}s)")]
+    ClusterOverloaded {
+        retry_after_secs: u32,
+        reason: String,
+    },
 }
 
 /// Detailed diagnostic explanation for why a task could not be scheduled on any node.
