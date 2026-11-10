@@ -71,6 +71,18 @@ pub enum NetError {
     #[error("UDP hole punch failed: {0}")]
     HolePunchFailed(String),
 
+    #[error("Relay protocol error: {0}")]
+    RelayProtocol(String),
+
+    #[error("Relay authentication failed: {0}")]
+    RelayAuthFailed(String),
+
+    #[error("Relay destination client not connected: {0}")]
+    RelayClientNotConnected(String),
+
+    #[error("Relay quota exceeded: {0}")]
+    RelayQuotaExceeded(String),
+
     #[error("Network engine shutdown")]
     Shutdown,
 }

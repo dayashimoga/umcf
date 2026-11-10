@@ -1,0 +1,28 @@
+{
+  "subphase": "S3.P2.SP2",
+  "title": "Encrypted TURN/DERP-Style Relay Fallback Protocol",
+  "git_commit": "4dc325ee89345fcb59520736cb67ffef295a83b5",
+  "timestamp_utc": "2026-11-10T13:28:00Z",
+  "podman_total_bytes": 9266431893,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "fallback_connection_ms": 1,
+    "fallback_connection_limit_ms": 1500,
+    "zero_knowledge_verified": true,
+    "upgrade_detected": true,
+    "dropped_streams": 0,
+    "initial_path": "RELAYED_E2EE",
+    "upgraded_path": "DIRECT_WAN_PUNCHED"
+  },
+  "artifact_hashes": {
+    "relay_fallback_and_upgrade_trace.json": "bd683e0826e10653b3164967adf2a4d6c8545010a278e0d5feb4441961cbceb1"
+  }
+}

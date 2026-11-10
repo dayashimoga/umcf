@@ -1,0 +1,13 @@
+{
+  "dropped_streams": 0,
+  "fallback_connection_limit_ms": 1500,
+  "fallback_connection_ms": 7,
+  "initial_path": "RELAYED_E2EE",
+  "relay_packets_forwarded": 1,
+  "relay_server_addr": "127.0.0.1:52255",
+  "status": "PASS",
+  "timestamp_utc": "1794317267.774Z",
+  "upgrade_detected": true,
+  "upgraded_path": "DIRECT_WAN_PUNCHED",
+  "zero_knowledge_verified": true
+}
