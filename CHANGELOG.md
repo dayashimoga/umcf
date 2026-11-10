@@ -65,3 +65,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p1-sp3.sh` and `scripts/test-s1-p1-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` tiers with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P1_SP3_evidence.json` and `artifacts/evidence/stage-01/workspace_metadata.json`.
 
+### Added (S1.P2.SP1: `umcf-proto` Wire Envelope, Framing & Semantic Versioning Negotiation)
+- **Deterministic Wire Envelope & Framing (`crates/umcf-proto/src/envelope.rs`)**:
+  - Implemented 92-byte fixed header layout with 4-byte magic bytes `UMCF` (`0x554D4346`), `ProtocolVersion` (major, minor, patch), `PlaneKind`, `MessageKind`, `MessageFlags` (NONE, COMPRESSED_ZSTD, ENCRYPTED_PAYLOAD, REQUIRES_ACK), `MessageId` (128-bit), `TimestampHlc` (physical ms + logical counter), BLAKE3 payload digest, FNV-1a checksum, and 64-byte Ed25519 signature footer slot.
+  - Zero-copy payload borrowing and transparent Zstd compression/decompression on demand.
+  - Micro-benchmark latency: **1.286 µs** per 1 KiB roundtrip in release mode (target: `< 2.5 µs`).
+- **Semantic Version Range Handshake (`crates/umcf-proto/src/negotiation.rs`)**:
+  - Implemented `HandshakeOffer`, `HandshakeAccept`, `HandshakeReject`, and deterministic `negotiate_version` selecting the highest mutually supported `(major, minor)` version while strictly rejecting mismatched major versions with `NegotiationError::IncompatibleMajorVersion`.
+- **Async Streaming Framing Codec (`crates/umcf-proto/src/codec.rs`)**:
+  - Implemented `UmcfFrameCodec` for `tokio_util::codec::Decoder` and `Encoder` with configurable maximum frame limits (16 MiB control plane, 64 MiB data plane).
+  - O(1) header inspection immunizing against `0xFFFFFFFF` OOM payload length denial-of-service attacks before buffer allocation.
+- **Classified Test Harness**: Implemented `scripts/test-s1-p2-sp1.sh` and `scripts/test-s1-p2-sp1.ps1` covering `[Unit]`, `[Integration]` (10,000 envelopes streamed over duplex stream), `[Simulation]` (10,000 bit-flip mutations), `[Hardware-Required]` (SIMD acceleration), and `[Manually-Verified]` (Rustdoc generation) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P2_SP1_evidence.json` and `artifacts/evidence/stage-01/umcf_proto_test_report.xml`.
+

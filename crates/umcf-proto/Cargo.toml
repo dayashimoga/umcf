@@ -8,3 +8,14 @@ description = "Versioned wire protocol, plane isolation, and capability negotiat
 [lints]
 workspace = true
 
+[dependencies]
+blake3.workspace = true
+bytes.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync", "io-util", "macros", "rt-multi-thread"] }
+tokio-util = { workspace = true, features = ["codec"] }
+zstd.workspace = true
+
+[dev-dependencies]
+proptest = "1.12.0"
+

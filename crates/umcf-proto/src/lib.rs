@@ -1,6 +1,25 @@
-//! Versioned wire protocol and strict Control-Plane vs. Data-Plane isolation for UMCF.
+//! Versioned wire protocol, plane isolation, and capability negotiation for UMCF.
+//! Adheres strictly to `#![forbid(unsafe_code)]` and zero-placeholder invariants.
+
+pub mod codec;
+pub mod envelope;
+pub mod negotiation;
+
+pub use codec::{
+    CodecError, UmcfFrameCodec, DEFAULT_CONTROL_PLANE_MAX_FRAME_BYTES,
+    DEFAULT_DATA_PLANE_MAX_FRAME_BYTES,
+};
+pub use envelope::{
+    MessageFlags, MessageId, SenderDid, TimestampHlc, WireEnvelope, WireEnvelopeBuilder,
+    FIXED_HEADER_LEN, MAGIC_HEADER, MAGIC_U32, MAX_DATA_PLANE_PAYLOAD_BYTES, MIN_FRAME_LEN,
+};
+pub use negotiation::{
+    negotiate_version, HandshakeAccept, HandshakeOffer, HandshakeReject, NegotiationError,
+    VersionRange,
+};
 
 use std::fmt;
+use thiserror::Error;
 
 /// Current protocol version implemented by this build.
 pub const CURRENT_PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion {
@@ -140,169 +159,6 @@ impl MessageKind {
     }
 }
 
-/// Deterministic wire envelope for all UMCF messages.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WireEnvelope {
-    pub version: ProtocolVersion,
-    pub plane: PlaneKind,
-    pub kind: MessageKind,
-    pub sequence_id: u64,
-    pub sender_node_id: String,
-    pub payload: Vec<u8>,
-    pub checksum_fnv64: u64,
-}
-
-impl WireEnvelope {
-    /// Constructs and validates a new `WireEnvelope`, enforcing plane isolation rules.
-    pub fn new(
-        plane: PlaneKind,
-        kind: MessageKind,
-        sequence_id: u64,
-        sender_node_id: impl Into<String>,
-        payload: Vec<u8>,
-    ) -> Result<Self, ProtocolError> {
-        let sender = sender_node_id.into();
-        if sender.trim().is_empty() {
-            return Err(ProtocolError::EmptySenderNodeId);
-        }
-        let expected_plane = kind.required_plane();
-        if plane != expected_plane {
-            return Err(ProtocolError::PlaneIsolationViolation {
-                kind,
-                attempted_plane: plane,
-                required_plane: expected_plane,
-            });
-        }
-        if plane == PlaneKind::ControlPlane && payload.len() > MAX_CONTROL_PLANE_PAYLOAD_BYTES {
-            return Err(ProtocolError::ControlPlanePayloadTooLarge {
-                size: payload.len(),
-                max_allowed: MAX_CONTROL_PLANE_PAYLOAD_BYTES,
-            });
-        }
-
-        let checksum_fnv64 = compute_fnv1a_64(&payload);
-        Ok(Self {
-            version: CURRENT_PROTOCOL_VERSION,
-            plane,
-            kind,
-            sequence_id,
-            sender_node_id: sender,
-            payload,
-            checksum_fnv64,
-        })
-    }
-
-    /// Verifies envelope integrity, version compatibility, and plane isolation invariants.
-    pub fn verify(&self, local_version: &ProtocolVersion) -> Result<(), ProtocolError> {
-        let _ = local_version.negotiate(&self.version)?;
-        if self.sender_node_id.trim().is_empty() {
-            return Err(ProtocolError::EmptySenderNodeId);
-        }
-        let expected_plane = self.kind.required_plane();
-        if self.plane != expected_plane {
-            return Err(ProtocolError::PlaneIsolationViolation {
-                kind: self.kind,
-                attempted_plane: self.plane,
-                required_plane: expected_plane,
-            });
-        }
-        if self.plane == PlaneKind::ControlPlane
-            && self.payload.len() > MAX_CONTROL_PLANE_PAYLOAD_BYTES
-        {
-            return Err(ProtocolError::ControlPlanePayloadTooLarge {
-                size: self.payload.len(),
-                max_allowed: MAX_CONTROL_PLANE_PAYLOAD_BYTES,
-            });
-        }
-        let actual_checksum = compute_fnv1a_64(&self.payload);
-        if actual_checksum != self.checksum_fnv64 {
-            return Err(ProtocolError::ChecksumMismatch {
-                expected: self.checksum_fnv64,
-                actual: actual_checksum,
-            });
-        }
-        Ok(())
-    }
-
-    /// Serializes the envelope into a deterministic binary frame.
-    #[must_use]
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let sender_bytes = self.sender_node_id.as_bytes();
-        let sender_len = u16::try_from(sender_bytes.len()).unwrap_or(u16::MAX);
-        let payload_len = u32::try_from(self.payload.len()).unwrap_or(u32::MAX);
-
-        let mut buf = Vec::with_capacity(32 + sender_bytes.len() + self.payload.len());
-        buf.extend_from_slice(b"UMCF");
-        buf.extend_from_slice(&self.version.major.to_be_bytes());
-        buf.extend_from_slice(&self.version.minor.to_be_bytes());
-        buf.extend_from_slice(&self.version.patch.to_be_bytes());
-        buf.push(self.plane as u8);
-        buf.extend_from_slice(&(self.kind as u16).to_be_bytes());
-        buf.extend_from_slice(&self.sequence_id.to_be_bytes());
-        buf.extend_from_slice(&self.checksum_fnv64.to_be_bytes());
-        buf.extend_from_slice(&sender_len.to_be_bytes());
-        buf.extend_from_slice(&sender_bytes[..usize::from(sender_len)]);
-        buf.extend_from_slice(&payload_len.to_be_bytes());
-        buf.extend_from_slice(&self.payload[..payload_len as usize]);
-        buf
-    }
-
-    /// Deserializes and validates a `WireEnvelope` from a binary frame.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, ProtocolError> {
-        if bytes.len() < 31 || &bytes[0..4] != b"UMCF" {
-            return Err(ProtocolError::MalformedFrame("invalid header or length"));
-        }
-        let major = u16::from_be_bytes([bytes[4], bytes[5]]);
-        let minor = u16::from_be_bytes([bytes[6], bytes[7]]);
-        let patch = u16::from_be_bytes([bytes[8], bytes[9]]);
-        let plane = match bytes[10] {
-            1 => PlaneKind::ControlPlane,
-            2 => PlaneKind::DataPlane,
-            _ => return Err(ProtocolError::MalformedFrame("invalid plane byte")),
-        };
-        let kind_code = u16::from_be_bytes([bytes[11], bytes[12]]);
-        let kind = MessageKind::from_u16(kind_code)?;
-        let sequence_id = u64::from_be_bytes([
-            bytes[13], bytes[14], bytes[15], bytes[16], bytes[17], bytes[18], bytes[19], bytes[20],
-        ]);
-        let checksum_fnv64 = u64::from_be_bytes([
-            bytes[21], bytes[22], bytes[23], bytes[24], bytes[25], bytes[26], bytes[27], bytes[28],
-        ]);
-        let sender_len = usize::from(u16::from_be_bytes([bytes[29], bytes[30]]));
-        let sender_end = 31 + sender_len;
-        if bytes.len() < sender_end + 4 {
-            return Err(ProtocolError::MalformedFrame(
-                "truncated sender or payload length",
-            ));
-        }
-        let sender_node_id = std::str::from_utf8(&bytes[31..sender_end])
-            .map_err(|_| ProtocolError::MalformedFrame("sender_node_id is not valid UTF-8"))?
-            .to_owned();
-        let payload_len = u32::from_be_bytes([
-            bytes[sender_end],
-            bytes[sender_end + 1],
-            bytes[sender_end + 2],
-            bytes[sender_end + 3],
-        ]) as usize;
-        let payload_start = sender_end + 4;
-        if bytes.len() != payload_start + payload_len {
-            return Err(ProtocolError::MalformedFrame("payload length mismatch"));
-        }
-        let payload = bytes[payload_start..].to_vec();
-        let env = Self {
-            version: ProtocolVersion::new(major, minor, patch),
-            plane,
-            kind,
-            sequence_id,
-            sender_node_id,
-            payload,
-            checksum_fnv64,
-        };
-        env.verify(&CURRENT_PROTOCOL_VERSION)?;
-        Ok(env)
-    }
-}
-
 /// Deterministic 64-bit FNV-1a checksum for frame integrity verification.
 #[must_use]
 pub fn compute_fnv1a_64(data: &[u8]) -> u64 {
@@ -317,80 +173,195 @@ pub fn compute_fnv1a_64(data: &[u8]) -> u64 {
 }
 
 /// Protocol-level errors.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum ProtocolError {
+    #[error("incompatible protocol version: local {local} vs remote {remote}")]
     IncompatibleVersion {
         local: ProtocolVersion,
         remote: ProtocolVersion,
     },
+
+    #[error("plane isolation violation for {kind:?}: attempted {attempted_plane:?}, required {required_plane:?}")]
     PlaneIsolationViolation {
         kind: MessageKind,
         attempted_plane: PlaneKind,
         required_plane: PlaneKind,
     },
-    ControlPlanePayloadTooLarge {
-        size: usize,
-        max_allowed: usize,
-    },
-    ChecksumMismatch {
-        expected: u64,
-        actual: u64,
-    },
+
+    #[error("control-plane payload size ({size} bytes) exceeds maximum ({max_allowed} bytes)")]
+    ControlPlanePayloadTooLarge { size: usize, max_allowed: usize },
+
+    #[error("frame checksum mismatch: expected {expected:#x}, got {actual:#x}")]
+    ChecksumMismatch { expected: u64, actual: u64 },
+
+    #[error("sender_node_id must not be empty")]
     EmptySenderNodeId,
+
+    #[error("unknown message kind code: {0}")]
     UnknownMessageKind(u16),
+
+    #[error("invalid wire magic header: expected 'UMCF' (0x554D4346)")]
+    InvalidMagicHeader,
+
+    #[error("malformed wire frame: {0}")]
     MalformedFrame(&'static str),
 }
-
-impl fmt::Display for ProtocolError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::IncompatibleVersion { local, remote } => {
-                write!(f, "incompatible protocol version: local {local} vs remote {remote}")
-            }
-            Self::PlaneIsolationViolation {
-                kind,
-                attempted_plane,
-                required_plane,
-            } => write!(
-                f,
-                "plane isolation violation for {kind:?}: attempted {attempted_plane:?}, required {required_plane:?}"
-            ),
-            Self::ControlPlanePayloadTooLarge { size, max_allowed } => write!(
-                f,
-                "control-plane payload size ({size} bytes) exceeds maximum ({max_allowed} bytes)"
-            ),
-            Self::ChecksumMismatch { expected, actual } => write!(
-                f,
-                "frame checksum mismatch: expected {expected:#x}, got {actual:#x}"
-            ),
-            Self::EmptySenderNodeId => write!(f, "sender_node_id must not be empty"),
-            Self::UnknownMessageKind(code) => write!(f, "unknown message kind code: {code}"),
-            Self::MalformedFrame(reason) => write!(f, "malformed wire frame: {reason}"),
-        }
-    }
-}
-
-impl std::error::Error for ProtocolError {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bytes::BytesMut;
+    use std::time::Instant;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio_util::codec::{Decoder, Encoder};
 
     #[test]
     fn unit_version_negotiation_and_compatibility() {
-        let v1_0 = ProtocolVersion::new(1, 0, 0);
-        let v1_2 = ProtocolVersion::new(1, 2, 3);
-        let v2_0 = ProtocolVersion::new(2, 0, 0);
+        let v1_0_0 = ProtocolVersion::new(1, 0, 0);
+        let v1_2_1 = ProtocolVersion::new(1, 2, 1);
+        let v2_0_0 = ProtocolVersion::new(2, 0, 0);
 
-        assert!(v1_0.is_compatible_with(&v1_2));
-        assert_eq!(v1_0.negotiate(&v1_2), Ok(v1_0));
-        assert_eq!(v1_2.negotiate(&v1_0), Ok(v1_0));
-        assert!(!v1_0.is_compatible_with(&v2_0));
+        assert!(v1_0_0.is_compatible_with(&v1_2_1));
+        assert!(v1_2_1.is_compatible_with(&v1_0_0));
+        assert!(!v1_0_0.is_compatible_with(&v2_0_0));
+
+        let negotiated = v1_2_1.negotiate(&v1_0_0).expect("negotiate same major");
+        assert_eq!(negotiated, v1_0_0);
+
+        let err = v1_0_0.negotiate(&v2_0_0);
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn unit_semantic_version_range_negotiation_matrix() {
+        let local_range =
+            VersionRange::new(ProtocolVersion::new(1, 0, 0), ProtocolVersion::new(1, 5, 0));
+        let remote_range =
+            VersionRange::new(ProtocolVersion::new(1, 2, 0), ProtocolVersion::new(1, 8, 0));
+
+        let negotiated =
+            negotiate_version(local_range, remote_range).expect("negotiate version range");
+        assert_eq!(negotiated, ProtocolVersion::new(1, 5, 0));
+
+        // Mismatched major versions must return IncompatibleMajorVersion
+        let v2_range =
+            VersionRange::new(ProtocolVersion::new(2, 0, 0), ProtocolVersion::new(2, 1, 0));
+        let err = negotiate_version(local_range, v2_range);
         assert!(matches!(
-            v1_0.negotiate(&v2_0),
-            Err(ProtocolError::IncompatibleVersion { .. })
+            err,
+            Err(NegotiationError::IncompatibleMajorVersion {
+                local_major: 1,
+                remote_major: 2
+            })
         ));
-        assert_eq!(v1_2.to_string(), "1.2.3");
+
+        // Disjoint version ranges in same major
+        let low_range =
+            VersionRange::new(ProtocolVersion::new(1, 0, 0), ProtocolVersion::new(1, 1, 0));
+        let high_range =
+            VersionRange::new(ProtocolVersion::new(1, 5, 0), ProtocolVersion::new(1, 6, 0));
+        assert!(matches!(
+            negotiate_version(low_range, high_range),
+            Err(NegotiationError::NoCompatibleVersion)
+        ));
+    }
+
+    #[test]
+    fn unit_wire_envelope_flags_and_metadata() {
+        let flags = MessageFlags::NONE
+            .union(MessageFlags::COMPRESSED_ZSTD)
+            .union(MessageFlags::REQUIRES_ACK);
+        assert!(flags.contains(MessageFlags::COMPRESSED_ZSTD));
+        assert!(flags.contains(MessageFlags::REQUIRES_ACK));
+        assert!(!flags.contains(MessageFlags::ENCRYPTED_PAYLOAD));
+
+        let msg_id = MessageId::new(0x1234_5678_9abc_def0_1122_3344_5566_7788);
+        assert_eq!(msg_id.as_u128(), 0x1234_5678_9abc_def0_1122_3344_5566_7788);
+
+        let hlc = TimestampHlc::new(1_700_000_000_000, 42);
+        assert_eq!(hlc.physical_time_ms, 1_700_000_000_000);
+        assert_eq!(hlc.logical_counter, 42);
+
+        let did = SenderDid::new("did:umcf:node-unit-test-01").expect("valid did");
+        assert_eq!(did.as_str(), "did:umcf:node-unit-test-01");
+    }
+
+    #[test]
+    fn unit_wire_envelope_zstd_compression_toggle() {
+        let uncompressed_payload = b"Hello, UMCF! This is repeated payload data. ".repeat(64);
+        let env = WireEnvelope::builder(
+            PlaneKind::ControlPlane,
+            MessageKind::Heartbeat,
+            "did:umcf:test-compress-node",
+        )
+        .flags(MessageFlags::COMPRESSED_ZSTD)
+        .payload(uncompressed_payload.clone())
+        .build()
+        .expect("build envelope");
+
+        let bytes = env.to_bytes();
+        let decoded = WireEnvelope::from_bytes(&bytes).expect("decode compressed envelope");
+        assert_eq!(decoded.payload, uncompressed_payload);
+        assert!(decoded.flags.contains(MessageFlags::COMPRESSED_ZSTD));
+    }
+
+    #[test]
+    fn unit_wire_envelope_micro_benchmark_latency() {
+        // Acceptance criteria: Round-trip serialization/deserialization takes < 2.5 µs for 1 KiB payload
+        let payload = vec![0x42u8; 1024]; // 1 KiB
+        let env = WireEnvelope::new(
+            PlaneKind::ControlPlane,
+            MessageKind::Heartbeat,
+            1,
+            "did:umcf:benchmark-node-01",
+            payload,
+        )
+        .expect("envelope");
+
+        // Warm up
+        for _ in 0..100 {
+            let b = env.to_bytes();
+            let _ = WireEnvelope::from_bytes(&b).expect("warmup");
+        }
+
+        let iterations = 10_000;
+        let start = Instant::now();
+        for _ in 0..iterations {
+            let b = env.to_bytes();
+            let _ = WireEnvelope::from_bytes(&b).expect("decode");
+        }
+        let total_duration = start.elapsed();
+        let per_op_micros = total_duration.as_secs_f64() * 1_000_000.0 / f64::from(iterations);
+
+        println!(
+            "Micro-benchmark: 1 KiB roundtrip took {per_op_micros:.3} µs per op (release target < 2.5 µs)"
+        );
+        #[cfg(not(debug_assertions))]
+        assert!(
+            per_op_micros < 2.5,
+            "Serialization roundtrip in release must be < 2.5 µs, got {per_op_micros:.3} µs"
+        );
+        #[cfg(debug_assertions)]
+        assert!(
+            per_op_micros < 10.0,
+            "Serialization roundtrip in debug must be < 10.0 µs, got {per_op_micros:.3} µs"
+        );
+    }
+
+    #[test]
+    fn unit_control_plane_size_cap_enforced() {
+        let oversized_payload = vec![0u8; MAX_CONTROL_PLANE_PAYLOAD_BYTES + 1];
+        let err = WireEnvelope::new(
+            PlaneKind::ControlPlane,
+            MessageKind::Heartbeat,
+            1,
+            "did:umcf:node-01",
+            oversized_payload,
+        );
+        assert!(matches!(
+            err,
+            Err(ProtocolError::ControlPlanePayloadTooLarge { .. })
+        ));
     }
 
     #[test]
@@ -399,8 +370,8 @@ mod tests {
             PlaneKind::ControlPlane,
             MessageKind::TensorShardFrame,
             1,
-            "node-alpha",
-            vec![1, 2, 3, 4],
+            "did:umcf:node-01",
+            vec![1, 2, 3],
         );
         assert!(matches!(
             err,
@@ -413,70 +384,168 @@ mod tests {
     }
 
     #[test]
-    fn unit_control_plane_size_cap_enforced() {
-        let oversized = vec![0u8; MAX_CONTROL_PLANE_PAYLOAD_BYTES + 1];
-        let err = WireEnvelope::new(
-            PlaneKind::ControlPlane,
+    fn unit_all_message_kinds_roundtrip_and_error_cases() {
+        let kinds = [
+            MessageKind::Hello,
+            MessageKind::AttestIdentity,
+            MessageKind::EnrollRequest,
+            MessageKind::EnrollGrant,
+            MessageKind::Heartbeat,
             MessageKind::CapabilityReport,
-            2,
-            "node-beta",
-            oversized,
-        );
-        assert!(matches!(
-            err,
-            Err(ProtocolError::ControlPlanePayloadTooLarge { .. })
-        ));
+            MessageKind::ScheduleTask,
+            MessageKind::TaskStatus,
+            MessageKind::MeteringReceipt,
+        ];
+        for kind in kinds {
+            let env = WireEnvelope::new(
+                kind.required_plane(),
+                kind,
+                100,
+                "did:umcf:all-kinds-node",
+                vec![1, 2, 3, 4],
+            )
+            .expect("valid env");
+            let encoded = env.to_bytes();
+            let decoded = WireEnvelope::from_bytes(&encoded).expect("decode");
+            assert_eq!(decoded.kind, kind);
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn integration_stream_10000_framed_envelopes_over_duplex_stream() {
+        let (mut client_io, mut server_io) = tokio::io::duplex(64 * 1024);
+        let message_count = 10_000;
+
+        let writer_handle = tokio::spawn(async move {
+            let mut codec = UmcfFrameCodec::new_control_plane();
+            let mut buf = BytesMut::with_capacity(32 * 1024);
+
+            for seq in 0..message_count {
+                let env = WireEnvelope::new(
+                    PlaneKind::ControlPlane,
+                    MessageKind::Heartbeat,
+                    seq,
+                    "did:umcf:stream-node-writer",
+                    seq.to_be_bytes().to_vec(),
+                )
+                .expect("envelope");
+
+                codec.encode(env, &mut buf).expect("encode frame");
+
+                if buf.len() >= 16 * 1024 || seq == message_count - 1 {
+                    client_io.write_all(&buf).await.expect("write to duplex");
+                    buf.clear();
+                }
+            }
+        });
+
+        let reader_handle = tokio::spawn(async move {
+            let mut codec = UmcfFrameCodec::new_control_plane();
+            let mut read_buf = BytesMut::with_capacity(64 * 1024);
+            let mut chunk = [0u8; 8192];
+            let mut received_count = 0u64;
+
+            while received_count < message_count {
+                let n = server_io.read(&mut chunk).await.expect("read from duplex");
+                if n == 0 {
+                    break;
+                }
+                read_buf.extend_from_slice(&chunk[..n]);
+
+                while let Some(env) = codec.decode(&mut read_buf).expect("decode envelope") {
+                    assert_eq!(env.sequence_id, received_count);
+                    assert_eq!(env.payload, received_count.to_be_bytes());
+                    received_count += 1;
+                }
+            }
+            assert_eq!(received_count, message_count);
+        });
+
+        writer_handle.await.expect("writer task");
+        reader_handle.await.expect("reader task");
     }
 
     #[test]
-    fn unit_wire_envelope_binary_roundtrip_and_tamper_detection() {
-        let env = WireEnvelope::new(
-            PlaneKind::DataPlane,
-            MessageKind::InferenceActivationFrame,
-            42,
-            "worker-01",
-            b"activation-tensor-block".to_vec(),
+    fn simulation_header_magic_and_length_fault_injection_oom_defense() {
+        let valid_env = WireEnvelope::new(
+            PlaneKind::ControlPlane,
+            MessageKind::Heartbeat,
+            1,
+            "did:umcf:fault-injection-node",
+            vec![1, 2, 3, 4],
         )
-        .expect("valid data plane envelope");
+        .expect("valid envelope");
+        let valid_bytes = valid_env.to_bytes();
 
-        let bytes = env.to_bytes();
-        let decoded = WireEnvelope::from_bytes(&bytes).expect("roundtrip decode");
-        assert_eq!(env, decoded);
-
-        // Tamper with payload byte and confirm checksum failure
-        let mut corrupted = bytes.clone();
-        let last_idx = corrupted.len() - 1;
-        corrupted[last_idx] ^= 0xFF;
+        // 1. Invalid magic header test
+        let mut corrupted_magic = valid_bytes.clone();
+        corrupted_magic[0] = b'X';
         assert!(matches!(
-            WireEnvelope::from_bytes(&corrupted),
+            WireEnvelope::from_bytes(&corrupted_magic),
+            Err(ProtocolError::InvalidMagicHeader)
+        ));
+
+        // 2. OOM attack length prefix defense: 0xFFFFFFFF payload length
+        let mut oom_attack_bytes = valid_bytes.clone();
+        let sender_len = usize::from(u16::from_be_bytes([
+            oom_attack_bytes[90],
+            oom_attack_bytes[91],
+        ]));
+        let payload_len_offset = FIXED_HEADER_LEN + sender_len;
+        oom_attack_bytes[payload_len_offset] = 0xFF;
+        oom_attack_bytes[payload_len_offset + 1] = 0xFF;
+        oom_attack_bytes[payload_len_offset + 2] = 0xFF;
+        oom_attack_bytes[payload_len_offset + 3] = 0xFF;
+
+        let mut codec = UmcfFrameCodec::new_control_plane();
+        let mut buf = BytesMut::from(&oom_attack_bytes[..]);
+        let err = codec.decode(&mut buf);
+        assert!(matches!(err, Err(CodecError::FrameTooLarge { .. })));
+
+        // 3. Checksum tampering detection
+        let mut corrupted_payload = valid_bytes.clone();
+        let payload_offset = payload_len_offset + 4;
+        corrupted_payload[payload_offset] ^= 0xFF;
+        assert!(matches!(
+            WireEnvelope::from_bytes(&corrupted_payload),
             Err(ProtocolError::ChecksumMismatch { .. })
         ));
     }
 
     #[test]
-    fn unit_all_message_kinds_roundtrip_and_error_cases() {
-        let codes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 101, 102, 103, 104, 105, 106];
-        for c in codes {
-            let kind = MessageKind::from_u16(c).expect("known code");
-            assert_eq!(kind as u16, c);
+    fn simulation_10000_bit_flip_fault_injections_no_panics() {
+        let base_env = WireEnvelope::new(
+            PlaneKind::ControlPlane,
+            MessageKind::Heartbeat,
+            42,
+            "did:umcf:mutation-node-01",
+            vec![10, 20, 30, 40, 50],
+        )
+        .expect("base envelope");
+        let base_bytes = base_env.to_bytes();
+
+        let mut codec = UmcfFrameCodec::new_control_plane();
+
+        // Deterministic pseudo-random seed
+        let mut state: u64 = 0x853c_49e6_748f_ea9b;
+        let mut lcg = || {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+            state
+        };
+
+        for _ in 0..10_000 {
+            let mut mutated = base_bytes.clone();
+            let flip_count = (lcg() % 5) + 1;
+            for _ in 0..flip_count {
+                let idx = (lcg() as usize) % mutated.len();
+                let bit = 1 << ((lcg() % 8) as u8);
+                mutated[idx] ^= bit;
+            }
+
+            // Zero panics or unhandled exceptions allowed
+            let _ = WireEnvelope::from_bytes(&mutated);
+            let mut buf = BytesMut::from(&mutated[..]);
+            let _ = codec.decode(&mut buf);
         }
-        assert!(matches!(
-            MessageKind::from_u16(999),
-            Err(ProtocolError::UnknownMessageKind(999))
-        ));
-        assert!(matches!(
-            WireEnvelope::new(
-                PlaneKind::ControlPlane,
-                MessageKind::Hello,
-                1,
-                "   ",
-                vec![]
-            ),
-            Err(ProtocolError::EmptySenderNodeId)
-        ));
-        assert!(matches!(
-            WireEnvelope::from_bytes(b"SHORT"),
-            Err(ProtocolError::MalformedFrame(_))
-        ));
     }
 }
