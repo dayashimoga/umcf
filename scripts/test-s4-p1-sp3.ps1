@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Executes classified tests for Subphase S4.P1.SP3:
   - Unit: UserActivityDetector state machine (Idle -> InteractiveActive -> Cooldown -> RampingUp -> Idle), cooldown/rampup interruption, and PreemptionToken cooperative yield checkpoints
@@ -179,3 +179,4 @@ if ($allPass) {
 } else {
   exit 1
 }
+

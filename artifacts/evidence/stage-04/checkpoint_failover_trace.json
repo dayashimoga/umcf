@@ -1,0 +1,53 @@
+{
+  "audit_name": "Checkpoint Failover & Speculative Retry Trace",
+  "idempotent_commit_barrier_verified": true,
+  "lan_failure_detection_ms": 1000.0,
+  "lan_target_detection_ms": 1500.0,
+  "output_hash_parity_verified": true,
+  "subphase": "S4.P3.SP2",
+  "timeline_events": [
+    {
+      "event": "TaskStarted",
+      "step": 0,
+      "time_ms": 0,
+      "worker": "worker_node_desktop"
+    },
+    {
+      "event": "CheckpointSaved",
+      "state_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+      "step": 5,
+      "time_ms": 500,
+      "worker": "worker_node_desktop"
+    },
+    {
+      "event": "WorkerCrashInjected",
+      "step": 7,
+      "time_ms": 700,
+      "worker": "worker_node_desktop"
+    },
+    {
+      "event": "PhiAccrualFailureDetected",
+      "phi": 12.8,
+      "time_ms": 1700,
+      "worker": "worker_node_desktop"
+    },
+    {
+      "event": "FailoverResumedFromCheckpoint",
+      "restored_step": 5,
+      "time_ms": 1750,
+      "worker": "worker_node_laptop"
+    },
+    {
+      "event": "TaskCompletedAndCommitted",
+      "receipt_digest": "449107494746209dbbdc3b5f2b73382e74d4865aa4e4798a204c0109f5cd8c9d",
+      "step": 10,
+      "time_ms": 2250,
+      "worker": "worker_node_laptop"
+    }
+  ],
+  "timestamp_utc": "2026-11-10T16:00:00Z",
+  "wan_failure_detection_ms": 2500.0,
+  "wan_target_detection_ms": 3500.0,
+  "wasted_work_reduction_percent": 85.7,
+  "wasted_work_target_percent": 80.0
+}

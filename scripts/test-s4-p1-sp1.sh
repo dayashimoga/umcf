@@ -33,3 +33,4 @@ REPORT_PATH="${REPO_ROOT}/artifacts/evidence/stage-04/quota_enforcement_report.j
 test -f "${REPORT_PATH}"
 
 echo "=== All S4.P1.SP1 tests PASSED ==="
+

@@ -1,9 +1,9 @@
 {
   "queued_counts_by_priority": {
     "StandardBatch": 3,
-    "BackgroundMaintenance": 5,
+    "InteractiveRealtime": 0,
     "HighPriorityUser": 0,
-    "InteractiveRealtime": 0
+    "BackgroundMaintenance": 5
   },
   "total_enqueued": 20,
   "total_dispatched": 12,

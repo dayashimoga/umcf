@@ -30,3 +30,4 @@ cargo test -p umcf-worker --test worker_tests test_manually_verified_
 test -f "${REPO_ROOT}/artifacts/evidence/stage-04/sandbox_escape_audit.json"
 
 echo "=== Subphase S4.P3.SP1: ALL TIERS PASSED ==="
+

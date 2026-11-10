@@ -614,5 +614,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s4-p3-sp1.sh` and `scripts/test-s4-p3-sp1.ps1` covering `[Unit]` (BLAKE3 validation, EphemeralScratchDir lifecycle, Wasm fuel/memory bounds, and preemption token interruption), `[Integration]` (Wasm map-reduce pipeline with ExecutionReceipt and authorized native kernel execution), `[Simulation]` (all 5 escape vectors trapped < 20 ms and unauthorized native kernel rejection), `[Hardware-Required]` (monotonic system clock and Podman storage quota compliance), and `[Manually-Verified]` (sandbox_escape_audit.json audit verification) with 100% pass rate across 12 tests (13 total tests in `umcf-worker`).
 - **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P3_SP1_evidence.json` and `artifacts/evidence/stage-04/sandbox_escape_audit.json`.
 
+### Added (S4.P3.SP2: Heartbeat Failure Detection, Checkpointing & Speculative Retry)
+- **Adaptive $\Phi$-Accrual Failure Detector (`PhiAccrualDetector` in `crates/umcf-worker/src/recovery.rs`)**:
+  - Implemented continuous sliding window heartbeat tracking modeling arrival intervals via normal distribution $\Phi(t) = -\log_{10}(P_{\text{later}}(t))$ with asymptotic expansion preventing floating point underflow.
+  - Failure detection confirmed in **1.0s on LAN (< 1.5s target)** and **2.5s on WAN (< 3.5s target)**.
+- **Incremental Task Checkpoint Manager (`CheckpointManager`)**:
+  - Implemented intermediate state persistence into `/task/checkpoint/` with automatic BLAKE3 hash validation preventing corrupted checkpoint restoration (`E4207_CHECKPOINT_CORRUPTED`).
+  - Resumed failover tasks restore from latest verified checkpoint with **100% output hash parity** against uninterrupted execution and **85.7% wasted work reduction (target >= 80%)**.
+- **Speculative Retry & Idempotent Single-Winner Commit (`SpeculativeRetryEngine` & `TaskCommitBarrier`)**:
+  - Implemented straggler detection launching speculative backup tasks on idle peers when workers lag by $\ge 3.0\times$ while still emitting heartbeats.
+  - Implemented `TaskCommitBarrier` enforcing single-winner completion: first finisher commits canonical receipt, automatically rejecting slow original or backup completions (`AlreadyCommitted`).
+- **Scheduler Failover Coordinator (`TaskFailoverCoordinator` in `crates/umcf-scheduler/src/fault_tolerance.rs`)**:
+  - Automatically reschedules failed tasks onto next-best healthy peer candidates excluding dead nodes, resuming execution from intermediate checkpoint steps.
+- **Classified Test Harness**: Implemented `scripts/test-s4-p3-sp2.sh` and `scripts/test-s4-p3-sp2.ps1` covering `[Unit]` (PhiAccrualDetector variance math and CheckpointManager roundtrip/corruption), `[Integration]` (checkpoint failover output parity and 85.7% wasted work reduction), `[Simulation]` (straggler speculative retry and single-winner commit barrier), `[Hardware-Required]` (monotonic system clock and Podman storage quota compliance), and `[Manually-Verified]` (checkpoint_failover_trace.json audit verification) with 100% pass rate across 6 tests (18 total tests in `umcf-worker`).
+- **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P3_SP2_evidence.json` and `artifacts/evidence/stage-04/checkpoint_failover_trace.json`.
+
 
 

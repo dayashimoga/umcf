@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Executes classified tests for Subphase S4.P2.SP1:
   - Unit: JobDag topological sort & cycle detection, 15 synthetic node constraint pruning matrix, and RooflineCostModel LAN vs WAN tradeoffs
@@ -176,3 +176,4 @@ if ($allPass) {
 } else {
   exit 1
 }
+

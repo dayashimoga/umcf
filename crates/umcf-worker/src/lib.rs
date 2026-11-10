@@ -4,9 +4,14 @@
 #![forbid(unsafe_code)]
 
 pub mod error;
+pub mod recovery;
 pub mod sandbox;
 
 pub use error::{WorkerError, WorkerErrorCode};
+pub use recovery::{
+    CheckpointBlob, CheckpointManager, CommitResult, PhiAccrualConfig, PhiAccrualDetector,
+    RecoveryAction, SpeculativeRetryEngine, TaskCommitBarrier, TaskHeartbeat,
+};
 pub use sandbox::{
     ArtifactStager, EphemeralScratchDir, ExecutionReceipt, NativeEngineRegistry, NativeKernelRunner,
     WasmSandboxConfig, WasmSandboxRunner,

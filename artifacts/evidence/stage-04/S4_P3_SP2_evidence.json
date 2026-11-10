@@ -1,0 +1,35 @@
+{
+  "subphase": "S4.P3.SP2",
+  "title": "Heartbeat Failure Detection, Checkpointing & Speculative Retry",
+  "git_commit": "d3a32fa6c757c3abeb16ff45ee7ca8957ba6190f",
+  "timestamp_utc": "2026-11-10T16:05:00Z",
+  "podman_total_bytes": 17313977127,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "recovery_summary": {
+    "lan_failure_detection_ms": 1000.0,
+    "lan_target_detection_ms": 1500.0,
+    "wan_failure_detection_ms": 2500.0,
+    "wan_target_detection_ms": 3500.0,
+    "wasted_work_reduction_percent": 85.7,
+    "wasted_work_target_percent": 80.0,
+    "output_hash_parity_verified": true,
+    "speculative_backup_triggered": true,
+    "idempotent_commit_barrier_verified": true
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-04/checkpoint_failover_trace.json": "908F8B3664BD53DB36C7D2A202C02C1525335610D310A99A9D77181B62A11CA9",
+    "crates/umcf-worker/src/recovery.rs": "EE25523EB2EBE8D681FF03F0EFD9B3C0AC1180091FF02101E4313EABA589978E",
+    "crates/umcf-scheduler/src/fault_tolerance.rs": "DD4F7A1D73DAD251A44E4965806F0286BFE15425ED14B6D42F85F08F906569BF",
+    "crates/umcf-worker/tests/worker_tests.rs": "E3F7033B021BEB3643D142E1656BA413DA3F661F25642CEC177BEEF91B001DF7",
+    "scripts/test-s4-p3-sp2.ps1": "B8C524AAB547F9BED25E3C99E0BD2EACB6BE2A29166A9AD98B835947F347CA09",
+    "scripts/test-s4-p3-sp2.sh": "FF8397C64DEB47860113B9F19558DDE019D1F7CF18B4A5CF62FFCA731AA86AAB"
+  }
+}

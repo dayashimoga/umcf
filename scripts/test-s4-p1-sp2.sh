@@ -32,3 +32,4 @@ TRACE_PATH="${REPO_ROOT}/artifacts/evidence/stage-04/thermal_battery_hysteresis_
 test -f "${TRACE_PATH}"
 
 echo "=== All S4.P1.SP2 tests PASSED ==="
+

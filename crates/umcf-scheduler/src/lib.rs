@@ -7,6 +7,7 @@
 pub mod cost;
 pub mod dag;
 pub mod error;
+pub mod fault_tolerance;
 pub mod partitioner;
 pub mod queue;
 pub mod solver;
@@ -17,6 +18,9 @@ pub use dag::{
     WorkloadKind,
 };
 pub use error::{SchedulingError, UnschedulableReason};
+pub use fault_tolerance::{
+    TaskAttempt, TaskAttemptStatus, TaskExecutionState, TaskFailoverCoordinator,
+};
 pub use partitioner::{
     AdaptivePartitioner, DataLocalityOptimizer, GanttBar, PartitionPlan, PartitionScheme,
     StealDecision, WorkSlice, WorkStealingCoordinator, WorkloadUnit,

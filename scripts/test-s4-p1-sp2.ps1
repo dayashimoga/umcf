@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Executes classified tests for Subphase S4.P1.SP2:
   - Unit: ThermalBatteryGuard regime transitions (FullCapacity -> Throttled50 -> Paused -> EmergencyEvict) and temperature/battery hysteresis deadbands (3°C / 3%)
@@ -185,3 +185,4 @@ if (-not $allPassed) {
   exit 1
 }
 exit 0
+
