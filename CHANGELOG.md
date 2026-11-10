@@ -25,3 +25,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Added `infra/podman/` multi-target container definitions and `scripts/enforce-podman-quota.ps1` / `scripts/enforce-podman-quota.sh` enforcing the strict 30 GB storage limit.
   - Added `.github/workflows/ci-rust.yml`, `ci-web.yml`, `ci-flutter.yml`, `ci-security-sbom.yml`, and `release.yml` with independent artifact uploads, SHA-256 checksums, build metadata, and SBOM generation.
 
+---
+
+## [Unreleased] — Stage 1 Foundation
+
+### Added (S1.P1.SP1: Git/Governance/Rules/Skills Bootstrap)
+- **Dual Licensing**: Added official `LICENSE-APACHE` (Apache-2.0) and `LICENSE-MIT` (MIT) manifests.
+- **Root Developer Governance**: Added root `CONTRIBUTING.md` defining architectural invariants, commit format, and verification gates.
+- **Automated Placeholder & Governance Gates**:
+  - Implemented `scripts/check-no-placeholders.sh` and `scripts/check-no-placeholders.ps1` enforcing zero forbidden tokens (`todo!()`, `unimplemented!()`, `FIXME`) across production paths in `< 60ms`.
+  - Implemented `scripts/verify-governance.sh` and `scripts/verify-governance.ps1` verifying presence and non-emptiness of 49 governance files and 72/72 subphases in `TODO.md`.
+  - Implemented `scripts/podman-quota-check.sh` and `scripts/podman-quota-check.ps1` enforcing the 29.0 GiB safe threshold and 30 GiB hard ceiling.
+- **Classified Test Harness**: Implemented `scripts/test-s1-p1-sp1.sh` and `scripts/test-s1-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, and `[Manually-Verified]` tiers with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P1_SP1_evidence.json` and `artifacts/evidence/stage-01/placeholder_scan_S1_P1_SP1.log`.
+

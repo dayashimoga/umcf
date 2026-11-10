@@ -56,3 +56,4 @@ Execute the next approved UMCF stage using its complete stage, phase, and subpha
 - **Zero Placeholders**: Never use placeholders, `todo!()`, `unimplemented!()`, fake success responses, hardcoded production data, or unsupported completion claims.
 - **Resource & Quota Safety**: Respect the 30 GB Podman storage quota cap (`scripts/enforce-podman-quota.*`) and safe device consent defaults (`sharing_enabled: false` by default).
 - **If Blocked**: Identify the exact blocker, document alternative paths or degraded modes, and continue independent tasks without compromising correctness or safety.
+

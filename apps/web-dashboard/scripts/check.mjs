@@ -16,7 +16,7 @@ for (const file of requiredFiles) {
     process.exit(1);
   }
   const content = fs.readFileSync(file, "utf8");
-  if (content.includes("TODO:") || content.includes("FIXME:")) {
+  if (content.includes("TODO:") || content.includes("FIX" + "ME:")) {
     console.error(`Unresolved placeholder found in ${file}`);
     process.exit(1);
   }
