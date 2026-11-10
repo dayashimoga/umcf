@@ -137,6 +137,13 @@ impl NodeKeypair {
         *self.x25519_public.as_bytes()
     }
 
+    /// Returns the raw 32-byte Ed25519 secret seed.
+    /// Used strictly for secure, authenticated local vault encryption.
+    #[must_use]
+    pub fn seed(&self) -> &[u8; 32] {
+        &self.seed
+    }
+
     /// Computes the canonical UMCF `NodeId` from this keypair's public key.
     #[must_use]
     pub fn node_id(&self) -> NodeId {

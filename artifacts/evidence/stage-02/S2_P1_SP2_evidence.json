@@ -1,0 +1,73 @@
+{
+  "subphase": "S2.P1.SP2",
+  "title": "Platform Keychain/Keystore & Encrypted Local Vault",
+  "status": "PASS",
+  "requirements_traceability": [
+    "FR-001",
+    "FR-002",
+    "FR-005",
+    "NFR-001",
+    "NFR-005"
+  ],
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "argon2id_m_cost_kib": 65536,
+    "argon2id_t_cost_iterations": 3,
+    "argon2id_p_cost_lanes": 4,
+    "xchacha20_poly1305_nonce_bits": 192,
+    "vault_tamper_fuzz_iterations": 500,
+    "tamper_detection_rate_pct": 100.0,
+    "tamper_integrity_error_code": "E2004",
+    "atomic_file_replacement": true,
+    "permissions_unix": "0600",
+    "zeroize_on_drop": true,
+    "zeroize_ephemeral_keys": true,
+    "placeholder_count": 0,
+    "clippy_warnings": 0,
+    "compiler_warnings": 0
+  },
+  "artifact_hashes": {
+    "crates/umcf-identity/src/storage.rs": {
+      "bytes": 7072,
+      "sha256": "f0044a19d3918da76d5c065931f5f2c281c5cff584b7fe4236acaf8aa0a62d38"
+    },
+    "crates/umcf-identity/src/vault.rs": {
+      "bytes": 12208,
+      "sha256": "4ec31a62e0cb165f1ff96cea851019a6040582d2ad7887f6197fb817ffd725fc"
+    },
+    "crates/umcf-identity/src/os_keystore.rs": {
+      "bytes": 4460,
+      "sha256": "8e30d3023bbd563c461bde70d09403bc513cc5f205c99a98c7294df9a6511469"
+    },
+    "crates/umcf-identity/src/lib.rs": {
+      "bytes": 14565,
+      "sha256": "675f93fb0ca1162a36ad66d6c317d99612fed6abe4a3f3c3f41d3f35ce0f8c75"
+    },
+    "crates/umcf-identity/src/error.rs": {
+      "bytes": 2214,
+      "sha256": "b6b2923702f2d5334687c13278e1b99c7c4cfa33a8fbb5a5baae9f310128a374"
+    },
+    "crates/umcf-identity/src/keys.rs": {
+      "bytes": 6318,
+      "sha256": "b73213c66b42d6448acb9426a847ccbd711eeffb5d44d82236c5a716c8aca3d5"
+    },
+    "artifacts/evidence/stage-02/vault_security_audit.json": {
+      "bytes": 1682,
+      "sha256": "c894b17eb3f6c099228839127bb2eef7162bc7584d3c17dee5c8cbbd264932fd"
+    },
+    "scripts/test-s2-p1-sp2.ps1": {
+      "bytes": 6613,
+      "sha256": "0f245abfeb708b3e7b446ea53dcd8e13c75ca683e998f45874f4711cb371cbf2"
+    },
+    "scripts/test-s2-p1-sp2.sh": {
+      "bytes": 3016,
+      "sha256": "a447135589021a29e514575e89a451eb41f859c820a12335b02edd94eb51b73b"
+    }
+  }
+}

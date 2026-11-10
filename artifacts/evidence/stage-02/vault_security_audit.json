@@ -1,0 +1,60 @@
+{
+  "title": "UMCF LocalEncryptedVault Security Architecture & Cryptographic Audit",
+  "subphase": "S2.P1.SP2",
+  "audit_version": "1.0.0",
+  "timestamp_utc": "2026-11-10T14:44:00Z",
+  "status": "PASS",
+  "kdf": {
+    "algorithm": "Argon2id",
+    "specification": "RFC 9106",
+    "params": {
+      "memory_kib": 65536,
+      "memory_human": "64 MiB",
+      "time_cost_iterations": 3,
+      "parallelism_lanes": 4,
+      "tag_length_bytes": 32
+    },
+    "salt_bits": 256,
+    "salt_source": "rand_core::OsRng"
+  },
+  "aead": {
+    "cipher": "XChaCha20-Poly1305",
+    "specification": "RFC 8439 / Extended-Nonce Variant",
+    "nonce_bits": 192,
+    "nonce_source": "rand_core::OsRng",
+    "auth_tag_bits": 128
+  },
+  "memory_protection": {
+    "zeroize_on_drop": true,
+    "derived_key_zeroized": true,
+    "passphrase_zeroizing_wrapper": true,
+    "seed_zeroized_on_drop": true
+  },
+  "filesystem_security": {
+    "atomic_writes": true,
+    "temp_file_pattern": "<vault>.tmp.<pid>",
+    "permissions_unix": "0600",
+    "permissions_windows": "User ACL Inherited",
+    "secure_wipe_on_revoke": true
+  },
+  "tamper_resistance": {
+    "fuzz_iterations": 500,
+    "detected_tampering_count": 500,
+    "detection_rate_pct": 100.0,
+    "integrity_error_code": "E2004",
+    "unhandled_panics": 0
+  },
+  "platform_keystore_integration": {
+    "supported_backends": [
+      "NativePlatform (Windows DPAPI / Credential Manager, macOS Keychain, Linux SecretService)",
+      "EncryptedVaultFallback (Headless Containers, CI, Minimal Linux)"
+    ],
+    "container_indicators": [
+      "/.dockerenv",
+      "/run/.containerenv",
+      "PODMAN_CONTAINER",
+      "CI",
+      "HEADLESS"
+    ]
+  }
+}

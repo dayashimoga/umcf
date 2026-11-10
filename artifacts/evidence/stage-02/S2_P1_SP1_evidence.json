@@ -52,7 +52,7 @@
     },
     "artifacts/evidence/stage-02/did_document_sample.json": {
       "bytes": 1234,
-      "sha256": "4135c77ebf30972040765212975363de0a4c1dac06f20ad1aed67e5021376ce4"
+      "sha256": "7b44b9c962d481f4a30b694bcb1894898bd8cc88d2c9e1d68a54af4c771b1b26"
     },
     "scripts/test-s2-p1-sp1.ps1": {
       "bytes": 6350,

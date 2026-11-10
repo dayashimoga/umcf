@@ -27,6 +27,21 @@ pub enum IdentityError {
 
     #[error("JSON serialization failed: {0}")]
     SerializationError(String),
+
+    #[error("vault integrity check failed: {0}")]
+    VaultIntegrityFailure(String),
+
+    #[error("passphrase for vault is incorrect")]
+    PassphraseIncorrect,
+
+    #[error("vault is locked or uninitialized")]
+    VaultLocked,
+
+    #[error("key storage error: {0}")]
+    StorageError(String),
+
+    #[error("requested key or identity not found in storage")]
+    KeyNotFound,
 }
 
 impl IdentityError {
@@ -34,12 +49,19 @@ impl IdentityError {
     #[must_use]
     pub const fn error_code(&self) -> ErrorCode {
         match self {
-            Self::InvalidSignature | Self::EnvelopeTampered => ErrorCode::E2002InvalidSignature,
+            Self::InvalidSignature | Self::EnvelopeTampered | Self::PassphraseIncorrect => {
+                ErrorCode::E2002InvalidSignature
+            }
             Self::MalformedDid(_)
             | Self::UnsupportedDidMethod(_)
             | Self::InvalidPublicKey(_)
-            | Self::SenderMismatch { .. } => ErrorCode::E2001InvalidNodeId,
-            Self::SerializationError(_) => ErrorCode::E8002UnhandledInternalError,
+            | Self::SenderMismatch { .. }
+            | Self::VaultLocked
+            | Self::KeyNotFound => ErrorCode::E2001InvalidNodeId,
+            Self::VaultIntegrityFailure(_) => ErrorCode::E2004UnauthorizedCapability,
+            Self::SerializationError(_) | Self::StorageError(_) => {
+                ErrorCode::E8002UnhandledInternalError
+            }
         }
     }
 }

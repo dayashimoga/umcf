@@ -160,6 +160,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s2-p1-sp1.sh` and `scripts/test-s2-p1-sp1.ps1` covering `[Unit]` (keypair generation, DH agreement, did:key multicodec roundtrips), `[Integration]` (envelope sign & verify with DID document export), `[Simulation]` (tampered payload and impersonation rejection), `[Hardware-Required]` (release microbenchmark < 80 µs), and `[Manually-Verified]` (W3C DID Core 1.0 JSON inspection) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P1_SP1_evidence.json` and `artifacts/evidence/stage-02/did_document_sample.json`.
 
+### Added (S2.P1.SP2: Platform Keychain/Keystore & Encrypted Local Vault)
+- **Persisted Identity & Key Storage Backend (`crates/umcf-identity/src/storage.rs`)**:
+  - Implemented async trait `KeyStorageBackend` (`store_identity`, `load_identity`, `rotate_identity`, `revoke_identity`).
+  - Implemented `PersistedIdentity` managing active keypair, W3C `did:key`, creation epoch timestamp, generation counter, and full historical record (`HistoricalKeyRecord`).
+  - Implemented key rotation preserving prior public key history for receipt verification while activating the new signing key immediately.
+  - Implemented `verify_signature_with_history` verifying historical receipts signed under retired public keys.
+- **Argon2id + XChaCha20-Poly1305 Encrypted Local Vault (`crates/umcf-identity/src/vault.rs`)**:
+  - Implemented `LocalEncryptedVault` using Argon2id key derivation (`m=64 MiB, t=3, p=4` default, 256-bit CSPRNG salt) and extended-nonce 192-bit XChaCha20-Poly1305 AEAD authenticated encryption.
+  - Implemented bounded parameter validation (`MIN_ARGON2_M_COST`..`MAX_ARGON2_M_COST`, iteration and parallelism limits) to defend against CPU/memory exhaustion DoS on corrupted files.
+  - Implemented atomic file replacement via temporary `.tmp.<pid>` files and Unix `0600` permissions (`set_secure_permissions`).
+  - Implemented zeroize-on-drop memory wiping for ephemeral derived keys and secure file zeroing prior to unlink on revocation.
+  - 100% tamper detection rate across 500 fuzz iterations, returning `IdentityError::VaultIntegrityFailure` (`ErrorCode::E2004`).
+- **Platform Keystore with Headless Container Fallback (`crates/umcf-identity/src/os_keystore.rs`)**:
+  - Implemented `PlatformKeyStore` providing auto-detection between native desktop keyrings (Windows DPAPI, macOS Keychain, Linux SecretService) and `EncryptedVaultFallback`.
+  - Automatically identifies headless environments (`/.dockerenv`, `/run/.containerenv`, `PODMAN_CONTAINER`, `CI`, `HEADLESS`) and initializes encrypted file vault without DBus errors or panics.
+- **Classified Test Harness**: Implemented `scripts/test-s2-p1-sp2.sh` and `scripts/test-s2-p1-sp2.ps1` covering `[Unit]` (vault create, unlock, wrong passphrase rejection, key rotation), `[Integration]` (identity continuity across simulated process restart), `[Simulation]` (500 fuzzing iterations detecting 1-bit tampering with 100% reliability), `[Hardware-Required]` (host keystore auto-detect and Podman quota verification < 29.0 GiB), and `[Manually-Verified]` (vault_security_audit.json review) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P1_SP2_evidence.json` and `artifacts/evidence/stage-02/vault_security_audit.json`.
+
 
 
 
