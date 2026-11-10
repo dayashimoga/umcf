@@ -9,6 +9,9 @@ description = "Worker runtime, isolated execution sandbox, artifact staging, and
 umcf-core = { path = "../umcf-core" }
 umcf-guard = { path = "../umcf-guard" }
 umcf-proto = { path = "../umcf-proto" }
+umcf-coordinator = { path = "../umcf-coordinator" }
+umcf-scheduler = { path = "../umcf-scheduler" }
+umcf-identity = { path = "../umcf-identity" }
 blake3 = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -17,7 +20,6 @@ tracing = { workspace = true }
 tempfile = { workspace = true }
 
 [dev-dependencies]
-umcf-identity = { path = "../umcf-identity" }
 
 [lints]
 workspace = true

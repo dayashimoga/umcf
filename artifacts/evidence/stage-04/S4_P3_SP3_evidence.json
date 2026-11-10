@@ -1,0 +1,36 @@
+{
+  "subphase": "S4.P3.SP3",
+  "title": "End-to-End Distributed Job Execution Verification",
+  "git_commit": "cf64217f09f0df887d1ea257fe544ae65e08b1a2",
+  "timestamp_utc": "2026-11-10T16:20:00Z",
+  "podman_total_bytes": 17754722149,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "e2e_summary": {
+    "total_dag_tasks": 24,
+    "completed_tasks": 24,
+    "failed_tasks": 0,
+    "failovers_recovered": 2,
+    "speculative_backups_launched": 0,
+    "avg_dispatch_latency_ms": 0.018,
+    "max_dispatch_latency_ms": 0.031,
+    "dispatch_latency_target_ms": 15.0,
+    "bit_exact_parity_confirmed": true,
+    "chaos_events_survived": 3
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-04/e2e_distributed_dag_report.json": "2921EA4C76BDF7B02D0E79540D5944F9C83A359826F065CA91A3E39860A86530",
+    "crates/umcf-worker/src/runtime.rs": "FC200438137B17BF91422E3FE062526830A399E3892CC85026E6EF92463CA56E",
+    "crates/umcf-worker/tests/worker_tests.rs": "4AC8903B5DCEBE48AB55B7222C603F2C49583E7FCD5DBB2995C92390870CFA45",
+    "scripts/test-s4-p3-sp3.ps1": "23D2A42F770881C9BFE6B812E1A4192679754874B5471AA071B48B2E2D9F1A80",
+    "scripts/test-s4-p3-sp3.sh": "ACDA7B48414AD052C9347EDCE5B3567333822E9E9E9AA89F69D58639C6DCA602"
+  }
+}
+

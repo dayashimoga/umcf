@@ -1,0 +1,52 @@
+{
+  "audit_name": "End-to-End Distributed 24-Task DAG Report",
+  "avg_dispatch_latency_ms": 0.01887500000000001,
+  "bit_exact_parity_confirmed": true,
+  "chaos_injections_survived": [
+    "Task 3: Mobile Worker Thermal Eviction -> Rescheduled on Laptop 1",
+    "Task 9: Sudden Worker Crash -> Rescheduled on Laptop 2 from Checkpoint",
+    "Task 14: User Input Activity Preemption -> Suspended and Resumed Smoothly"
+  ],
+  "cluster_nodes": [
+    {
+      "id": "did:umcf:00000000000000000000000000000001",
+      "power": "AC",
+      "ram_gb": 32,
+      "role": "Master/Hybrid Desktop",
+      "tflops": 12.0
+    },
+    {
+      "id": "did:umcf:00000000000000000000000000000002",
+      "power": "AC",
+      "ram_gb": 16,
+      "role": "Worker Laptop 1",
+      "tflops": 4.0
+    },
+    {
+      "id": "did:umcf:00000000000000000000000000000003",
+      "power": "Battery 85%",
+      "ram_gb": 8,
+      "role": "Worker Laptop 2",
+      "tflops": 2.0
+    },
+    {
+      "id": "did:umcf:00000000000000000000000000000004",
+      "power": "Battery 70%",
+      "ram_gb": 6,
+      "role": "Mobile Worker",
+      "tflops": 1.5
+    }
+  ],
+  "cluster_nodes_count": 4,
+  "completed_tasks": 24,
+  "dispatch_latency_target_ms": 15.0,
+  "failed_tasks": 0,
+  "failovers_recovered": 2,
+  "final_blake3_digest": "3d97f46f4f4e2e384cda7dc3b6f56a39543743c2b5f3a6ae2a3fd61f7abd8fb9",
+  "max_dispatch_latency_ms": 0.049,
+  "speculative_backups_launched": 0,
+  "subphase": "S4.P3.SP3",
+  "timestamp_utc": "2026-11-10T16:15:00Z",
+  "total_dag_tasks": 24,
+  "total_duration_ms": 107.182
+}

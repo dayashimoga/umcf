@@ -5,12 +5,16 @@
 
 pub mod error;
 pub mod recovery;
+pub mod runtime;
 pub mod sandbox;
 
 pub use error::{WorkerError, WorkerErrorCode};
 pub use recovery::{
     CheckpointBlob, CheckpointManager, CommitResult, PhiAccrualConfig, PhiAccrualDetector,
     RecoveryAction, SpeculativeRetryEngine, TaskCommitBarrier, TaskHeartbeat,
+};
+pub use runtime::{
+    ChaosEvent, ChaosKind, ClusterNodeRuntime, DistributedJobResult, NodeRuntimeConfig,
 };
 pub use sandbox::{
     ArtifactStager, EphemeralScratchDir, ExecutionReceipt, NativeEngineRegistry, NativeKernelRunner,

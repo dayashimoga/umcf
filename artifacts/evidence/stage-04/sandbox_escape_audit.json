@@ -5,7 +5,7 @@
     {
       "error_code": "E4202_SANDBOX_PATH_TRAVERSAL",
       "status": "BLOCKED",
-      "trap_latency_us": 4656,
+      "trap_latency_us": 3421,
       "trapped_under_20ms": true,
       "vector": "Path Traversal (../../etc/passwd)"
     },
@@ -19,26 +19,26 @@
     {
       "error_code": "E4203_SANDBOX_RESOURCE_EXHAUSTED",
       "status": "BLOCKED",
-      "trap_latency_us": 2020,
+      "trap_latency_us": 796,
       "trapped_under_20ms": true,
       "vector": "Infinite Loop Fuel Exhaustion"
     },
     {
       "error_code": "E4203_SANDBOX_RESOURCE_EXHAUSTED",
       "status": "BLOCKED",
-      "trap_latency_us": 2074,
+      "trap_latency_us": 335,
       "trapped_under_20ms": true,
       "vector": "Memory Allocation Bomb (4 GiB linear memory expansion)"
     },
     {
       "error_code": "E4204_UNAUTHORIZED_NATIVE_KERNEL",
       "status": "BLOCKED",
-      "trap_latency_us": 9,
+      "trap_latency_us": 5,
       "trapped_under_20ms": true,
       "vector": "Unauthorized Native Kernel Injection"
     }
   ],
-  "max_trap_latency_ms": 4.656,
+  "max_trap_latency_ms": 3.421,
   "sandbox_type": "Wasmtime WASI Capabilities Restricted",
   "subphase": "S4.P3.SP1",
   "target_latency_ceiling_ms": 20.0,

@@ -30,3 +30,4 @@ cargo test -p umcf-worker --test worker_tests test_manually_verified_s4_p3_sp2_
 test -f "${REPO_ROOT}/artifacts/evidence/stage-04/checkpoint_failover_trace.json"
 
 echo "=== Subphase S4.P3.SP2: ALL TIERS PASSED ==="
+

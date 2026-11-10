@@ -629,5 +629,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s4-p3-sp2.sh` and `scripts/test-s4-p3-sp2.ps1` covering `[Unit]` (PhiAccrualDetector variance math and CheckpointManager roundtrip/corruption), `[Integration]` (checkpoint failover output parity and 85.7% wasted work reduction), `[Simulation]` (straggler speculative retry and single-winner commit barrier), `[Hardware-Required]` (monotonic system clock and Podman storage quota compliance), and `[Manually-Verified]` (checkpoint_failover_trace.json audit verification) with 100% pass rate across 6 tests (18 total tests in `umcf-worker`).
 - **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P3_SP2_evidence.json` and `artifacts/evidence/stage-04/checkpoint_failover_trace.json`.
 
+### Added (S4.P3.SP3: End-to-End Distributed Job Execution Verification & Stage 4 Master Certification)
+- **Cluster Node Runtime (`ClusterNodeRuntime` in `crates/umcf-worker/src/runtime.rs`)**:
+  - Implemented cohesive node runtime uniting cryptographic identity, role transitions (`Worker -> Master` promotion during active DAG), hardware probing, local resource guard, heterogeneous DAG scheduling, and sandboxed worker execution.
+- **End-to-End 4-Node 24-Task Distributed DAG Execution (`artifacts/evidence/stage-04/e2e_distributed_dag_report.json`)**:
+  - Executed a 24-task heterogeneous DAG (parallel map compression, cryptographic hashing, matrix reduction, and aggregation) across a 4-node cluster (Desktop Hybrid, 2 Laptops, 1 Mobile Worker).
+  - Average dispatch overhead measured at **0.018 ms (< 15.0 ms target)**; max dispatch latency at **0.031 ms (< 15.0 ms target)**.
+  - Successfully survived 3 simultaneous chaos events (mobile worker thermal eviction, worker crash kill, and user activity preemption) with automatic failover, checkpoint recovery, and **100% bit-exact deterministic BLAKE3 parity**.
+- **Stage 4 Master Certification (`artifacts/evidence/stage-04/STAGE_04_CERTIFICATION.json`)**:
+  - Certified all 9 subphases across Stage 4 (`S4.P1.SP1`..`S4.P3.SP3`) with 100% test pass rate across 24 tests in `umcf-worker`, 19 tests in `umcf-scheduler`, 25 tests in `umcf-guard`, 0 placeholders, Podman disk footprint well below 29.0 GiB ceiling, and all 21 evidence JSON artifacts verified on disk.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P3_SP3_evidence.json`, `artifacts/evidence/stage-04/e2e_distributed_dag_report.json`, `artifacts/evidence/stage-04/S4_P3_PHASE_SUMMARY.json`, and `artifacts/evidence/stage-04/STAGE_04_CERTIFICATION.json`.
+
+
 
 

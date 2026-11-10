@@ -1,0 +1,91 @@
+{
+  "phase": "S4.P3",
+  "title": "Sandboxed Workload Execution, Checkpointing & Fault Recovery",
+  "stage": "Stage 4 — Distributed Scheduler, Resource Management, Workload Execution and Recovery",
+  "status": "PASS",
+  "git_commit": "cf64217f09f0df887d1ea257fe544ae65e08b1a2",
+  "timestamp_utc": "2026-11-10T16:22:00Z",
+  "podman_total_bytes": 17754722149,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "subphases": {
+    "S4.P3.SP1": {
+      "title": "Isolated Worker Execution Sandbox & Artifact Staging",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P3_SP1_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "escape_vectors_tested": 5,
+        "all_escapes_trapped": true,
+        "max_trap_latency_ms": 2.616,
+        "target_latency_ceiling_ms": 20.0,
+        "blake3_artifact_validation_verified": true,
+        "scratch_directory_isolation_verified": true
+      }
+    },
+    "S4.P3.SP2": {
+      "title": "Heartbeat Failure Detection, Checkpointing & Speculative Retry",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P3_SP2_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "lan_failure_detection_ms": 1000.0,
+        "lan_target_detection_ms": 1500.0,
+        "wan_failure_detection_ms": 2500.0,
+        "wan_target_detection_ms": 3500.0,
+        "wasted_work_reduction_percent": 85.7,
+        "wasted_work_target_percent": 80.0,
+        "output_hash_parity_verified": true,
+        "idempotent_commit_barrier_verified": true
+      }
+    },
+    "S4.P3.SP3": {
+      "title": "End-to-End Distributed Job Execution Verification",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P3_SP3_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "total_dag_tasks": 24,
+        "completed_tasks": 24,
+        "failed_tasks": 0,
+        "failovers_recovered": 2,
+        "speculative_backups_launched": 0,
+        "avg_dispatch_latency_ms": 0.018,
+        "max_dispatch_latency_ms": 0.031,
+        "dispatch_latency_target_ms": 15.0,
+        "bit_exact_parity_confirmed": true,
+        "chaos_events_survived": 3
+      }
+    }
+  },
+  "phase_tests_total": 24,
+  "phase_tests_passed": 24,
+  "phase_pass_rate_percent": 100.0,
+  "artifact_hashes": {
+    "S4_P3_SP1_evidence.json": "00BC46F8FA1D8A2938B868F0D1505A429352A9D1C5DC061A0512686A36DE50CD",
+    "S4_P3_SP2_evidence.json": "CFA84803A000A1A7DFF917210EE6A5BD22D97D8DA50CE46F46A63E04FF30C782",
+    "S4_P3_SP3_evidence.json": "4E57187FD27D336780C2508A562BEE4C0257B7BF861A741BE01B9BF3C9996F4B",
+    "sandbox_escape_audit.json": "449107494746209DBBDC3B5F2B73382E74D4865AA4E4798A204C0109F5CD8C9D",
+    "checkpoint_failover_trace.json": "908F8B3664BD53DB36C7D2A202C02C1525335610D310A99A9D77181B62A11CA9",
+    "e2e_distributed_dag_report.json": "2921EA4C76BDF7B02D0E79540D5944F9C83A359826F065CA91A3E39860A86530"
+  }
+}
+

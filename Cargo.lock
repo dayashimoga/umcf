@@ -2965,10 +2965,12 @@ dependencies = [
  "tempfile",
  "thiserror",
  "tracing",
+ "umcf-coordinator",
  "umcf-core",
  "umcf-guard",
  "umcf-identity",
  "umcf-proto",
+ "umcf-scheduler",
 ]
 
 [[package]]
