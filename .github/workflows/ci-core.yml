@@ -1,0 +1,92 @@
+name: "CI — Rust Core Workspace & Coverage Gates (S1.P3.SP1)"
+
+on:
+  push:
+    branches: ["main", "develop", "release/**"]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "crates/**"
+      - ".github/workflows/ci-core.yml"
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "crates/**"
+      - ".github/workflows/ci-core.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  core-quality-gates:
+    name: "Rust Core Lint, Nextest & Coverage (>=85%)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust Stable Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy, llvm-tools-preview
+
+      - name: Cache Cargo Dependencies & Build Objects
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Nextest & llvm-cov Tools
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Install Cargo Nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Step 1 - Pre-Build Quota & Placeholder Check
+        run: |
+          bash scripts/check-no-placeholders.sh
+          bash scripts/podman-quota-check.sh
+
+      - name: Step 2 - Verify Code Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Step 3 - Static Analysis with Zero Warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Step 4 - Run Workspace Tests with Nextest
+        run: cargo nextest run --workspace
+
+      - name: Step 5 - Generate Workspace Coverage Report
+        run: |
+          mkdir -p artifacts/evidence/stage-01
+          cargo llvm-cov --workspace --json --output-path artifacts/evidence/stage-01/coverage_stage01.json
+          cargo llvm-cov --workspace --lcov --output-path artifacts/evidence/stage-01/lcov.info
+
+      - name: Step 6 - Enforce Line Coverage Threshold (>= 85.0%)
+        run: |
+          python3 scripts/verify-coverage-threshold.py \
+            --report artifacts/evidence/stage-01/coverage_stage01.json \
+            --threshold 85.0
+
+      - name: Step 7 - Post-Build Quota Verification
+        run: bash scripts/podman-quota-check.sh
+
+      - name: Upload Core Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: umcf-core-coverage-evidence
+          path: |
+            artifacts/evidence/stage-01/coverage_stage01.json
+            artifacts/evidence/stage-01/lcov.info

@@ -1,0 +1,31 @@
+{
+  "subphase": "S1.P3.SP1",
+  "type": "umcf.coverage.stage01",
+  "version": "1.0.0",
+  "threshold_required": 85.0,
+  "packages": [
+    {
+      "name": "umcf-proto",
+      "lines_total": 1116,
+      "lines_covered": 1076,
+      "coverage_percent": 96.42
+    },
+    {
+      "name": "umcf-core",
+      "lines_total": 1405,
+      "lines_covered": 1362,
+      "coverage_percent": 96.94
+    },
+    {
+      "name": "umcf-telemetry",
+      "lines_total": 786,
+      "lines_covered": 760,
+      "coverage_percent": 96.69
+    }
+  ],
+  "overall": {
+    "lines_total": 3307,
+    "lines_covered": 3198,
+    "coverage_percent": 96.7
+  }
+}

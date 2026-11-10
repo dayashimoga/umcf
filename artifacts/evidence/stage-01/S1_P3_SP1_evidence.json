@@ -1,0 +1,24 @@
+{
+  "subphase": "S1.P3.SP1",
+  "title": "Rust/Web/Control-Plane CI & Coverage Gates",
+  "git_commit": "bed8085b4aac7ad6f02ce33c38d4293f44e4f211",
+  "timestamp_utc": "2026-11-10T08:39:15Z",
+  "podman_total_bytes": 2165355437,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    ".github/workflows/ci-core.yml": "b56f7cf212a23a6f99ff73cc91c8564f883e94020c2d440aa81cbb705e1ff0ad",
+    "scripts/verify-coverage-threshold.py": "742029eebc51356c7f6e4845f2a32e2d7f4df3ab746ef9c17ba895bd5a260e91",
+    "scripts/generate-stage01-coverage.py": "e84086fdbe61f35bb6c896a68b6d5c7e4a9251cc2df2ec2db40111b9ed166a2c",
+    "scripts/ci-core-podman.ps1": "3d2aa589ad5209bd47c3932a9bf37b26a1fee90ad76bea0edd0e7269a76d3d5a",
+    "scripts/ci-web-podman.ps1": "e7a285e5c670e3c6de599e17b50a4bb7517fce802ad60520508bd9ce64b5a7b5",
+    "artifacts/evidence/stage-01/coverage_stage01.json": "6b2ac71d7ef16a7fa12b0b061cff980f975a2ba84faa00d76b75510a04113f1f"
+  }
+}

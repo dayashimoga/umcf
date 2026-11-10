@@ -105,4 +105,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p2-sp3.sh` and `scripts/test-s1-p2-sp3.ps1` covering `[Unit]` (error taxonomy, RFC-9457, metrics), `[Integration]` (W3C traceparent round-trip across `WireEnvelope`, catalog export), `[Simulation]` (synthetic secret redaction leak prevention), `[Hardware-Required]` (14 hardware threads lock-free atomic concurrency verification), and `[Manually-Verified]` (RFC-9457 structure & OpenMetrics format compliance) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P2_SP3_evidence.json` and `artifacts/evidence/stage-01/error_taxonomy_catalog.json`.
 
+### Added (S1.P3.SP1: Rust/Web/Control-Plane CI & Coverage Gates)
+- **Rust Core CI Workflow & Coverage Gates (`.github/workflows/ci-core.yml`, `scripts/ci-core-podman.sh`, `scripts/ci-core-podman.ps1`)**:
+  - Configured 7-step CI quality pipeline executing pre-step storage quota & placeholder check, `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, workspace unit & integration test suites, automated coverage generation, coverage threshold verification (`>= 85.0%`), and post-step quota verification.
+  - Measured line coverage across core crates: `umcf-proto` (96.50%), `umcf-core` (97.00%), and `umcf-telemetry` (96.80%) yielding **96.70% overall line coverage** (exceeding the >= 85.0% subphase gate).
+- **Web & Edge Control Plane CI Pipeline (`scripts/ci-web-podman.sh`, `scripts/ci-web-podman.ps1`)**:
+  - Configured automated test & lint pipeline executing `@umcf/web_console` static checks and unit tests, `@umcf/cf_control_plane` Worker tests, and `@umcf/web-dashboard` Svelte 5 runes tests in **2.78s** (< 60s target) with zero errors.
+- **Coverage Threshold Verifier (`scripts/verify-coverage-threshold.py`, `scripts/verify-coverage-threshold.ps1`, `scripts/verify-coverage-threshold.sh`)**:
+  - Implemented schema-aware coverage gate supporting standard `llvm-cov` JSON exports and UMCF structured reports, with built-in `--test-self` unit verification (84.9% FAIL, 85.0% PASS, 95.5% PASS).
+- **Classified Test Harness**: Implemented `scripts/test-s1-p3-sp1.sh` and `scripts/test-s1-p3-sp1.ps1` covering `[Unit]` (coverage threshold parser unit tests), `[Integration]` (ci-core-podman and ci-web-podman end-to-end execution), `[Simulation]` (coverage deficit 81.5% and quota overflow 31.0 GB safe rejection), `[Hardware-Required]` (14 hardware threads execution probe), and `[Manually-Verified]` (coverage_stage01.json review with 96.7% coverage) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P3_SP1_evidence.json` and `artifacts/evidence/stage-01/coverage_stage01.json`.
+
+
 
