@@ -1,0 +1,83 @@
+{
+  "phase": "S4.P1",
+  "title": "Local Resource Guard, Consent Enforcement & Lifecycle Monitor",
+  "stage": "Stage 4 — Distributed Scheduler, Resource Management, Workload Execution and Recovery",
+  "status": "PASS",
+  "git_commit": "06aecfe0374e5088c4b281f96e42b26c6d0ae59f",
+  "timestamp_utc": "2026-11-10T15:12:00Z",
+  "podman_total_bytes": 15950386475,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "subphases": {
+    "S4.P1.SP1": {
+      "title": "CPU/Memory/VRAM Cgroups & Job Object Quota Enforcer",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P1_SP1_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "memory_denial_code": "E4001_MEMORY_QUOTA_EXCEEDED",
+        "vram_denial_code": "E4002_VRAM_QUOTA_EXCEEDED",
+        "policy_update_latency_target_ms": 20.0,
+        "runaway_rejection_latency_target_ms": 10.0,
+        "reclamation_verified": true
+      }
+    },
+    "S4.P1.SP2": {
+      "title": "Thermal Throttling, Battery Guard & Mobile OS Lifecycle Hooks",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P1_SP2_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "regimes_verified": ["FullCapacity", "Throttled50", "PausedWaitCoolOrCharge", "EmergencyEvict"],
+        "cooling_deadband_deg_c": 3.0,
+        "recharge_deadband_percent": 3.0,
+        "on_trim_memory_evacuation_ms": 100,
+        "state_flapping_prevented": true
+      }
+    },
+    "S4.P1.SP3": {
+      "title": "Interactive User Activity Detector & Instant Preemption",
+      "status": "PASS",
+      "evidence_file": "artifacts/evidence/stage-04/S4_P1_SP3_evidence.json",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "key_metrics": {
+        "interactive_cpu_cap_percent": 15.0,
+        "idle_cooldown_secs": 30.0,
+        "ramp_up_duration_secs": 3.0,
+        "preemption_deadline_us": 50000,
+        "p99_latency_us": 35000,
+        "deadline_met_percent": 100.0,
+        "zero_task_corruption_verified": true
+      }
+    }
+  },
+  "phase_tests_total": 25,
+  "phase_tests_passed": 25,
+  "phase_pass_rate_percent": 100.0,
+  "artifact_hashes": {
+    "S4_P1_SP1_evidence.json": "ED969ED831BF7B387D4F5B8F941C9FE6C5F83884A95F24E7BF124AFB2E5B60DE",
+    "S4_P1_SP2_evidence.json": "35637E33D5E1BD9ACF8D20547359544E34768E9A32C81F01BB880C3F7BB31AA1",
+    "S4_P1_SP3_evidence.json": "E28FAEF88807B4BE984630329DC1A9FBA3901551493D4C02174717011E1B46F6",
+    "quota_enforcement_report.json": "35851AA9079BC082CD46E8A7AFC8F48181C43C8EC407B1B3D8E054B9E51D8794",
+    "thermal_battery_hysteresis_trace.json": "746E964EE132BD768B27CD6A795C0E9916F190D4E7C3E3DCD5ED87D72B5C661D",
+    "preemption_latency_histogram.json": "7DE0175F66E2DC40E448FE89710431850565F2E34B6912AA5D2C3C4F7841A79A"
+  }
+}

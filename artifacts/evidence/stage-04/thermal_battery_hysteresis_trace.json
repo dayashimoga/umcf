@@ -1,7 +1,7 @@
 [
   {
     "current_regime": "FullCapacity",
-    "evaluation_latency_micros": 3,
+    "evaluation_latency_micros": 0,
     "previous_regime": "FullCapacity",
     "reason": "",
     "step": 1,
@@ -19,7 +19,7 @@
   },
   {
     "current_regime": "Throttled50",
-    "evaluation_latency_micros": 16,
+    "evaluation_latency_micros": 2,
     "previous_regime": "FullCapacity",
     "reason": "Temperature 38.5°C >= throttle limit 38.0°C",
     "step": 3,
@@ -28,7 +28,7 @@
   },
   {
     "current_regime": "PausedWaitCoolOrCharge",
-    "evaluation_latency_micros": 2,
+    "evaluation_latency_micros": 1,
     "previous_regime": "Throttled50",
     "reason": "Temperature 41.2°C >= pause limit 41.0°C",
     "step": 4,
@@ -73,7 +73,7 @@
   },
   {
     "current_regime": "Throttled50",
-    "evaluation_latency_micros": 4,
+    "evaluation_latency_micros": 6,
     "previous_regime": "EmergencyEvict",
     "reason": "Cooled to 37.8°C <= 38.0°C after emergency evict",
     "step": 9,
@@ -82,7 +82,7 @@
   },
   {
     "current_regime": "FullCapacity",
-    "evaluation_latency_micros": 1,
+    "evaluation_latency_micros": 2,
     "previous_regime": "Throttled50",
     "reason": "Cooled to 30.0°C < 37.0°C",
     "step": 10,

@@ -7,6 +7,7 @@
 pub mod error;
 pub mod lifecycle;
 pub mod manager;
+pub mod preemption;
 pub mod quota;
 pub mod vram;
 
@@ -16,6 +17,10 @@ pub use lifecycle::{
     OsLifecycleSignal, SensorTelemetry, ThermalBatteryGuard, TrimMemoryLevel,
 };
 pub use manager::{QuotaManager, QuotaTelemetryReport, MAX_POLICY_UPDATE_LATENCY_MS};
+pub use preemption::{
+    ActivitySource, ActivityState, InstantPreemptor, PreemptionConfig, PreemptionEvent,
+    PreemptionLatencyHistogram, PreemptionToken, TaskCheckpoint,
+};
 pub use quota::{
     AllocatorGuard, CgroupV2Enforcer, JobObjectEnforcer, PosixRlimitEnforcer, QuotaConfig,
     QuotaEnforcer, RamReservationLease, WasmResourceLimiter,
