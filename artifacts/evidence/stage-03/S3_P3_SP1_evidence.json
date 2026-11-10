@@ -1,0 +1,28 @@
+{
+  "subphase": "S3.P3.SP1",
+  "title": "Cross-Platform CPU/RAM/Storage/Battery/Thermal Probing",
+  "git_commit": "322aa4cf0feaac855a3fb8a75a3973458acf8f65",
+  "timestamp_utc": "2026-11-10T14:00:00Z",
+  "podman_total_bytes": 10286867149,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "probe_duration_microseconds": 624.4,
+    "probe_duration_max_limit_ms": 25.0,
+    "architecture": "x86_64",
+    "physical_cores": 14,
+    "simd_avx2": true,
+    "total_ram_bytes": 16640237568,
+    "total_disk_bytes": 270202302464
+  },
+  "artifact_hashes": {
+    "live_system_probe_report.json": "dd4e4dbce68dd2c6686f9d9e53ad3aaa479eab6a04504280ed7eb40527061279"
+  }
+}

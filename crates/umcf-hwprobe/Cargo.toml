@@ -1,0 +1,21 @@
+[package]
+name = "umcf-hwprobe"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Real OS CPU/RAM/Storage/Battery/Thermal hardware probing and cgroup awareness for UMCF"
+
+[dependencies]
+umcf-core = { path = "../umcf-core" }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+sysinfo = "0.33"
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

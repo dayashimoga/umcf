@@ -53,7 +53,7 @@
 - [x] **[S3.P2.SP1]** (`2026-11-10`) STUN/ICE Candidate Gathering & UDP Hole Punching (Evidence: `artifacts/evidence/stage-03/S3_P2_SP1_evidence.json`, `artifacts/evidence/stage-03/nat_hole_punch_matrix.json`)
 - [x] **[S3.P2.SP2]** (`2026-11-10`) Encrypted TURN/DERP-Style Relay Fallback Protocol (Evidence: `artifacts/evidence/stage-03/S3_P2_SP2_evidence.json`, `artifacts/evidence/stage-03/relay_fallback_and_upgrade_trace.json`)
 - [x] **[S3.P2.SP3]** (`2026-11-10`) Roaming, Network Interface Handover & QUIC Connection Migration (Evidence: `artifacts/evidence/stage-03/S3_P2_SP3_evidence.json`, `artifacts/evidence/stage-03/connection_migration_trace.json`)
-- [ ] **[S3.P3.SP1]** Cross-Platform CPU/RAM/Storage/Battery/Thermal Probing
+- [x] **[S3.P3.SP1]** (`2026-11-10`) Cross-Platform CPU/RAM/Storage/Battery/Thermal Probing (Evidence: `artifacts/evidence/stage-03/S3_P3_SP1_evidence.json`, `artifacts/evidence/stage-03/live_system_probe_report.json`)
 - [ ] **[S3.P3.SP2]** GPU & NPU Compute Enumeration (Vulkan/Metal/DX12/OpenCL/NNAPI/CoreML)
 - [ ] **[S3.P3.SP3]** Real Compute/Memory/Network Micro-Benchmarks & Signed Attestation
 

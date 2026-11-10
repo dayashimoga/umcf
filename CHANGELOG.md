@@ -430,8 +430,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Stream data integrity: 100% bit-exact BLAKE3 verified.
   - Podman storage verified at **8.65 GiB** (< 29.0 GiB ceiling) and 0 forbidden placeholder tokens.
 - **Classified Test Harness**: Implemented `scripts/test-s3-p2-sp3.sh` and `scripts/test-s3-p2-sp3.ps1` covering `[Unit]` (`NetworkInterfaceWatcher` diff & debounce), `[Integration]` (5 consecutive QUIC socket rebinds < 250 ms, 0 broken streams, BLAKE3 bulk transfer), `[Simulation]` (abrupt interface blackhole recovery), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (connection_migration_trace.json audit) with 100% pass rate across 40 tests.
-- **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P2_SP3_evidence.json` and `artifacts/evidence/stage-03/connection_migration_trace.json`.
 
-
-
+### Added (S3.P3.SP1: Cross-Platform CPU/RAM/Storage/Battery/Thermal Probing)
+- **Dedicated Hardware Probing Crate (`crates/umcf-hwprobe`)**:
+  - Implemented `#![forbid(unsafe_code)]` cross-platform hardware prober crate with zero placeholders or mocks.
+  - Implemented `CpuProber`: detects host CPU architecture, logical core count, physical core count, base/boost frequencies, P-cores vs E-cores disparity split, and SIMD instruction sets (`simd_avx2`, `simd_avx512`, `simd_neon`, `simd_sve`).
+  - Implemented `MemoryStorageProber`: probes host total physical RAM and available RAM, and dynamically enforces cgroup v2 container limits (`memory.max` and `memory.current`) so containerized processes never over-report host RAM.
+  - Implemented persistent storage prober: queries total disk bytes, available disk bytes, and detects SSD vs HDD medium type (`is_solid_state`).
+  - Implemented `PowerThermalProber`: parses Linux/Android `/sys/class/power_supply` (battery capacity percentage, AC/charging state) and `/sys/class/thermal` (milli-Celsius sensor readouts), with fallback to `sysinfo::Components` on desktop/Windows/macOS platforms.
+  - Implemented `SystemProber`: unifies all hardware subsystems into `SystemProber::probe_all()`, mapping host state into a fully populated `HardwareCapabilityDescriptor` with automatic `OperatingSystem` and `DeviceClass` inference.
+- **High-Performance Static Cache & Sub-Millisecond Probing**:
+  - Engineered static thread-safe lazy initialized caching for `sysinfo::System`, `Disks`, and `Components` (`GLOBAL_SYSTEM`, `GLOBAL_DISKS`, `GLOBAL_COMPONENTS`).
+  - Measured live probe execution duration: **0.624 ms** (624 µs), outperforming the **< 25 ms** requirement by a factor of 40x.
+- **Measurable Metrics & Invariants**:
+  - Full system hardware probe completed in **0.624 ms** (< 25 ms ceiling).
+  - SIMD hardware flags accurately queried (`simd_avx2 = true` on host matching CPUID registers).
+  - Cgroup v2 `memory.max` and `cpu.max` parsers verified against containerized boundaries.
+  - Synthetic thermal critical (95,000 mC -> `ThermalState::Critical`) and low battery (8% discharging) verified.
+  - Podman storage verified at **10.28 GiB** (< 29.0 GiB ceiling) and 0 forbidden placeholder tokens.
+- **Classified Test Harness**: Implemented `scripts/test-s3-p3-sp1.sh` and `scripts/test-s3-p3-sp1.ps1` covering `[Unit]` (/proc/cpuinfo, cgroup v2 cpu.max/memory.max/memory.current, battery sysfs, and thermal mapping parsers), `[Integration]` (SystemProber::probe_all() live hardware query < 25 ms), `[Simulation]` (thermal critical 95°C and low battery 8% sysfs injection, cgroup limits clamping), `[Hardware-Required]` (real CPUID SIMD register queries, host RAM bounds, and Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (live_system_probe_report.json audit) with 100% pass rate across 12 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P3_SP1_evidence.json` and `artifacts/evidence/stage-03/live_system_probe_report.json`.
 

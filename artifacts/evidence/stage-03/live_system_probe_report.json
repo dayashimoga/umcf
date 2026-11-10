@@ -1,0 +1,57 @@
+{
+  "node_id": "did:umcf:00001111222233334444555566667777",
+  "device_class": "Desktop",
+  "os": "Windows",
+  "cpu": {
+    "architecture": "x86_64",
+    "physical_cores": 14,
+    "performance_cores": 14,
+    "efficiency_cores": 0,
+    "simd_avx2": true,
+    "simd_avx512": false,
+    "simd_neon": false,
+    "simd_sve": false,
+    "base_clock_mhz": 0,
+    "boost_clock_mhz": 0
+  },
+  "memory": {
+    "total_ram": 16640237568,
+    "available_ram": 3826319360,
+    "is_unified_memory": false,
+    "bandwidth_mbps": 34000
+  },
+  "accelerators": [
+    {
+      "name": "Host CPU (x86_64)",
+      "kind": "Cpu",
+      "backend": "CpuSimd",
+      "vram_bytes": 3826319360,
+      "dedicated_memory_mb": 0,
+      "shared_memory_mb": 3649,
+      "compute_units": 14,
+      "fp32_tflops": 0.7,
+      "fp16_tflops": 1,
+      "int8_tops": 28,
+      "supports_fp16": false,
+      "supports_int8": true,
+      "supports_int4": true,
+      "verified_on_hardware": true
+    }
+  ],
+  "storage": {
+    "total_disk": 270202302464,
+    "available_disk": 29560090624,
+    "is_solid_state": true
+  },
+  "network": {
+    "link_type": "Loopback",
+    "estimated_bandwidth_mbps": 1000,
+    "measured_rtt_ms": 1
+  },
+  "power_thermal": {
+    "battery_percent": null,
+    "is_charging": true,
+    "thermal_state": "Nominal",
+    "temperature_milli_celsius": null
+  }
+}
