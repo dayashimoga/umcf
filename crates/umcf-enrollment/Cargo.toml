@@ -1,0 +1,29 @@
+[package]
+name = "umcf-enrollment"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Short-lived QR enrollment tokens, matrix rendering, and secure candidate handshake for UMCF"
+
+[dependencies]
+umcf-proto.workspace = true
+umcf-core.workspace = true
+umcf-identity.workspace = true
+umcf-telemetry.workspace = true
+ed25519-dalek.workspace = true
+x25519-dalek.workspace = true
+rand_core.workspace = true
+blake3.workspace = true
+qrcode.workspace = true
+bincode.workspace = true
+chacha20poly1305 = { workspace = true, features = ["std"] }
+base64 = "0.22.1"
+tokio = { workspace = true, features = ["sync", "time"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

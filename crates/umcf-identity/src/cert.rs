@@ -7,7 +7,6 @@ use rcgen::{
     BasicConstraints, CertificateParams, DistinguishedName, DnType, IsCa, KeyPair, KeyUsagePurpose,
     SanType, SerialNumber, PKCS_ED25519,
 };
-use rustls_pki_types::PrivatePkcs8KeyDer;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use umcf_core::NodeRole;
@@ -48,6 +47,20 @@ pub struct NodeCertificate {
     pub cert_der: Vec<u8>,
     /// PEM-formatted X.509 certificate string.
     pub cert_pem: String,
+}
+
+/// Wrapper implementing `rcgen::PublicKeyData` for raw Ed25519 public keys.
+#[derive(Debug, Clone, Copy)]
+pub struct Ed25519PublicKeyData<'a>(pub &'a [u8; 32]);
+
+impl<'a> rcgen::PublicKeyData for Ed25519PublicKeyData<'a> {
+    fn der_bytes(&self) -> &[u8] {
+        self.0
+    }
+
+    fn algorithm(&self) -> &rcgen::SignatureAlgorithm {
+        &rcgen::PKCS_ED25519
+    }
 }
 
 impl ClusterCa {
@@ -118,13 +131,24 @@ impl ClusterCa {
         role: NodeRole,
         validity_days: u32,
     ) -> Result<NodeCertificate, IdentityError> {
-        let did = node_keypair.did_key();
+        self.issue_certificate_for_public_key(
+            &node_keypair.ed25519_public_bytes(),
+            &node_keypair.did_key(),
+            role,
+            validity_days,
+        )
+    }
 
-        // Convert Ed25519 seed to RFC 8410 PKCS#8 v1 DER format for KeyPair
-        let pkcs8_der = ed25519_seed_to_pkcs8_der(node_keypair.seed());
-        let pkcs8_key_der = PrivatePkcs8KeyDer::from(&pkcs8_der[..]);
-        let leaf_keypair = KeyPair::from_pkcs8_der_and_sign_algo(&pkcs8_key_der, &PKCS_ED25519)
-            .map_err(|e| IdentityError::CertificateInvalid(e.to_string()))?;
+    /// Issues an X.509 leaf `NodeCertificate` directly for a candidate's public key and DID
+    /// without requiring possession of the candidate's private key.
+    pub fn issue_certificate_for_public_key(
+        &self,
+        public_key_bytes: &[u8; 32],
+        did: &str,
+        role: NodeRole,
+        validity_days: u32,
+    ) -> Result<NodeCertificate, IdentityError> {
+        let public_key_data = Ed25519PublicKeyData(public_key_bytes);
 
         // Generate cryptographically random 16-byte positive serial number
         let mut serial_bytes = [0u8; 16];
@@ -140,7 +164,7 @@ impl ClusterCa {
                     .map_err(|e: rcgen::Error| IdentityError::CertificateInvalid(e.to_string()))?,
             ),
             SanType::URI(
-                did.clone()
+                did.to_string()
                     .try_into()
                     .map_err(|e: rcgen::Error| IdentityError::CertificateInvalid(e.to_string()))?,
             ),
@@ -152,7 +176,7 @@ impl ClusterCa {
         params.distinguished_name = DistinguishedName::new();
         params
             .distinguished_name
-            .push(DnType::CommonName, did.clone());
+            .push(DnType::CommonName, did.to_string());
         params
             .distinguished_name
             .push(DnType::OrganizationName, "Universal Mobile Compute Fabric");
@@ -167,7 +191,7 @@ impl ClusterCa {
         ];
 
         let now = SystemTime::now();
-        let not_before = now;
+        let not_before = now.checked_sub(Duration::from_secs(60)).unwrap_or(now);
         let not_after = now + Duration::from_secs(u64::from(validity_days) * 86400);
         params.not_before = not_before.into();
         params.not_after = not_after.into();
@@ -197,14 +221,14 @@ impl ClusterCa {
             .map_err(|e| IdentityError::CertificateInvalid(e.to_string()))?;
 
         let leaf_cert = params
-            .signed_by(&leaf_keypair, &ca_cert, &self.ca_keypair)
+            .signed_by(&public_key_data, &ca_cert, &self.ca_keypair)
             .map_err(|e| IdentityError::CertificateInvalid(e.to_string()))?;
 
         let cert_der = leaf_cert.der().to_vec();
         let cert_pem = leaf_cert.pem();
 
         Ok(NodeCertificate {
-            did,
+            did: did.to_string(),
             cluster_id: self.cluster_id.clone(),
             role,
             serial_number: serial_number_hex,
@@ -240,15 +264,4 @@ mod hex {
     pub fn encode(data: impl AsRef<[u8]>) -> String {
         data.as_ref().iter().map(|b| format!("{b:02x}")).collect()
     }
-}
-
-/// Encodes an Ed25519 private seed into RFC 8410 PKCS#8 v1 DER bytes for X.509 keypair import.
-fn ed25519_seed_to_pkcs8_der(seed: &[u8; 32]) -> [u8; 48] {
-    let mut der = [0u8; 48];
-    der[0..16].copy_from_slice(&[
-        0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22,
-        0x04, 0x20,
-    ]);
-    der[16..48].copy_from_slice(seed);
-    der
 }

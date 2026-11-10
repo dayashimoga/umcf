@@ -193,6 +193,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s2-p1-sp3.sh` and `scripts/test-s2-p1-sp3.ps1` covering `[Unit]` (Cluster CA generation, leaf certificate issuance, expiry, and CRL lookup microbenchmark < 10 µs), `[Integration]` (2-RTT mutual attestation protocol with TLS exporter and transcript export), `[Simulation]` (MITM relay attack, nonce replay, sender impersonation, and CRL revocation rejection), `[Hardware-Required]` (hardware thread probe and Podman quota verification < 29.0 GiB), and `[Manually-Verified]` (mtls_attestation_transcript.json review) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P1_SP3_evidence.json` and `artifacts/evidence/stage-02/mtls_attestation_transcript.json`.
 
+### Added (S2.P2.SP1: Short-Lived QR Enrollment Token Generator & Scanner Flow)
+- **New Workspace Crate (`crates/umcf-enrollment`)**:
+  - Established `crates/umcf-enrollment` dedicated to pairing, QR matrix encoding, single-use token lifecycle, and cryptographic enrollment handshakes.
+  - Added `qrcode` and `bincode` to workspace dependencies.
+- **Compact Enrollment Token (`crates/umcf-enrollment/src/token.rs`)**:
+  - Implemented `EnrollmentToken` carrying `cluster_id`, `issuer_did`, `issuer_public_key`, `ephemeral_x25519_pk`, `bootstrap_endpoints: Vec<SocketAddr>`, `one_time_nonce: [u8; 16]`, `expires_at_ms`, `proposed_role`, and `issuer_ed25519_sig`.
+  - Implemented compact binary wire framing (`CompactTokenWire`) and URL-safe base64 URI serialization (`umcf://enroll/v1/<base64url>`).
+  - Achieved URI length of **285 ASCII characters**, strictly within the **320-character ceiling** required for fast mobile camera scanning at QR Version 10 / ECC Level M.
+  - Enforced default TTL of 180 seconds (3 minutes) and hard ceiling of 600 seconds (10 minutes) (`MAX_TOKEN_TTL_MS`).
+- **QR Matrix Rendering (`crates/umcf-enrollment/src/qr.rs`)**:
+  - Implemented `QrRenderer` generating standalone, crisp vector SVG (`to_svg()`, `to_svg_file()`) with 4-module quiet zone margin and dark theme branding (`#0f172a`).
+  - Implemented Unicode terminal half-block matrix rendering (`to_unicode_blocks()`) for CLI enrollment inspection.
+  - Exported sample verification vector to `artifacts/evidence/stage-02/sample_enrollment_qr.svg`.
+- **Encrypted Enrollment Handshake (`crates/umcf-enrollment/src/handshake.rs`)**:
+  - Implemented `EnrollmentCoordinator` and `CandidateEnroller` executing ephemeral X25519 Diffie-Hellman key agreement, BLAKE3 key derivation, and ChaCha20-Poly1305 AEAD channel encryption.
+  - Candidate scans QR token, creates authenticated `JoinRequest` binding W3C DID document and `HardwareCapabilityDescriptor`.
+  - Coordinator verifies signature, decrypts payload, validates single-use nonce against `ReplayProtectionCache`, and issues a signed X.509 `NodeCertificate`.
+  - Achieved complete loopback handshake latency of **27 ms**, well below the strict **50 ms** ceiling.
+- **Classified Test Harness**: Implemented `scripts/test-s2-p2-sp1.sh` and `scripts/test-s2-p2-sp1.ps1` covering `[Unit]` (token generation, URI roundtrip <= 320 chars, TTL ceiling, tampering rejection, SVG/Unicode QR rendering), `[Integration]` (full master QR token -> candidate scan -> join request -> cert issuance handshake in < 50 ms), `[Simulation]` (concurrent replay of single-use token strictly rejected by cache), `[Hardware-Required]` (hardware thread probe and Podman quota verification < 29.0 GiB), and `[Manually-Verified]` (sample_enrollment_qr.svg QR matrix validation) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P2_SP1_evidence.json` and `artifacts/evidence/stage-02/sample_enrollment_qr.svg`.
+
+
 
 
 

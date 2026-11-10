@@ -4,6 +4,7 @@ members = [
     "crates/umcf-proto",
     "crates/umcf-core",
     "crates/umcf-identity",
+    "crates/umcf-enrollment",
     "crates/umcf-telemetry",
     "crates/umcf-coordinator",
     "crates/umcf-worker",
@@ -27,9 +28,11 @@ umcf-proto = { path = "crates/umcf-proto" }
 umcf-core = { path = "crates/umcf-core" }
 umcf-telemetry = { path = "crates/umcf-telemetry" }
 umcf-identity = { path = "crates/umcf-identity" }
+umcf-enrollment = { path = "crates/umcf-enrollment" }
 umcf-coordinator = { path = "crates/umcf-coordinator" }
 umcf-worker = { path = "crates/umcf-worker" }
 umcf-scheduler = { path = "crates/umcf-scheduler" }
+qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core", "zeroize"] }
 x25519-dalek = { version = "2.0.1", features = ["zeroize", "static_secrets"] }
 zeroize = { version = "1.8.1", features = ["derive"] }

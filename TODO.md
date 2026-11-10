@@ -38,7 +38,7 @@
 - [x] **[S2.P1.SP1]** (`2026-11-10`) Ed25519/X25519 Node Identity & DID Generation (Evidence: `artifacts/evidence/stage-02/S2_P1_SP1_evidence.json`)
 - [x] **[S2.P1.SP2]** (`2026-11-10`) Platform Keychain/Keystore & Encrypted Local Vault (Evidence: `artifacts/evidence/stage-02/S2_P1_SP2_evidence.json`)
 - [x] **[S2.P1.SP3]** (`2026-11-10`) Mutual Attestation & Signed Identity Certificates (Evidence: `artifacts/evidence/stage-02/S2_P1_SP3_evidence.json`)
-- [ ] **[S2.P2.SP1]** Short-Lived QR Enrollment Token Generator & Scanner Flow
+- [x] **[S2.P2.SP1]** (`2026-11-10`) Short-Lived QR Enrollment Token Generator & Scanner Flow (Evidence: `artifacts/evidence/stage-02/S2_P2_SP1_evidence.json`)
 - [ ] **[S2.P2.SP2]** Fine-Grained RBAC & Explicit Resource-Sharing Consent Engine
 - [ ] **[S2.P2.SP3]** Dynamic Master/Worker/Hybrid State Machine & Coordinator Election
 - [ ] **[S2.P3.SP1]** Local Autonomous Coordinator & Embedded ACID State Store

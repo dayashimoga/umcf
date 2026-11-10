@@ -1,0 +1,38 @@
+{
+  "subphase": "S2.P2.SP1",
+  "title": "Short-Lived QR Enrollment Token Generator & Scanner Flow",
+  "git_commit": "2db44affb1852d614b16cc11718e5b6bde66312f",
+  "timestamp_utc": "2026-11-10T09:50:00Z",
+  "podman_total_bytes": 4827482684,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "metrics": {
+    "uri_length_characters": 285,
+    "uri_length_ceiling": 320,
+    "handshake_latency_ms": 27,
+    "handshake_latency_ceiling_ms": 50,
+    "default_token_ttl_seconds": 180,
+    "max_token_ttl_seconds": 600,
+    "qr_version": 10,
+    "qr_ecc_level": "M"
+  },
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "crates/umcf-enrollment/Cargo.toml": "5E8346D83F36DED140835DF799D6EA086DBEB48920F0338E4032316F74C0BD0E",
+    "crates/umcf-enrollment/src/lib.rs": "04EC01CE7B2F6B06E8E4642085BE541E4A5362DEFA3435EFF96732C2E567EEB0",
+    "crates/umcf-enrollment/src/error.rs": "C47872342DE0159DB570056B71DF79DA8F59E08D409EA96B7BE8F8AFFA493E60",
+    "crates/umcf-enrollment/src/token.rs": "B6EAF928C7C88BD2351B492B52A1DAA5A26C743187CEA2D284BE9B7ACA6E4FA0",
+    "crates/umcf-enrollment/src/qr.rs": "7EA0D2ED5705EF6C6F339AD2B3A73986EDE159C56A034BE23BBECFABDB05EC9A",
+    "crates/umcf-enrollment/src/handshake.rs": "4791EC0D5A06D018818E84D87248C4D0E649BD8EB10400E769C219BD9E84FDB3",
+    "crates/umcf-identity/src/cert.rs": "C7E127E9A8016F4F9AA38065705BA391339C64B311462755379F45AFD32D5DCD",
+    "artifacts/evidence/stage-02/sample_enrollment_qr.svg": "0297EA26DB43A0E609A91D97D7BF08ABD071552FAB6113B8E0C7EAA4E3CE44E8",
+    "scripts/test-s2-p2-sp1.ps1": "E4DFB7E3AAA32AA4B9989061C49D0BDD9038E4F703821EC7EF4637D1D7D9FC9A",
+    "scripts/test-s2-p2-sp1.sh": "653B61D09D634CFE5D3E56C2C34CE23FDC506E2AEF024A475C35B2EC59EB05C5"
+  }
+}

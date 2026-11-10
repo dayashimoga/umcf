@@ -18,12 +18,12 @@ pub mod vault;
 pub use attestation::{
     AttestationChallenge, AttestationProof, MutualAttestationProtocol, TLS_EXPORTER_LABEL,
 };
-pub use cert::{ClusterCa, NodeCertificate};
+pub use cert::{ClusterCa, Ed25519PublicKeyData, NodeCertificate};
 pub use crl::{ClusterCrl, CrlRevocationReason, RevokedCertificateEntry};
 pub use did::{DidDocument, DidKey, VerificationMethod};
 pub use envelope_auth::{sign_envelope, verify_envelope};
 pub use error::IdentityError;
-pub use keys::NodeKeypair;
+pub use keys::{NodeKeypair, DOMAIN_SEPARATION_PREFIX};
 pub use os_keystore::{KeystoreBackendKind, PlatformKeyStore};
 pub use storage::{HistoricalKeyRecord, KeyStorageBackend, PersistedIdentity};
 pub use vault::{LocalEncryptedVault, VaultArgon2Params, VAULT_HEADER_SIZE, VAULT_MAGIC};
