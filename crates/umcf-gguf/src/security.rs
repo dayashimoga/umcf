@@ -197,6 +197,11 @@ impl VerifiedModelGuard {
     }
 
     #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.file_path
+    }
+
+    #[must_use]
     pub fn inspection(&self) -> &ModelInspection {
         &self.inspection
     }

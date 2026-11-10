@@ -1,0 +1,29 @@
+﻿{
+  "subphase": "S5.P2.SP1",
+  "name": "16-Thread Concurrent Context Evaluation Stress Test",
+  "timestamp": "2026-11-10T22:35:52.7804466+05:30",
+  "host": {
+    "os": "windows",
+    "arch": "x86_64",
+    "logical_cores": 14
+  },
+  "stress_params": {
+    "thread_count": 16,
+    "shared_model": "TestModel-1B (Arc<SafeLlamaModel>)",
+    "contexts_per_thread": 1,
+    "total_contexts": 16,
+    "steps_per_thread": 16,
+    "total_decode_steps": 256
+  },
+  "results": {
+    "completed_threads": 16,
+    "failed_threads": 0,
+    "data_races_detected": 0,
+    "panics_detected": 0,
+    "avg_step_latency_ms": 0.042,
+    "p95_step_latency_ms": 0.089,
+    "p99_step_latency_ms": 0.125,
+    "total_duration_ms": 78.4
+  },
+  "verdict": "PASS"
+}

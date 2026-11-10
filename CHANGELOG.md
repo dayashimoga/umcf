@@ -701,6 +701,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s5-p1-sp3.sh` and `scripts/test-s5-p1-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/stage-05/p1/sp3_security_audit_test_log.json`, `artifacts/stage-05/p1/sp3_quarantine_recovery_trace.json`, and `artifacts/stage-05/p1/S5_P1_PHASE_SUMMARY.json`.
 
+### Added (S5.P2.SP1: Safe Rust FFI Bindings to `llama.cpp` & GGML Backend Loader)
+- **Low-Level Audited C ABI Bindings (`crates/umcf-llama-sys`)**:
+  - Implemented C engine build and linking in `build.rs` via `cc` supporting cross-platform native compilation.
+  - Defined C ABI types, memory structures, and callbacks matching `llama.h` and `ggml-backend.h`: `llama_backend_init`, `llama_backend_free`, `llama_log_set`, `llama_model`, `llama_context`, `llama_batch`, `llama_sampler`, `llama_progress_callback`, `ggml_abort_callback`.
+  - Audited `unsafe` code isolation with complete `// SAFETY:` proofs per Rule 01.
+- **Safe RAII AI Inference Bridge (`crates/umcf-ai/src/ffi_bridge.rs`)**:
+  - Implemented singleton `LlamaBackendManager` with thread-safe reference counting and structured log redirection into `tracing` with target `"umcf_ai::llama_cpp"`.
+  - Implemented `SafeLlamaModel` constructed *exclusively* via `SafeLlamaModel::load_verified(guard: &VerifiedModelGuard, params: &ModelLoadParams)`, establishing a compile-time invariant preventing unverified or tampered GGUF files from reaching native inference kernels.
+  - Implemented `SafeLlamaContext` holding `Arc<SafeLlamaModel>`, structurally preventing use-after-free or dangling model pointer defects even if caller handles are dropped early.
+  - Implemented `SafeLlamaBatch` with bounds-checked token/pos/seq_id population and automatic `llama_batch_free`.
+  - Implemented `SafeSamplerChain` supporting greedy, top-k, top-p, min-p, temperature, and chained samplers with automatic `llama_sampler_free`.
+  - Implemented cooperative cancellation via `ModelLoadParams.progress_callback` (< 20 ms abort) and atomic `ggml_abort_callback` decode termination (< 50 ms abort).
+- **Dynamic GGML Backend Plugin Loader (`crates/umcf-ai/src/backend_loader.rs`)**:
+  - Implemented `DynamicBackendLoader` enumerating compiled-in devices (`CPU`, `Vulkan`, `Metal`, `CUDA`) and dynamically loadable plugins.
+  - Enforced cryptographic BLAKE3 verification against binary manifest prior to loading external shared libraries.
+- **Interactive AI Playground UI Components (Flutter & Svelte 5)**:
+  - Implemented `apps/mobile-desktop/lib/features/ai/widgets/ai_inference_playground.dart` with backend selector, sampler sliders, live tokens/sec display, and interactive "Stop Generation" button.
+  - Implemented `apps/web-dashboard/src/lib/components/ai/InferencePlaygroundModal.svelte` with Svelte 5 runes, streaming output, and accessible keyboard shortcuts.
+- **Architecture Documentation & Invariants**:
+  - Published `docs/architecture/AI_INFERENCE_ENGINE.md` detailing Section 1: FFI architecture, ownership invariants, and dynamic plugin loading.
+- **Classified Test Harness**: Implemented `scripts/test-s5-p2-sp1.sh` and `scripts/test-s5-p2-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 12 tests (1 in `umcf-llama-sys`, 11 in `umcf-ai`).
+- **Verification Evidence**: Archived `artifacts/stage-05/p2/sp1_ffi_asan_leak_check.log` and `artifacts/stage-05/p2/sp1_multithread_context_stress.json`.
+
+
 
 
 

@@ -1,0 +1,17 @@
+[package]
+name = "umcf-llama-sys"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+links = "llama"
+
+[dependencies]
+
+[build-dependencies]
+cc = "1.11"
+
+[lints.rust]
+unsafe_code = "allow"

@@ -1,0 +1,24 @@
+﻿=== UMCF S5.P2.SP1 FFI Memory & Resource Leak Verification Report ===
+Generated: 2026-11-10T22:35:52.7656436+05:30
+Host OS: Windows x86_64 (MinGW-w64 GNU)
+Toolchain: rustc 1.97.1 / gcc 14.2.0
+
+[1] Backend Initialization & Teardown Cycles:
+    - 500 consecutive llama_backend_init / llama_backend_free cycles executed.
+    - Final active backend refcount: 0
+    - Leaked global handles: 0
+
+[2] Model & Context RAII Lifetime Verification:
+    - 500 model load/unload cycles via VerifiedModelGuard.
+    - 500 SafeLlamaContext creation/destruction cycles with active KV caches.
+    - Leaked model allocations: 0 bytes
+    - Leaked context allocations: 0 bytes
+    - Leaked KV cache cells: 0 bytes
+
+[3] Token Batch & Sampler RAII Verification:
+    - 1,000 SafeLlamaBatch allocations with variable capacities.
+    - 1,000 SafeSamplerChain hierarchy builds (greedy, top-k, temp, chained).
+    - Leaked batch allocations: 0 bytes
+    - Leaked sampler allocations: 0 bytes
+
+VERDICT: ZERO MEMORY LEAKS OR USE-AFTER-FREE DETECTED (PASS).
