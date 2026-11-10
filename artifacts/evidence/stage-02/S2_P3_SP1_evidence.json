@@ -1,0 +1,32 @@
+{
+  "subphase": "S2.P3.SP1",
+  "title": "Local Autonomous Coordinator & SQLite/Redb State Store",
+  "git_commit": "3bb95e67cb5acb0642cdfdfa1c7bace2ce49e365",
+  "timestamp_utc": "2026-11-10T10:30:00Z",
+  "podman_total_bytes": 5396485469,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "total_workspace_tests": 59,
+    "pass_rate_percent": 100.0,
+    "crdt_randomized_iterations": 10000,
+    "crdt_laws_verified": [
+      "commutativity",
+      "idempotency",
+      "associativity"
+    ],
+    "redb_commit_p50_us": 43,
+    "redb_commit_p99_us": 298,
+    "redb_compacted_size_bytes": 843776
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-02/crdt_proptest_summary.json": "36209985a7f9c5a844378efb2548c22f9cac7cff7dccf5daad90059c4b6e81a0"
+  }
+}

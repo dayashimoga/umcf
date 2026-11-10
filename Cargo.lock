@@ -748,6 +748,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "redb"
+version = "2.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3d64e07496d293ad8ed401c4d193d5b9f0f97671fbd5bf21d691a0c7d2c53dc8"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "ref-cast"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1335,6 +1344,26 @@ dependencies = [
  "tokio",
  "tokio-util",
  "zstd",
+]
+
+[[package]]
+name = "umcf-registry"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "blake3",
+ "proptest",
+ "redb",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "umcf-core",
+ "umcf-enrollment",
+ "umcf-identity",
+ "umcf-proto",
 ]
 
 [[package]]

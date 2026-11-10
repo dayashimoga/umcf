@@ -41,7 +41,7 @@
 - [x] **[S2.P2.SP1]** (`2026-11-10`) Short-Lived QR Enrollment Token Generator & Scanner Flow (Evidence: `artifacts/evidence/stage-02/S2_P2_SP1_evidence.json`)
 - [x] **[S2.P2.SP2]** (`2026-11-10`) Fine-Grained RBAC & Explicit Resource-Sharing Consent Engine (Evidence: `artifacts/evidence/stage-02/S2_P2_SP2_evidence.json`)
 - [x] **[S2.P2.SP3]** (`2026-11-10`) Dynamic Master/Worker/Hybrid State Machine & Coordinator Election (Evidence: `artifacts/evidence/stage-02/S2_P2_SP3_evidence.json`)
-- [ ] **[S2.P3.SP1]** Local Autonomous Coordinator & Embedded ACID State Store
+- [x] **[S2.P3.SP1]** (`2026-11-10`) Local Autonomous Coordinator & Embedded ACID State Store (Evidence: `artifacts/evidence/stage-02/S2_P3_SP1_evidence.json`)
 - [ ] **[S2.P3.SP2]** Cloudflare Workers + Durable Objects Control Plane Sync
 - [ ] **[S2.P3.SP3]** Google Cloud Run Fallback Control Plane & Split-Brain Reconciliation
 

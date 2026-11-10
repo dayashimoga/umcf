@@ -1,0 +1,29 @@
+[package]
+name = "umcf-registry"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Embedded ACID state store (redb), Hybrid Logical Clocks (HLC), and delta-state CRDT cluster registry for UMCF"
+
+[dependencies]
+umcf-proto.workspace = true
+umcf-core.workspace = true
+umcf-identity.workspace = true
+umcf-enrollment.workspace = true
+redb = { workspace = true }
+blake3.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+bincode.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync", "time"] }
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+proptest = { workspace = true }
+
+[lints]
+workspace = true
