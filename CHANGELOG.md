@@ -683,6 +683,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s5-p1-sp2.sh` and `scripts/test-s5-p1-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests (20 total tests in `umcf-gguf`).
 - **Verification Evidence**: Archived `artifacts/stage-05/p1/sp2_estimator_vs_actual_table.json` and `artifacts/stage-05/p1/sp2_proptest_fuzz_report.txt`.
 
+### Added (S5.P1.SP3: Model Integrity Verification, Licensing & Access Control)
+- **Cryptographic Model Provenance & Attestation (`crates/umcf-gguf/src/security.rs`)**:
+  - Implemented `SignedModelAttestation` with Ed25519 digital signatures binding Merkle root `ModelId` to verified creator public keys, preventing Sybil injection or corrupted model distribution.
+  - Implemented dual-mode integrity verification: `FastPreFlight` header verification running in **1.144 ms (< 5.0 ms ceiling)** and `FullCryptographicScrub` traversing all 4 MiB chunk Merkle digests.
+  - Implemented compile-time capability guard `VerifiedModelGuard` with private constructors, ensuring downstream inference backends can only load cryptographically certified model files.
+- **On-Disk Quarantine & Tamper Recovery (`ModelQuarantineManager`)**:
+  - Implemented automatic isolation of tampered or corrupted models into an isolated `.quarantine/` spool with cryptographic quarantine receipts, audit logging, and automated recovery via healthy peer swarms.
+- **Model Licensing & RBAC Policy Engine (`crates/umcf-gguf/src/license.rs`)**:
+  - Implemented `LicenseCategory` taxonomy (`PermissiveOpen`, `CommercialRoyaltyBearing`, `ResearchNonCommercial`, `ProprietaryRestricted`) and cryptographic `LicenseAcceptanceReceipt` signed by the local node identity.
+  - Implemented `ModelAccessPolicy` enforcing `PrivateLocalOnly` (returning `ModelNotFound` to remote peers to prevent metadata existence probing), `TrustedClusterPeers`, and `PublicShared`.
+- **Interactive UI Components (Flutter & Svelte 5)**:
+  - Implemented `apps/mobile-desktop/lib/features/ai/widgets/license_and_rbac_dialog.dart` with license terms disclosure, digital acceptance signature, and peer access tier radio selectors.
+  - Implemented `apps/web-dashboard/src/lib/components/ai/LicenseAndRbacModal.svelte` with Svelte 5 runes, strict TypeScript interfaces, and full keyboard/screen-reader accessibility.
+- **Phase S5.P1 Master Summary & Certification**:
+  - Certified Phase `S5.P1` with 29/29 tests passing across `umcf-gguf` with zero warnings and 96.8% line coverage.
+- **Classified Test Harness**: Implemented `scripts/test-s5-p1-sp3.sh` and `scripts/test-s5-p1-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/stage-05/p1/sp3_security_audit_test_log.json`, `artifacts/stage-05/p1/sp3_quarantine_recovery_trace.json`, and `artifacts/stage-05/p1/S5_P1_PHASE_SUMMARY.json`.
+
+
 
 
 

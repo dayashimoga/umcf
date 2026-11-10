@@ -24,3 +24,4 @@ echo "[5/5] Running [Manually-Verified] tests..."
 cargo test -p umcf-gguf --test parser_and_estimator_tests test_manual_
 
 echo "=== S5.P1.SP2 Verification: ALL PASS ==="
+

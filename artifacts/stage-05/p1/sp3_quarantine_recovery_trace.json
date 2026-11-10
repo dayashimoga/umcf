@@ -1,0 +1,19 @@
+{
+  "subphase": "S5.P1.SP3",
+  "title": "On-Disk Silent Corruption Automatic Quarantine Trace",
+  "timestamp": "2026-11-10T22:17:27Z",
+  "status": "PASS",
+  "incident_trace": {
+    "model_id": "5be5c217399b2ddfef9c31eee544a82f145afbd13e29c7c8fbe60d66ca25d853",
+    "corruption_simulation": "Flipped 2 bytes near EOF on active model file on disk",
+    "detection_mechanism": "ModelIntegrityVerifier::verify(VerifyMode::FullCryptographicScrub)",
+    "scrub_result": "ChunkHashMismatch on chunk #0",
+    "quarantine_action": {
+      "source_path": "models/5be5c217399b2ddfef9c31eee544a82f145afbd13e29c7c8fbe60d66ca25d853.gguf",
+      "target_quarantine_path": "quarantine/5be5c217399b2ddfef9c31eee544a82f145afbd13e29c7c8fbe60d66ca25d853.corrupted",
+      "diagnostic_report": "quarantine/5be5c217399b2ddfef9c31eee544a82f145afbd13e29c7c8fbe60d66ca25d853.reason.txt",
+      "active_store_status": "Removed from active model registry. Execution forbidden."
+    },
+    "zero_leakage_confirmed": true
+  }
+}

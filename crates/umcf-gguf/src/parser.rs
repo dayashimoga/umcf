@@ -783,15 +783,16 @@ pub fn create_test_gguf_bytes(
 
     // Tensors
     let mut current_offset: u64 = 0;
+    let vocab_size: u64 = 256;
 
     // Embedding tensor
     write_str(&mut buf, "token_embd.weight");
     buf.extend_from_slice(&2u32.to_le_bytes()); // 2 dims
-    buf.extend_from_slice(&32000u64.to_le_bytes());
+    buf.extend_from_slice(&vocab_size.to_le_bytes());
     buf.extend_from_slice(&(u64::from(embedding_len)).to_le_bytes());
     buf.extend_from_slice(&(quant_type as u32).to_le_bytes());
     buf.extend_from_slice(&current_offset.to_le_bytes());
-    let embd_size = quant_type.tensor_size_bytes(32000 * u64::from(embedding_len)).unwrap_or(0);
+    let embd_size = quant_type.tensor_size_bytes(vocab_size * u64::from(embedding_len)).unwrap_or(0);
     current_offset += embd_size;
 
     // Layer tensors
@@ -821,9 +822,18 @@ pub fn create_test_gguf_bytes(
     write_str(&mut buf, "output.weight");
     buf.extend_from_slice(&2u32.to_le_bytes());
     buf.extend_from_slice(&(u64::from(embedding_len)).to_le_bytes());
-    buf.extend_from_slice(&32000u64.to_le_bytes());
+    buf.extend_from_slice(&vocab_size.to_le_bytes());
     buf.extend_from_slice(&(quant_type as u32).to_le_bytes());
     buf.extend_from_slice(&current_offset.to_le_bytes());
+    let out_size = quant_type.tensor_size_bytes(u64::from(embedding_len) * vocab_size).unwrap_or(0);
+    current_offset += out_size;
+
+    // Pad buffer to 32-byte alignment for data_offset
+    let pad = (32 - (buf.len() % 32)) % 32;
+    buf.resize(buf.len() + pad, 0);
+
+    // Append dummy tensor data payload so total file size matches data_offset + current_offset
+    buf.resize(buf.len() + (current_offset as usize), 0x55);
 
     buf
 }

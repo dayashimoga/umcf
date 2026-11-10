@@ -41,3 +41,4 @@ Test Harness: proptest v1.12.0
 Conclusion:
 The zero-copy GGUF parser in crates/umcf-gguf/src/parser.rs is 100% panic-free and robust against adversarial or corrupted binary payloads.
 ================================================================================
+

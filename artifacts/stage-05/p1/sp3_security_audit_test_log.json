@@ -1,0 +1,33 @@
+{
+  "subphase": "S5.P1.SP3",
+  "title": "Model Integrity Verification, Licensing & Access Control Audit Log",
+  "timestamp": "2026-11-10T22:17:27Z",
+  "status": "PASS",
+  "audit_results": {
+    "ed25519_attestations": {
+      "verified": true,
+      "tamper_detection": "PASSED (single-bit payload mutation fails signature verification)",
+      "sybil_spoof_detection": "PASSED (signature verification against spoofed public key rejected)"
+    },
+    "tensor_boundary_audit": {
+      "out_of_bounds_rejection": "PASSED",
+      "overlapping_tensors_rejection": "PASSED",
+      "header_data_collision_rejection": "PASSED"
+    },
+    "license_eula_gates": {
+      "open_permissive_auto_admit": "PASSED (Apache-2.0, MIT)",
+      "community_restricted_block": "PASSED (Llama-3, Gemma terms require signed receipt)",
+      "cryptographic_receipt_persistence": "PASSED (Ed25519 signed receipt stored under licenses/)"
+    },
+    "rbac_visibility_enforcement": {
+      "private_local_only_404_zero_leakage": "PASSED (returns ModelNotFound on remote query)",
+      "trusted_cluster_peers_token_validation": "PASSED",
+      "public_shared_swarm_distribution": "PASSED"
+    },
+    "fast_preflight_benchmark": {
+      "latency_ms": 1.144,
+      "max_allowed_ms": 5.0,
+      "status": "PASSED"
+    }
+  }
+}
