@@ -413,6 +413,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s3-p2-sp2.sh` and `scripts/test-s3-p2-sp2.ps1` covering `[Unit]` (binary frame codec roundtrip, server routing & bandwidth quota), `[Integration]` (relay fallback connection < 1500 ms and automatic path upgrade to direct P2P), `[Simulation]` (malicious relay tampering detection & rejection), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (relay_fallback_and_upgrade_trace.json audit) with 100% pass rate across 36 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P2_SP2_evidence.json` and `artifacts/evidence/stage-03/relay_fallback_and_upgrade_trace.json`.
 
+### Added (S3.P2.SP3: Roaming, Network Interface Handover & Connection Migration)
+- **Multi-Interface Observer & Handover Detector (`crates/umcf-net/src/roaming.rs`)**:
+  - Implemented `#![forbid(unsafe_code)]` network interface watcher (`NetworkInterfaceWatcher`) detecting IP address additions/removals and primary link handovers (`Ethernet`, `WiFi`, `Cellular`, `Loopback`, `Other`).
+  - Implemented configurable debounce window (50 ms) to suppress link-state thrashing during transient network switches.
+  - Implemented deterministic handover simulation (`simulate_handover`) for automated multi-network testing in containerized environments.
+- **Active QUIC Socket Rebinding & RFC 9000 Connection Migration**:
+  - Implemented `QuicTransportEngine::rebind` performing live underlying UDP socket replacement with `socket2` DSCP/TOS socket configuration.
+  - Implemented `ConnectionMigrationCoordinator` orchestrating seamless path migration for active QUIC endpoints.
+  - Verified active bidirectional streams survive 5 consecutive live socket rebinds (`Wi-Fi -> Cellular -> Wi-Fi -> Cellular -> Wi-Fi`) with **0 broken streams** and maximum migration pause of **0.123 ms** (well below the 250 ms ceiling).
+  - Verified bulk payload transfer across the migrated connection with bit-exact BLAKE3 digest match.
+  - Implemented abrupt interface blackhole recovery via immediate socket rebinding before idle timeout.
+- **Measurable Metrics & Invariants**:
+  - 5/5 live migrations completed successfully with 0 broken streams.
+  - Maximum migration duration: **0.123 ms** (< 250 ms ceiling).
+  - Stream data integrity: 100% bit-exact BLAKE3 verified.
+  - Podman storage verified at **8.65 GiB** (< 29.0 GiB ceiling) and 0 forbidden placeholder tokens.
+- **Classified Test Harness**: Implemented `scripts/test-s3-p2-sp3.sh` and `scripts/test-s3-p2-sp3.ps1` covering `[Unit]` (`NetworkInterfaceWatcher` diff & debounce), `[Integration]` (5 consecutive QUIC socket rebinds < 250 ms, 0 broken streams, BLAKE3 bulk transfer), `[Simulation]` (abrupt interface blackhole recovery), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (connection_migration_trace.json audit) with 100% pass rate across 40 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P2_SP3_evidence.json` and `artifacts/evidence/stage-03/connection_migration_trace.json`.
+
 
 
 

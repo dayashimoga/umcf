@@ -1,0 +1,16 @@
+{
+  "broken_streams": 0,
+  "handover_sequence": [
+    "WiFi -> Cellular",
+    "Cellular -> WiFi",
+    "WiFi -> Cellular",
+    "Cellular -> WiFi",
+    "WiFi -> Cellular"
+  ],
+  "integrity_verified": true,
+  "max_migration_duration_ms": 0.221,
+  "migration_duration_ceiling_ms": 250,
+  "migrations_completed": 5,
+  "status": "PASS",
+  "timestamp_utc": "1794317730.421Z"
+}

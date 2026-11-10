@@ -18,6 +18,7 @@ pub mod qos;
 pub mod quic;
 pub mod rate_limiter;
 pub mod relay;
+pub mod roaming;
 pub mod stun;
 
 pub use beacon::{
@@ -46,6 +47,10 @@ pub use relay::{
     HybridUdpRelaySocket, PathType, PathUpgradeMonitor, RelayFrame, RelaySession, UmcfRelayServer,
     FRAME_TYPE_BIND, FRAME_TYPE_BIND_ACK, FRAME_TYPE_ERROR, FRAME_TYPE_KEEPALIVE,
     FRAME_TYPE_RECV, FRAME_TYPE_SEND, RELAY_MAGIC, RELAY_PROTOCOL_VERSION,
+};
+pub use roaming::{
+    ConnectionMigrationCoordinator, InterfaceDiff, InterfaceType, MigrationRecord,
+    NetworkInterfaceInfo, NetworkInterfaceWatcher, RoamingEvent,
 };
 pub use stun::{
     crc32_ieee, query_stun_server, EmbeddedStunServer, StunMessage, BINDING_REQUEST,
@@ -1798,6 +1803,249 @@ mod tests {
             assert_eq!(val.get("upgrade_detected").and_then(|v| v.as_bool()), Some(true));
             assert_eq!(val.get("dropped_streams").and_then(|v| v.as_u64()), Some(0));
             assert!(val.get("fallback_connection_ms").is_some());
+        }
+    }
+
+    // =========================================================================
+    // S3.P2.SP3: Roaming, Network Interface Handover & Connection Migration Tests
+    // =========================================================================
+
+    #[test]
+    fn test_network_interface_watcher_diff_and_debounce() {
+        let mut watcher = NetworkInterfaceWatcher::new(Duration::from_millis(50));
+        assert_eq!(watcher.primary_type(), InterfaceType::Loopback);
+
+        let ip_wifi: IpAddr = "192.168.1.100".parse().expect("parse ip");
+        let ip_cell: IpAddr = "10.45.67.89".parse().expect("parse cell");
+
+        // 1. Initial Handover to Wi-Fi
+        let diff1 = watcher.simulate_handover(ip_wifi, InterfaceType::WiFi);
+        assert!(diff1.has_changes());
+        assert_eq!(diff1.interface_type, InterfaceType::WiFi);
+        assert_eq!(diff1.new_primary, Some(ip_wifi));
+        assert_eq!(watcher.primary_type(), InterfaceType::WiFi);
+
+        // 2. Debounce: immediate evaluation before 50 ms must be suppressed
+        let debounced = watcher.evaluate_interfaces(&[ip_wifi, ip_cell], Some(ip_cell), InterfaceType::Cellular);
+        assert!(debounced.is_none(), "Evaluation within debounce window must return None");
+
+        // 3. Sleep past debounce window
+        std::thread::sleep(Duration::from_millis(60));
+
+        // 4. Handover to Cellular
+        let diff2 = watcher.simulate_handover(ip_cell, InterfaceType::Cellular);
+        assert!(diff2.has_changes());
+        assert_eq!(diff2.interface_type, InterfaceType::Cellular);
+        assert_eq!(diff2.new_primary, Some(ip_cell));
+        assert_eq!(diff2.old_primary, Some(ip_wifi));
+        assert_eq!(watcher.primary_type(), InterfaceType::Cellular);
+
+        // 5. Sleep past debounce window and switch back to Wi-Fi
+        std::thread::sleep(Duration::from_millis(60));
+        let diff3 = watcher.simulate_handover(ip_wifi, InterfaceType::WiFi);
+        assert!(diff3.has_changes());
+        assert_eq!(diff3.interface_type, InterfaceType::WiFi);
+        assert_eq!(diff3.new_primary, Some(ip_wifi));
+        assert_eq!(diff3.old_primary, Some(ip_cell));
+    }
+
+    #[tokio::test]
+    async fn test_quic_connection_migration_under_stream_rebinds() {
+        let cluster_id = "cluster-quic-roaming";
+        let ca = Arc::new(umcf_identity::cert::ClusterCa::generate(cluster_id).expect("ca"));
+        let crl = Arc::new(RwLock::new(ClusterCrl::new(
+            cluster_id, "did:key:ca", 1, 1_700_000_000_000, 1_800_000_000_000, vec![]
+        )));
+
+        // Node 1 (Client initiating migration)
+        let kp1 = Arc::new(NodeKeypair::generate());
+        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+
+        // Node 2 (Server receiving migrated streams)
+        let kp2 = Arc::new(NodeKeypair::generate());
+        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+
+        let cfg2 = QuicTransportConfig::new(
+            SocketAddr::from(([127, 0, 0, 1], 0)),
+            cluster_id,
+            cert2,
+            kp2.clone(),
+            ca.ca_cert_der().to_vec(),
+            crl.clone(),
+        );
+        let engine2 = QuicTransportEngine::start(cfg2).expect("engine2 start");
+        let addr2 = engine2.local_addr().expect("addr2");
+
+        let cfg1 = QuicTransportConfig::new(
+            SocketAddr::from(([127, 0, 0, 1], 0)),
+            cluster_id,
+            cert1,
+            kp1.clone(),
+            ca.ca_cert_der().to_vec(),
+            crl.clone(),
+        );
+        let engine1 = Arc::new(QuicTransportEngine::start(cfg1).expect("engine1 start"));
+
+        // Establish initial connection
+        let peer_conn = engine1.connect(addr2).await.expect("initial connect");
+        assert_eq!(peer_conn.node_id, kp2.node_id());
+
+        // Create migration coordinator
+        let shared_secret = [0x99u8; 32];
+        let coordinator = ConnectionMigrationCoordinator::new(
+            Arc::clone(&engine1),
+            Arc::clone(&kp1),
+            shared_secret,
+            vec![],
+        );
+
+        // Define 5 consecutive roaming transitions (Wi-Fi -> Cellular -> Wi-Fi -> Cellular -> Wi-Fi)
+        let transitions = [
+            (InterfaceType::WiFi, InterfaceType::Cellular),
+            (InterfaceType::Cellular, InterfaceType::WiFi),
+            (InterfaceType::WiFi, InterfaceType::Cellular),
+            (InterfaceType::Cellular, InterfaceType::WiFi),
+            (InterfaceType::WiFi, InterfaceType::Cellular),
+        ];
+
+        let mut max_duration_ms = 0.0_f64;
+
+        for (i, &(from_if, to_if)) in transitions.iter().enumerate() {
+            let new_bind_addr = SocketAddr::from(([127, 0, 0, 1], 0));
+            let (_actual_addr, duration) = coordinator
+                .execute_migration(new_bind_addr, from_if, to_if)
+                .await
+                .expect("execute migration");
+
+            let duration_ms = duration.as_micros() as f64 / 1000.0;
+            if duration_ms > max_duration_ms {
+                max_duration_ms = duration_ms;
+            }
+
+            // Acceptance criteria: rebind and path migration completes in < 250 ms
+            assert!(
+                duration < Duration::from_millis(250),
+                "Migration #{} took {:?}, exceeding 250 ms ceiling",
+                i + 1,
+                duration
+            );
+
+            // Verify active bidirectional stream survives immediately following rebind
+            let ping_payload = format!("ROAMING_PING_POST_REBIND_{}", i + 1);
+            let (ping_rtt, _reply) = peer_conn
+                .ping_control(ping_payload.as_bytes())
+                .await
+                .expect("control ping must survive migration");
+
+            assert!(ping_rtt < Duration::from_millis(100));
+        }
+
+        assert_eq!(coordinator.total_migrations(), 5);
+
+        // Verify bulk data transmission across the migrated connection with bit-exact BLAKE3 check
+        let bulk_data = vec![0x7Eu8; 1024 * 1024]; // 1 MiB test payload
+        let tensor_id = "migrated-tensor-shard-01";
+
+        let send_conn = Arc::clone(&peer_conn);
+        let sent_digest = send_conn
+            .send_bulk_tensor(tensor_id, &bulk_data)
+            .await
+            .expect("send bulk after migrations");
+
+        assert_eq!(sent_digest, *blake3::hash(&bulk_data).as_bytes());
+
+        // Write evidence: connection_migration_trace.json
+        let evidence_dir = workspace_artifacts_dir();
+        let _ = fs::create_dir_all(&evidence_dir);
+
+        let trace_data = serde_json::json!({
+            "timestamp_utc": chrono_like_now(),
+            "migrations_completed": 5,
+            "broken_streams": 0,
+            "max_migration_duration_ms": max_duration_ms,
+            "migration_duration_ceiling_ms": 250,
+            "integrity_verified": true,
+            "handover_sequence": [
+                "WiFi -> Cellular",
+                "Cellular -> WiFi",
+                "WiFi -> Cellular",
+                "Cellular -> WiFi",
+                "WiFi -> Cellular"
+            ],
+            "status": "PASS"
+        });
+
+        let json_path = evidence_dir.join("connection_migration_trace.json");
+        fs::write(
+            &json_path,
+            serde_json::to_string_pretty(&trace_data).unwrap_or_default(),
+        )
+        .expect("write connection_migration_trace.json");
+
+        engine1.stop();
+        engine2.stop();
+    }
+
+    #[tokio::test]
+    async fn test_abrupt_interface_blackhole_and_rebind_recovery() {
+        let cluster_id = "cluster-quic-blackhole";
+        let ca = Arc::new(umcf_identity::cert::ClusterCa::generate(cluster_id).expect("ca"));
+        let crl = Arc::new(RwLock::new(ClusterCrl::new(
+            cluster_id, "did:key:ca", 1, 1_700_000_000_000, 1_800_000_000_000, vec![]
+        )));
+
+        let kp1 = Arc::new(NodeKeypair::generate());
+        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+
+        let kp2 = Arc::new(NodeKeypair::generate());
+        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+
+        let cfg2 = QuicTransportConfig::new(
+            SocketAddr::from(([127, 0, 0, 1], 0)),
+            cluster_id,
+            cert2,
+            kp2.clone(),
+            ca.ca_cert_der().to_vec(),
+            crl.clone(),
+        );
+        let engine2 = QuicTransportEngine::start(cfg2).expect("engine2 start");
+        let addr2 = engine2.local_addr().expect("addr2");
+
+        let cfg1 = QuicTransportConfig::new(
+            SocketAddr::from(([127, 0, 0, 1], 0)),
+            cluster_id,
+            cert1,
+            kp1.clone(),
+            ca.ca_cert_der().to_vec(),
+            crl.clone(),
+        );
+        let engine1 = Arc::new(QuicTransportEngine::start(cfg1).expect("engine1 start"));
+
+        let peer_conn = engine1.connect(addr2).await.expect("initial connect");
+
+        // Rebind immediately to a fresh UDP socket (simulating bringing up secondary interface)
+        let new_sock = std::net::UdpSocket::bind("127.0.0.1:0").expect("bind new sock");
+        let _ = engine1.rebind(new_sock).expect("rebind");
+
+        // Communication immediately resumes on new socket
+        let (ping_rtt, _reply) = peer_conn.ping_control(b"POST_BLACKHOLE_RECOVERY").await.expect("ping post blackhole");
+        assert!(ping_rtt < Duration::from_millis(100));
+
+        engine1.stop();
+        engine2.stop();
+    }
+
+    #[test]
+    fn test_connection_migration_trace_audit() {
+        let trace_path = workspace_artifacts_dir().join("connection_migration_trace.json");
+        if trace_path.exists() {
+            let content = fs::read_to_string(trace_path).expect("read trace file");
+            let val: serde_json::Value = serde_json::from_str(&content).expect("parse json");
+            assert_eq!(val.get("status").and_then(|v| v.as_str()), Some("PASS"));
+            assert_eq!(val.get("migrations_completed").and_then(|v| v.as_u64()), Some(5));
+            assert_eq!(val.get("broken_streams").and_then(|v| v.as_u64()), Some(0));
+            assert_eq!(val.get("integrity_verified").and_then(|v| v.as_bool()), Some(true));
+            assert!(val.get("max_migration_duration_ms").is_some());
         }
     }
 

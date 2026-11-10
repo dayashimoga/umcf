@@ -1011,6 +1011,18 @@ impl QuicTransportEngine {
         self.endpoint.local_addr().map_err(NetError::Io)
     }
 
+    /// Rebinds the underlying UDP socket of the Quinn endpoint to a new socket,
+    /// triggering RFC 9000 QUIC connection migration across all active peer sessions.
+    ///
+    /// # Errors
+    /// Returns `NetError::Io` if socket rebinding fails.
+    pub fn rebind(&self, new_sock: std::net::UdpSocket) -> Result<SocketAddr, NetError> {
+        let _ = new_sock.set_nonblocking(true);
+        let new_addr = new_sock.local_addr().map_err(NetError::Io)?;
+        self.endpoint.rebind(new_sock).map_err(NetError::Io)?;
+        Ok(new_addr)
+    }
+
     /// Retrieves an active peer connection by NodeId.
     #[must_use]
     pub fn get_peer(&self, node_id: &NodeId) -> Option<Arc<PeerConnection>> {

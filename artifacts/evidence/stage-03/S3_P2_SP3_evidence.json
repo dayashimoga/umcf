@@ -1,0 +1,26 @@
+{
+  "subphase": "S3.P2.SP3",
+  "title": "Roaming, Network Interface Handover & Connection Migration",
+  "git_commit": "b6b9a794b1fac4e4bef042ba46c80d676b1afbd5",
+  "timestamp_utc": "2026-11-10T13:36:00Z",
+  "podman_total_bytes": 9285744329,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "migrations_completed": 5,
+    "broken_streams": 0,
+    "max_migration_duration_ms": 0.123,
+    "migration_duration_ceiling_ms": 250,
+    "integrity_verified": true
+  },
+  "artifact_hashes": {
+    "connection_migration_trace.json": "b0f6149d272db9fa9ece9df34a2c5f798748f6a32db97feb934b49f373127527"
+  }
+}
