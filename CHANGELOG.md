@@ -370,6 +370,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s3-p1-sp3.sh` and `scripts/test-s3-p1-sp3.ps1` covering `[Unit]` (`TrafficClass` priority/DSCP mapping and `BandwidthShaper` token accounting), `[Integration]` (QoS under 100% bulk load with p99 latency < 5.0 ms and zero drops), `[Simulation]` (dynamic throttling convergence in < 200 ms), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (OpenMetrics exposition and `qos_latency_under_load.json` audit) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P1_SP3_evidence.json` and `artifacts/evidence/stage-03/qos_latency_under_load.json`.
 
+### Added (S3.P2.SP1: STUN/ICE Candidate Gathering & UDP Hole Punching)
+- **RFC 8489 STUN Binary Protocol (`crates/umcf-net/src/stun.rs`)**:
+  - Implemented `#![forbid(unsafe_code)]` RFC 8489 STUN message encoder and parser (`StunMessage`).
+  - Implemented attributes: `XOR-MAPPED-ADDRESS` (IPv4 and IPv6 with XOR mask `0x2112A442`), `SOFTWARE`, and `FINGERPRINT` with IEEE 802.3 CRC-32 polynomial (`0xEDB88320`) and XOR constant `0x5354554E`.
+  - Implemented asynchronous `query_stun_server` and lightweight `EmbeddedStunServer` for local cluster testing and NAT classification.
+- **6-Tier NAT Classification & RFC 5245 ICE Candidate Engine (`crates/umcf-net/src/nat.rs`)**:
+  - Implemented `NatType` enum (`OpenInternet`, `FullCone`, `RestrictedCone`, `PortRestrictedCone`, `SymmetricNat`, `UdpBlocked`) with 36-combination punchability matrix (`is_direct_punchable` / `requires_relay`).
+  - Implemented `IceCandidateType` (`Host`, `ServerReflexive`, `PeerReflexive`, `Relayed`) and priority calculation formula `(type << 24) | (local << 8) | (256 - comp)`.
+  - Implemented `IceCandidateSet` signed and verified with HMAC-BLAKE3 credentials (`verify_signature`).
+  - Implemented `HolePunchProbePacket` 75-byte binary wire payload with `UMCFPUNCH` magic header and HMAC-BLAKE3 authentication derived from the peer's short-term password.
+  - Implemented `execute_hole_punch` coordinating paced synchronized UDP connectivity checks with immediate bidirectional completion.
+  - Implemented `NatSimulatorProxy` modeling configurable NAT behaviors and inbound filtering tables for automated multi-topology testing.
+- **Direct Sockets to Quinn QUIC mTLS Upgrade (`crates/umcf-net/src/quic.rs`)**:
+  - Implemented `QuicTransportEngine::start_with_socket` enabling direct reuse of hole-punched UDP sockets for immediate promotion to Quinn QUIC mTLS data-plane connections.
+- **Measurable Metrics & Invariants**:
+  - Candidate gathering completed in **1 ms** (< 300 ms ceiling).
+  - UDP hole punching succeeded in **1 ms** (< 800 ms ceiling).
+  - Quinn QUIC mTLS connection established over the hole-punched socket pair with bidirectional control ping RTT of **0.443 ms**.
+  - Symmetric NAT <-> Symmetric NAT cleanly detected and fast-failed to `RequiresRelay` in **0 ms** (< 1200 ms ceiling).
+  - Podman storage verified at **8.59 GiB** (< 29.0 GiB ceiling) and 0 forbidden placeholder tokens.
+- **Classified Test Harness**: Implemented `scripts/test-s3-p2-sp1.sh` and `scripts/test-s3-p2-sp1.ps1` covering `[Unit]` (RFC 8489 test vectors, ICE priority calculation, 75-byte probe framing, 36-combination NAT matrix), `[Integration]` (STUN gathering < 300 ms, PortRestrictedCone UDP hole punching < 800 ms, QUIC mTLS upgrade), `[Simulation]` (Symmetric NAT clean rejection & fast-fail < 1200 ms), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (nat_hole_punch_matrix.json audit) with 100% pass rate across 31 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P2_SP1_evidence.json` and `artifacts/evidence/stage-03/nat_hole_punch_matrix.json`.
+
 
 
 

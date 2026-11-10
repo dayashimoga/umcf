@@ -59,6 +59,18 @@ pub enum NetError {
     #[error("Mutual attestation failed: {0}")]
     AttestationFailed(String),
 
+    #[error("Invalid STUN message: {0}")]
+    InvalidStun(String),
+
+    #[error("Network operation timed out: {0}")]
+    Timeout(String),
+
+    #[error("Security alert during network traversal: {0}")]
+    SecurityAlert(String),
+
+    #[error("UDP hole punch failed: {0}")]
+    HolePunchFailed(String),
+
     #[error("Network engine shutdown")]
     Shutdown,
 }

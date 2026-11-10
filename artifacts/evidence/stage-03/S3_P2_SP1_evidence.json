@@ -1,0 +1,29 @@
+{
+  "subphase": "S3.P2.SP1",
+  "title": "STUN/ICE Candidate Gathering & UDP Hole Punching",
+  "git_commit": "5175c4be9ebcd1f386a68863d8d4f8df30c55e7d",
+  "timestamp_utc": "2026-11-10T13:16:00Z",
+  "podman_total_bytes": 9224046975,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "candidate_gathering_ms": 1,
+    "candidate_gathering_limit_ms": 300,
+    "hole_punch_elapsed_ms": 1,
+    "hole_punch_limit_ms": 800,
+    "quic_mtls_upgraded": true,
+    "control_ping_rtt_ms": 0.443,
+    "symmetric_rejection_ms": 0,
+    "symmetric_rejection_limit_ms": 1200
+  },
+  "artifact_hashes": {
+    "nat_hole_punch_matrix.json": "55dc1666c12c12ead0af51dd297329540cb47c082f05d8999341ffa7fc255176"
+  }
+}

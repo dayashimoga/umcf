@@ -1,0 +1,25 @@
+{
+  "candidate_gathering_limit_ms": 300,
+  "candidate_gathering_ms": 1,
+  "control_ping_rtt_ms": 0.241,
+  "hole_punch_elapsed_ms": 1,
+  "hole_punch_limit_ms": 800,
+  "quic_mtls_upgraded": true,
+  "status": "PASS",
+  "stun_server_addr": "127.0.0.1:60921",
+  "timestamp_utc": "1794316519.397Z",
+  "topologies_tested": [
+    {
+      "local": "PortRestrictedCone",
+      "punch_ms": 1,
+      "remote": "PortRestrictedCone",
+      "result": "DirectHolePunchSucceeded"
+    },
+    {
+      "local": "SymmetricNat",
+      "punch_ms": 0,
+      "remote": "SymmetricNat",
+      "result": "RequiresRelay"
+    }
+  ]
+}

@@ -780,6 +780,27 @@ impl QuicTransportEngine {
     /// # Errors
     /// Returns `NetError` if socket binding, certificate parsing, or Quinn initialization fails.
     pub fn start(config: QuicTransportConfig) -> Result<Self, NetError> {
+        let domain = if config.bind_addr.is_ipv6() {
+            socket2::Domain::IPV6
+        } else {
+            socket2::Domain::IPV4
+        };
+        let socket2_sock = socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
+            .map_err(NetError::Io)?;
+        let _ = socket2_sock.set_reuse_address(true);
+        let _ = socket2_sock.set_nonblocking(true);
+        let _ = crate::qos::apply_socket_dscp(&socket2_sock, crate::qos::TrafficClass::CriticalControl.dscp_value());
+        socket2_sock.bind(&config.bind_addr.into()).map_err(NetError::Io)?;
+        let std_sock: std::net::UdpSocket = socket2_sock.into();
+        Self::start_with_socket(config, std_sock)
+    }
+
+    /// Starts the QUIC transport engine on an already-bound or hole-punched UDP socket.
+    ///
+    /// # Errors
+    /// Returns `NetError` if certificate parsing, crypto configuration, or Quinn initialization fails.
+    pub fn start_with_socket(config: QuicTransportConfig, std_sock: std::net::UdpSocket) -> Result<Self, NetError> {
+        let _ = std_sock.set_nonblocking(true);
         let cancel_token = CancellationToken::new();
         let peers = Arc::new(RwLock::new(HashMap::new()));
 
@@ -842,20 +863,7 @@ impl QuicTransportEngine {
         let mut client_config = quinn::ClientConfig::new(Arc::new(quic_client_config));
         client_config.transport_config(transport);
 
-        // 5. Create Quinn Endpoint using socket2 with configured DSCP / TOS
-        let domain = if config.bind_addr.is_ipv6() {
-            socket2::Domain::IPV6
-        } else {
-            socket2::Domain::IPV4
-        };
-        let socket2_sock = socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
-            .map_err(NetError::Io)?;
-        let _ = socket2_sock.set_reuse_address(true);
-        let _ = socket2_sock.set_nonblocking(true);
-        let _ = crate::qos::apply_socket_dscp(&socket2_sock, crate::qos::TrafficClass::CriticalControl.dscp_value());
-        socket2_sock.bind(&config.bind_addr.into()).map_err(NetError::Io)?;
-        let std_sock: std::net::UdpSocket = socket2_sock.into();
-
+        // 5. Create Quinn Endpoint with provided std_sock
         let runtime = quinn::default_runtime().ok_or_else(|| {
             NetError::Io(std::io::Error::other(
                 "No async runtime available for Quinn endpoint",
