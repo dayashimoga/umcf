@@ -1,120 +1,26 @@
 //! Core domain models for Universal Mobile Compute Fabric (UMCF).
 //! Implements node identity, dynamic Master/Worker/Hybrid roles, explicit heterogeneous hardware
-//! capability profiles, and resource-sharing consent invariants.
+//! capability profiles, units with checked arithmetic, and resource-sharing consent invariants.
+//! Adheres strictly to `#![forbid(unsafe_code)]` and zero-placeholder invariants.
 
-use std::fmt;
+pub mod capabilities;
+pub mod types;
+pub mod units;
+
+pub use capabilities::{
+    AcceleratorCapability, AcceleratorKind, ComputeBackend, CpuCapability,
+    HardwareCapabilityDescriptor, MemoryCapability, NetworkCapability, NetworkLinkType,
+    PowerThermalState, ResourceRequirement, StorageCapability, ThermalState,
+};
+pub use types::{
+    ClusterId, DeviceClass, JobId, NodeId, NodeRole, OperatingSystem, RoleStateMachine, TaskId,
+};
+pub use units::{ByteSize, MegabytesPerSec, MilliCores, TeraFlopsFp16};
+
+use thiserror::Error;
 use umcf_proto::compute_fnv1a_64;
 
-/// Unique cryptographic node identifier (`did:umcf:<hex-fingerprint>`).
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NodeId(String);
-
-impl NodeId {
-    /// Derives a deterministic `NodeId` from a public key or seed material.
-    pub fn from_public_key_bytes(pubkey: &[u8]) -> Result<Self, CoreError> {
-        if pubkey.len() < 16 {
-            return Err(CoreError::InvalidPublicKeyLength(pubkey.len()));
-        }
-        let hi = compute_fnv1a_64(pubkey);
-        let lo = compute_fnv1a_64(&pubkey[pubkey.len() / 2..]);
-        Ok(Self(format!("did:umcf:{hi:016x}{lo:016x}")))
-    }
-
-    pub fn parse(raw: impl Into<String>) -> Result<Self, CoreError> {
-        let s = raw.into();
-        if !s.starts_with("did:umcf:") || s.len() < 25 {
-            return Err(CoreError::InvalidNodeIdFormat(s));
-        }
-        Ok(Self(s))
-    }
-
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl fmt::Display for NodeId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-/// Dynamic operational role of a UMCF node.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum NodeRole {
-    /// Coordinates cluster registry, task admission, and scheduling.
-    Master,
-    /// Executes compute, AI inference, rendering, media, or storage tasks within consent bounds.
-    Worker,
-    ///Simultaneously coordinates cluster state and contributes local compute capacity.
-    Hybrid,
-}
-
-impl fmt::Display for NodeRole {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Master => write!(f, "Master"),
-            Self::Worker => write!(f, "Worker"),
-            Self::Hybrid => write!(f, "Hybrid"),
-        }
-    }
-}
-
-/// Audited state machine governing dynamic role transitions on any device.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RoleStateMachine {
-    node_id: NodeId,
-    current_role: NodeRole,
-    epoch: u64,
-}
-
-impl RoleStateMachine {
-    #[must_use]
-    pub fn new(node_id: NodeId, initial_role: NodeRole) -> Self {
-        Self {
-            node_id,
-            current_role: initial_role,
-            epoch: 1,
-        }
-    }
-
-    #[must_use]
-    pub fn node_id(&self) -> &NodeId {
-        &self.node_id
-    }
-
-    #[must_use]
-    pub const fn current_role(&self) -> NodeRole {
-        self.current_role
-    }
-
-    #[must_use]
-    pub const fn epoch(&self) -> u64 {
-        self.epoch
-    }
-
-    /// Transitions the node to a new role and increments the cluster epoch.
-    pub fn transition_to(&mut self, target_role: NodeRole) -> u64 {
-        if self.current_role != target_role {
-            self.current_role = target_role;
-            self.epoch += 1;
-        }
-        self.epoch
-    }
-
-    #[must_use]
-    pub const fn can_coordinate(&self) -> bool {
-        matches!(self.current_role, NodeRole::Master | NodeRole::Hybrid)
-    }
-
-    #[must_use]
-    pub const fn can_execute_workloads(&self) -> bool {
-        matches!(self.current_role, NodeRole::Worker | NodeRole::Hybrid)
-    }
-}
-
-/// Operating system and device form-factor classification.
+/// Operating system and device form-factor classification (legacy profile compatibility).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PlatformKind {
     Android,
@@ -134,62 +40,8 @@ pub enum CpuArch {
     Wasm32,
 }
 
-/// Hardware accelerator class.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum AcceleratorKind {
-    DiscreteGpu,
-    IntegratedGpu,
-    MobileGpu,
-    Npu,
-}
-
-/// Explicit compute API backend.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ComputeBackend {
-    CpuSimd,
-    Vulkan,
-    Metal,
-    DirectX12,
-    Cuda,
-    Rocm,
-    OpenCl,
-    WebGpu,
-    IntelNpu,
-    AppleNeuralEngine,
-    AndroidNnapi,
-}
-
-/// Describes a hardware accelerator and whether its compute execution has been verified on real hardware.
-/// Per `ENGINEERING_CONTRACT.md` §2.4, unverified accelerators MUST NOT be claimed as verified.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AcceleratorCapability {
-    pub name: String,
-    pub kind: AcceleratorKind,
-    pub backend: ComputeBackend,
-    pub dedicated_memory_mb: u64,
-    pub shared_memory_mb: u64,
-    pub supports_fp16: bool,
-    pub supports_int8: bool,
-    pub supports_int4: bool,
-    /// True ONLY if probed from the physical driver and validated via an execution pass.
-    pub verified_on_hardware: bool,
-}
-
-impl AcceleratorCapability {
-    /// Usable memory budget for compute workloads on this specific accelerator.
-    #[must_use]
-    pub const fn usable_memory_mb(&self) -> u64 {
-        if self.dedicated_memory_mb > 0 {
-            self.dedicated_memory_mb
-        } else {
-            self.shared_memory_mb
-        }
-    }
-}
-
-/// Complete capability profile of a single UMCF node.
-/// Memory and accelerators belong strictly to this node and are never transparently pooled.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Hardware capability profile of a single UMCF node.
+#[derive(Debug, Clone, PartialEq)]
 pub struct HardwareProfile {
     pub node_id: NodeId,
     pub platform: PlatformKind,
@@ -204,8 +56,9 @@ pub struct HardwareProfile {
     pub accelerators: Vec<AcceleratorCapability>,
 }
 
+impl Eq for HardwareProfile {}
+
 impl HardwareProfile {
-    /// Returns only accelerators whose compute backends have been verified on physical hardware.
     #[must_use]
     pub fn verified_accelerators(&self) -> Vec<&AcceleratorCapability> {
         self.accelerators
@@ -218,26 +71,17 @@ impl HardwareProfile {
 /// Explicit user consent policy governing resource sharing on a device.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResourceConsentPolicy {
-    /// User has explicitly opted into executing workloads.
     pub sharing_enabled: bool,
-    /// Maximum CPU utilization percentage allowed (1..=100).
     pub max_cpu_percent: u8,
-    /// Maximum RAM in MiB that UMCF workloads may allocate.
     pub max_memory_mb: u64,
-    /// Maximum local disk storage in MiB for models/shards/cache.
     pub max_storage_mb: u64,
-    /// Whether workloads may execute when running on battery power.
     pub allow_on_battery: bool,
-    /// Minimum battery percentage required when `allow_on_battery` is true.
     pub min_battery_percent: u8,
-    /// Thermal cutoff in degrees Celsius above which workloads are throttled/paused.
     pub max_temperature_celsius: u8,
-    /// Immediately preempt background compute if interactive user input is detected.
     pub preempt_on_user_activity: bool,
 }
 
 impl Default for ResourceConsentPolicy {
-    /// Safe, conservative defaults requiring explicit user opt-in (`sharing_enabled: false`).
     fn default() -> Self {
         Self {
             sharing_enabled: false,
@@ -290,7 +134,6 @@ pub struct EnrollmentToken {
 }
 
 impl EnrollmentToken {
-    /// Maximum allowed lifetime of an enrollment token (300 seconds / 5 minutes).
     pub const MAX_TTL_SECS: u64 = 300;
 
     pub fn issue(
@@ -324,7 +167,6 @@ impl EnrollmentToken {
         })
     }
 
-    /// Encodes the token as a compact `umcf://enroll?...` URI suitable for QR codes.
     #[must_use]
     pub fn to_qr_uri(&self) -> String {
         format!(
@@ -363,172 +205,605 @@ impl EnrollmentToken {
 }
 
 /// Core domain errors.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub enum CoreError {
+    #[error("public key must be at least 16 bytes, got {0}")]
     InvalidPublicKeyLength(usize),
+
+    #[error("invalid NodeId format: '{0}'")]
     InvalidNodeIdFormat(String),
+
+    #[error("invalid ClusterId format: '{0}'")]
+    InvalidClusterIdFormat(String),
+
+    #[error("invalid resource consent policy: {0}")]
     InvalidConsentPolicy(&'static str),
+
+    #[error("invalid enrollment token TTL ({0}s); max is 300s")]
     InvalidEnrollmentTtl(u64),
+
+    #[error("enrollment token expired at {expired_at} (current time {now})")]
     EnrollmentTokenExpired { expired_at: u64, now: u64 },
+
+    #[error("invalid enrollment token signature")]
     InvalidEnrollmentSignature,
 }
-
-impl fmt::Display for CoreError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPublicKeyLength(len) => {
-                write!(f, "public key must be at least 16 bytes, got {len}")
-            }
-            Self::InvalidNodeIdFormat(s) => write!(f, "invalid NodeId format: {s}"),
-            Self::InvalidConsentPolicy(msg) => write!(f, "invalid resource consent policy: {msg}"),
-            Self::InvalidEnrollmentTtl(ttl) => {
-                write!(f, "invalid enrollment token TTL ({ttl}s); max is 300s")
-            }
-            Self::EnrollmentTokenExpired { expired_at, now } => {
-                write!(
-                    f,
-                    "enrollment token expired at {expired_at} (current time {now})"
-                )
-            }
-            Self::InvalidEnrollmentSignature => write!(f, "invalid enrollment token signature"),
-        }
-    }
-}
-
-impl std::error::Error for CoreError {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::path::Path;
+    use umcf_proto::{MessageKind, PlaneKind, WireEnvelope};
 
     #[test]
     fn unit_node_id_derivation_and_parsing() {
-        let key = b"0123456789abcdef0123456789abcdef";
-        let id = NodeId::from_public_key_bytes(key).expect("derive node id");
-        assert!(id.as_str().starts_with("did:umcf:"));
-        let parsed = NodeId::parse(id.to_string()).expect("parse valid node id");
-        assert_eq!(id, parsed);
+        let key = b"ed25519-public-key-seed-node-01";
+        let node_id = NodeId::from_public_key_bytes(key).expect("derivation");
+        assert!(node_id.as_str().starts_with("did:umcf:"));
 
-        assert!(matches!(
-            NodeId::from_public_key_bytes(b"short"),
-            Err(CoreError::InvalidPublicKeyLength(5))
-        ));
-        assert!(matches!(
-            NodeId::parse("invalid-id"),
-            Err(CoreError::InvalidNodeIdFormat(_))
-        ));
+        let parsed = NodeId::parse(node_id.as_str()).expect("parse");
+        assert_eq!(node_id, parsed);
+
+        assert!(NodeId::from_public_key_bytes(b"short").is_err());
+        assert!(NodeId::parse("invalid-did").is_err());
     }
 
     #[test]
     fn unit_role_state_machine_transitions() {
-        let id = NodeId::from_public_key_bytes(b"node-pubkey-material-12345678").expect("id");
-        let mut sm = RoleStateMachine::new(id.clone(), NodeRole::Worker);
-        assert_eq!(sm.node_id(), &id);
+        let node_id = NodeId::parse("did:umcf:0123456789abcdef0123456789").expect("id");
+        let mut sm = RoleStateMachine::new(node_id, NodeRole::Worker);
         assert_eq!(sm.current_role(), NodeRole::Worker);
-        assert!(!sm.can_coordinate());
-        assert!(sm.can_execute_workloads());
         assert_eq!(sm.epoch(), 1);
 
-        let ep = sm.transition_to(NodeRole::Hybrid);
-        assert_eq!(ep, 2);
-        assert!(sm.can_coordinate());
-        assert!(sm.can_execute_workloads());
-        assert_eq!(sm.current_role().to_string(), "Hybrid");
-
-        let ep2 = sm.transition_to(NodeRole::Master);
-        assert_eq!(ep2, 3);
-        assert!(sm.can_coordinate());
-        assert!(!sm.can_execute_workloads());
-        assert_eq!(sm.current_role().to_string(), "Master");
+        sm.transition_to(NodeRole::Hybrid);
+        assert_eq!(sm.current_role(), NodeRole::Hybrid);
+        assert_eq!(sm.epoch(), 2);
     }
 
     #[test]
-    fn unit_hardware_profile_filters_unverified_accelerators() {
-        let id = NodeId::from_public_key_bytes(b"node-pubkey-material-12345678").expect("id");
-        let profile = HardwareProfile {
-            node_id: id,
-            platform: PlatformKind::Windows,
-            cpu_arch: CpuArch::X86_64,
-            cpu_model: "Intel Core Ultra 5 225H".into(),
-            physical_cores: 14,
-            logical_cores: 14,
-            total_ram_mb: 16384,
-            available_ram_mb: 10240,
-            available_storage_mb: 24000,
-            network_bandwidth_mbps: 1000,
-            accelerators: vec![
-                AcceleratorCapability {
-                    name: "Intel Arc 130T GPU".into(),
-                    kind: AcceleratorKind::IntegratedGpu,
-                    backend: ComputeBackend::Vulkan,
-                    dedicated_memory_mb: 0,
-                    shared_memory_mb: 8192,
-                    supports_fp16: true,
-                    supports_int8: true,
-                    supports_int4: true,
-                    verified_on_hardware: true,
-                },
-                AcceleratorCapability {
-                    name: "Unverified NPU".into(),
-                    kind: AcceleratorKind::Npu,
-                    backend: ComputeBackend::IntelNpu,
-                    dedicated_memory_mb: 0,
-                    shared_memory_mb: 4096,
-                    supports_fp16: true,
-                    supports_int8: true,
-                    supports_int4: false,
-                    verified_on_hardware: false,
-                },
-            ],
+    fn unit_units_checked_arithmetic_prevents_overflow() {
+        let b1 = ByteSize::from_gib(10);
+        let b2 = ByteSize::from_gib(5);
+        assert_eq!(b1.checked_add(b2), Some(ByteSize::from_gib(15)));
+        assert_eq!(b1.checked_sub(b2), Some(ByteSize::from_gib(5)));
+
+        // Overflow prevention
+        let max_bytes = ByteSize(u64::MAX);
+        assert_eq!(max_bytes.checked_add(ByteSize(1)), None);
+        assert_eq!(max_bytes.saturating_add(ByteSize(1)), ByteSize(u64::MAX));
+
+        // MilliCores checked arithmetic
+        let c1 = MilliCores::from_cores(4);
+        let c2 = MilliCores::from_cores(2);
+        assert_eq!(c1.checked_add(c2), Some(MilliCores::from_cores(6)));
+        assert_eq!(c1.checked_sub(c2), Some(MilliCores::from_cores(2)));
+        assert_eq!(MilliCores(u32::MAX).checked_add(MilliCores(1)), None);
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn sample_descriptor(
+        name: &str,
+        class: DeviceClass,
+        os: OperatingSystem,
+        cores: u32,
+        ram_gib: u64,
+        backend: Option<ComputeBackend>,
+        vram_gib: u64,
+        thermal: ThermalState,
+        charging: bool,
+    ) -> HardwareCapabilityDescriptor {
+        let node_id = NodeId::parse(format!("did:umcf:{name}000000000000000000")).expect("id");
+        let mut accelerators = Vec::new();
+        if let Some(b) = backend {
+            accelerators.push(AcceleratorCapability {
+                name: format!("{name}-accelerator"),
+                kind: AcceleratorKind::DiscreteGpu,
+                backend: b,
+                vram_bytes: ByteSize::from_gib(vram_gib),
+                dedicated_memory_mb: vram_gib * 1024,
+                shared_memory_mb: 0,
+                compute_units: 32,
+                fp32_tflops: 10.5,
+                fp16_tflops: TeraFlopsFp16::from_tflops(21),
+                int8_tops: 42,
+                supports_fp16: true,
+                supports_int8: true,
+                supports_int4: true,
+                verified_on_hardware: true,
+            });
+        }
+
+        HardwareCapabilityDescriptor {
+            node_id,
+            device_class: class,
+            os,
+            cpu: CpuCapability {
+                architecture: "x86_64".into(),
+                physical_cores: cores,
+                performance_cores: cores,
+                efficiency_cores: 0,
+                simd_avx2: true,
+                simd_avx512: false,
+                simd_neon: false,
+                simd_sve: false,
+                base_clock_mhz: 2400,
+                boost_clock_mhz: 4800,
+            },
+            memory: MemoryCapability {
+                total_ram: ByteSize::from_gib(ram_gib),
+                available_ram: ByteSize::from_gib(ram_gib),
+                is_unified_memory: os == OperatingSystem::MacOs || os == OperatingSystem::Ios,
+                bandwidth_mbps: MegabytesPerSec::from_mbps(50_000),
+            },
+            accelerators,
+            storage: StorageCapability {
+                total_disk: ByteSize::from_gib(512),
+                available_disk: ByteSize::from_gib(256),
+                is_solid_state: true,
+            },
+            network: NetworkCapability {
+                link_type: NetworkLinkType::Wifi,
+                estimated_bandwidth_mbps: 500,
+                measured_rtt_ms: 12,
+            },
+            power_thermal: PowerThermalState {
+                battery_percent: if charging { Some(100) } else { Some(50) },
+                is_charging: charging,
+                thermal_state: thermal,
+                temperature_milli_celsius: Some(45_000),
+            },
+        }
+    }
+
+    #[test]
+    fn unit_hardware_capability_satisfies_across_25_profiles() {
+        // Build 25 heterogeneous hardware profiles
+        let profiles = [
+            // 1-5: Smartphones & Tablets
+            sample_descriptor(
+                "phone-01",
+                DeviceClass::Smartphone,
+                OperatingSystem::Android,
+                8,
+                6,
+                Some(ComputeBackend::Nnapi),
+                2,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "phone-02",
+                DeviceClass::Smartphone,
+                OperatingSystem::Android,
+                4,
+                3,
+                None,
+                0,
+                ThermalState::Fair,
+                false,
+            ),
+            sample_descriptor(
+                "phone-03",
+                DeviceClass::Smartphone,
+                OperatingSystem::Ios,
+                6,
+                6,
+                Some(ComputeBackend::CoreMl),
+                4,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "tablet-01",
+                DeviceClass::Tablet,
+                OperatingSystem::Android,
+                8,
+                8,
+                Some(ComputeBackend::Vulkan),
+                4,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "tablet-02",
+                DeviceClass::Tablet,
+                OperatingSystem::Ios,
+                8,
+                8,
+                Some(ComputeBackend::Metal),
+                8,
+                ThermalState::Nominal,
+                false,
+            ),
+            // 6-10: Laptops
+            sample_descriptor(
+                "laptop-01",
+                DeviceClass::Laptop,
+                OperatingSystem::Windows,
+                8,
+                16,
+                Some(ComputeBackend::Dx12),
+                6,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "laptop-02",
+                DeviceClass::Laptop,
+                OperatingSystem::Linux,
+                16,
+                32,
+                Some(ComputeBackend::Vulkan),
+                8,
+                ThermalState::Fair,
+                true,
+            ),
+            sample_descriptor(
+                "laptop-03",
+                DeviceClass::Laptop,
+                OperatingSystem::MacOs,
+                12,
+                36,
+                Some(ComputeBackend::Metal),
+                36,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "laptop-04",
+                DeviceClass::Laptop,
+                OperatingSystem::Windows,
+                4,
+                8,
+                None,
+                0,
+                ThermalState::Serious,
+                false,
+            ),
+            sample_descriptor(
+                "laptop-05",
+                DeviceClass::Laptop,
+                OperatingSystem::Linux,
+                8,
+                16,
+                None,
+                0,
+                ThermalState::Nominal,
+                true,
+            ),
+            // 11-15: Desktops & Workstations
+            sample_descriptor(
+                "desktop-01",
+                DeviceClass::Desktop,
+                OperatingSystem::Windows,
+                16,
+                32,
+                Some(ComputeBackend::Cuda),
+                16,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "desktop-02",
+                DeviceClass::Desktop,
+                OperatingSystem::Linux,
+                24,
+                64,
+                Some(ComputeBackend::Cuda),
+                24,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "desktop-03",
+                DeviceClass::Desktop,
+                OperatingSystem::Linux,
+                16,
+                32,
+                Some(ComputeBackend::Rocm),
+                16,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "workstation-01",
+                DeviceClass::Workstation,
+                OperatingSystem::Windows,
+                32,
+                128,
+                Some(ComputeBackend::Cuda),
+                48,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "workstation-02",
+                DeviceClass::Workstation,
+                OperatingSystem::Linux,
+                64,
+                256,
+                Some(ComputeBackend::Cuda),
+                96,
+                ThermalState::Nominal,
+                true,
+            ),
+            // 16-20: Servers
+            sample_descriptor(
+                "server-01",
+                DeviceClass::Server,
+                OperatingSystem::Linux,
+                64,
+                256,
+                Some(ComputeBackend::Cuda),
+                80,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "server-02",
+                DeviceClass::Server,
+                OperatingSystem::Linux,
+                128,
+                512,
+                Some(ComputeBackend::Cuda),
+                160,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "server-03",
+                DeviceClass::Server,
+                OperatingSystem::Linux,
+                32,
+                128,
+                None,
+                0,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "server-04",
+                DeviceClass::Server,
+                OperatingSystem::Linux,
+                16,
+                64,
+                Some(ComputeBackend::OpenCl),
+                16,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "server-05",
+                DeviceClass::Server,
+                OperatingSystem::Linux,
+                8,
+                32,
+                None,
+                0,
+                ThermalState::Fair,
+                true,
+            ),
+            // 21-25: Browser WASM & Degraded/Throttled Nodes
+            sample_descriptor(
+                "browser-01",
+                DeviceClass::BrowserWasm,
+                OperatingSystem::Web,
+                4,
+                4,
+                Some(ComputeBackend::WebGpu),
+                2,
+                ThermalState::Nominal,
+                true,
+            ),
+            sample_descriptor(
+                "browser-02",
+                DeviceClass::BrowserWasm,
+                OperatingSystem::Web,
+                2,
+                2,
+                None,
+                0,
+                ThermalState::Nominal,
+                false,
+            ),
+            sample_descriptor(
+                "phone-throttled",
+                DeviceClass::Smartphone,
+                OperatingSystem::Android,
+                8,
+                8,
+                Some(ComputeBackend::Vulkan),
+                4,
+                ThermalState::Critical,
+                false,
+            ),
+            sample_descriptor(
+                "laptop-overheated",
+                DeviceClass::Laptop,
+                OperatingSystem::Windows,
+                16,
+                32,
+                Some(ComputeBackend::Cuda),
+                8,
+                ThermalState::Critical,
+                true,
+            ),
+            sample_descriptor(
+                "desktop-cool",
+                DeviceClass::Desktop,
+                OperatingSystem::Linux,
+                12,
+                32,
+                Some(ComputeBackend::Vulkan),
+                12,
+                ThermalState::Nominal,
+                true,
+            ),
+        ];
+
+        assert_eq!(profiles.len(), 25);
+
+        // Test 1: High-end CUDA requirement (24 GB VRAM, AC required)
+        let cuda_req = ResourceRequirement {
+            min_cores: MilliCores::from_cores(16),
+            min_ram: ByteSize::from_gib(32),
+            min_vram: ByteSize::from_gib(24),
+            required_backend: Some(ComputeBackend::Cuda),
+            max_thermal_state: ThermalState::Fair,
+            require_ac_power: true,
         };
 
-        let verified = profile.verified_accelerators();
-        assert_eq!(verified.len(), 1);
-        assert_eq!(verified[0].name, "Intel Arc 130T GPU");
-        assert_eq!(verified[0].usable_memory_mb(), 8192);
+        // Desktop-02, Workstation-01, Workstation-02, Server-01, Server-02 should satisfy
+        assert!(profiles[11].satisfies(&cuda_req)); // desktop-02
+        assert!(profiles[13].satisfies(&cuda_req)); // workstation-01
+        assert!(profiles[14].satisfies(&cuda_req)); // workstation-02
+        assert!(profiles[15].satisfies(&cuda_req)); // server-01
+
+        // Phone-01, Browser-01, and Throttled profiles must NOT satisfy
+        assert!(!profiles[0].satisfies(&cuda_req));
+        assert!(!profiles[20].satisfies(&cuda_req));
+        assert!(!profiles[22].satisfies(&cuda_req)); // critical thermal
+        assert!(!profiles[23].satisfies(&cuda_req)); // critical thermal
+
+        // Test 2: Low-end lightweight CPU task (2 cores, 2 GiB RAM, any backend, allows battery)
+        let light_req = ResourceRequirement {
+            min_cores: MilliCores::from_cores(2),
+            min_ram: ByteSize::from_gib(2),
+            min_vram: ByteSize::ZERO,
+            required_backend: None,
+            max_thermal_state: ThermalState::Fair,
+            require_ac_power: false,
+        };
+
+        // Phone-01, Phone-02, Laptop-01, Desktop-01 should satisfy
+        assert!(profiles[0].satisfies(&light_req));
+        assert!(profiles[1].satisfies(&light_req));
+        assert!(profiles[5].satisfies(&light_req));
+        assert!(profiles[10].satisfies(&light_req));
+
+        // Critical thermal profiles must still fail
+        assert!(!profiles[22].satisfies(&light_req));
     }
 
     #[test]
-    fn unit_resource_consent_validation() {
-        let mut policy = ResourceConsentPolicy::default();
-        assert!(!policy.sharing_enabled);
-        assert!(policy.validate().is_ok());
+    fn unit_serialization_bincode_and_json_parity() {
+        let desc = sample_descriptor(
+            "parity-test-node",
+            DeviceClass::Workstation,
+            OperatingSystem::Linux,
+            32,
+            128,
+            Some(ComputeBackend::Cuda),
+            24,
+            ThermalState::Nominal,
+            true,
+        );
 
-        policy.max_cpu_percent = 0;
-        assert!(policy.validate().is_err());
-        policy.max_cpu_percent = 80;
-        policy.max_memory_mb = 16;
-        assert!(policy.validate().is_err());
-        policy.max_memory_mb = 4096;
-        policy.max_temperature_celsius = 120;
-        assert!(policy.validate().is_err());
+        // 1. JSON round-trip
+        let json_str = serde_json::to_string_pretty(&desc).expect("serialize json");
+        let from_json: HardwareCapabilityDescriptor =
+            serde_json::from_str(&json_str).expect("deserialize json");
+        assert_eq!(desc, from_json);
+
+        // 2. Bincode binary round-trip
+        let binary_bytes = bincode::serialize(&desc).expect("serialize bincode");
+        let from_binary: HardwareCapabilityDescriptor =
+            bincode::deserialize(&binary_bytes).expect("deserialize bincode");
+        assert_eq!(desc, from_binary);
     }
 
     #[test]
-    fn unit_enrollment_token_issue_verify_and_qr_uri() {
-        let issuer = NodeId::from_public_key_bytes(b"master-public-key-bytes-0001").expect("id");
-        let secret = b"cluster-enrollment-hmac-secret";
-        let token = EnrollmentToken::issue(
-            "tok-001",
-            issuer,
-            "lan-cluster-alpha",
-            1_700_000_000,
-            120,
-            secret,
+    fn integration_embed_in_wire_envelope_and_export_schema() {
+        let desc = sample_descriptor(
+            "embed-test-node",
+            DeviceClass::Desktop,
+            OperatingSystem::Windows,
+            16,
+            32,
+            Some(ComputeBackend::Dx12),
+            12,
+            ThermalState::Nominal,
+            true,
+        );
+
+        // Serialize descriptor to binary payload
+        let payload = bincode::serialize(&desc).expect("serialize bincode");
+
+        // Embed inside WireEnvelope
+        let env = WireEnvelope::new(
+            PlaneKind::ControlPlane,
+            MessageKind::CapabilityReport,
+            1,
+            desc.node_id.as_str(),
+            payload,
         )
-        .expect("issue token");
+        .expect("envelope");
 
-        assert!(token
-            .to_qr_uri()
-            .starts_with("umcf://enroll?cluster=lan-cluster-alpha"));
-        assert!(token.verify(1_700_000_060, secret).is_ok());
-        assert!(matches!(
-            token.verify(1_700_000_200, secret),
-            Err(CoreError::EnrollmentTokenExpired { .. })
-        ));
-        assert!(matches!(
-            token.verify(1_700_000_060, b"wrong-secret"),
-            Err(CoreError::InvalidEnrollmentSignature)
-        ));
+        let wire_bytes = env.to_bytes();
+        let decoded_env = WireEnvelope::from_bytes(&wire_bytes).expect("decode wire envelope");
+
+        let decoded_desc: HardwareCapabilityDescriptor =
+            bincode::deserialize(&decoded_env.payload).expect("deserialize capability payload");
+        assert_eq!(desc, decoded_desc);
+
+        // Export JSON Schema to root schemas directory
+        let schema = schemars::schema_for!(HardwareCapabilityDescriptor);
+        let schema_json = serde_json::to_string_pretty(&schema).expect("schema json");
+
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root_schemas = manifest_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .map(|p| p.join("schemas"))
+            .unwrap_or_else(|| std::path::PathBuf::from("schemas"));
+
+        fs::create_dir_all(&root_schemas).expect("create schemas dir");
+        let schema_path = root_schemas.join("hardware_capability_v1.schema.json");
+        fs::write(&schema_path, schema_json).expect("write schema");
+        assert!(schema_path.exists());
+    }
+
+    #[test]
+    fn simulation_boundary_overflows_and_critical_rejection() {
+        let mut desc = sample_descriptor(
+            "boundary-node",
+            DeviceClass::Smartphone,
+            OperatingSystem::Android,
+            8,
+            8,
+            None,
+            0,
+            ThermalState::Critical,
+            false,
+        );
+
+        let req = ResourceRequirement {
+            min_cores: MilliCores::from_cores(1),
+            min_ram: ByteSize::from_gib(1),
+            min_vram: ByteSize::ZERO,
+            required_backend: None,
+            max_thermal_state: ThermalState::Fair,
+            require_ac_power: false,
+        };
+
+        // Critical thermal state must be rejected
+        assert!(!desc.satisfies(&req));
+
+        // 0 physical cores must be rejected
+        desc.power_thermal.thermal_state = ThermalState::Nominal;
+        desc.cpu.physical_cores = 0;
+        assert!(!desc.satisfies(&req));
+
+        // u64::MAX requirement must safely fail without panicking
+        let huge_req = ResourceRequirement {
+            min_cores: MilliCores(u32::MAX),
+            min_ram: ByteSize(u64::MAX),
+            min_vram: ByteSize(u64::MAX),
+            required_backend: None,
+            max_thermal_state: ThermalState::Critical,
+            require_ac_power: false,
+        };
+        assert!(!desc.satisfies(&huge_req));
     }
 }

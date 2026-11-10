@@ -1,0 +1,378 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HardwareCapabilityDescriptor",
+  "description": "Complete multi-dimensional hardware capability descriptor advertised by a node.",
+  "type": "object",
+  "properties": {
+    "accelerators": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AcceleratorCapability"
+      }
+    },
+    "cpu": {
+      "$ref": "#/$defs/CpuCapability"
+    },
+    "device_class": {
+      "$ref": "#/$defs/DeviceClass"
+    },
+    "memory": {
+      "$ref": "#/$defs/MemoryCapability"
+    },
+    "network": {
+      "$ref": "#/$defs/NetworkCapability"
+    },
+    "node_id": {
+      "$ref": "#/$defs/NodeId"
+    },
+    "os": {
+      "$ref": "#/$defs/OperatingSystem"
+    },
+    "power_thermal": {
+      "$ref": "#/$defs/PowerThermalState"
+    },
+    "storage": {
+      "$ref": "#/$defs/StorageCapability"
+    }
+  },
+  "required": [
+    "node_id",
+    "device_class",
+    "os",
+    "cpu",
+    "memory",
+    "accelerators",
+    "storage",
+    "network",
+    "power_thermal"
+  ],
+  "$defs": {
+    "AcceleratorCapability": {
+      "description": "Discrete or integrated GPU/NPU accelerator capabilities.",
+      "type": "object",
+      "properties": {
+        "backend": {
+          "$ref": "#/$defs/ComputeBackend"
+        },
+        "compute_units": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "dedicated_memory_mb": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "fp16_tflops": {
+          "$ref": "#/$defs/TeraFlopsFp16"
+        },
+        "fp32_tflops": {
+          "type": "number",
+          "format": "float"
+        },
+        "int8_tops": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "kind": {
+          "$ref": "#/$defs/AcceleratorKind"
+        },
+        "name": {
+          "type": "string"
+        },
+        "shared_memory_mb": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "supports_fp16": {
+          "type": "boolean"
+        },
+        "supports_int4": {
+          "type": "boolean"
+        },
+        "supports_int8": {
+          "type": "boolean"
+        },
+        "verified_on_hardware": {
+          "type": "boolean"
+        },
+        "vram_bytes": {
+          "$ref": "#/$defs/ByteSize"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "backend",
+        "vram_bytes",
+        "dedicated_memory_mb",
+        "shared_memory_mb",
+        "compute_units",
+        "fp32_tflops",
+        "fp16_tflops",
+        "int8_tops",
+        "supports_fp16",
+        "supports_int8",
+        "supports_int4",
+        "verified_on_hardware"
+      ]
+    },
+    "AcceleratorKind": {
+      "description": "Hardware accelerator category.",
+      "type": "string",
+      "enum": [
+        "DiscreteGpu",
+        "IntegratedGpu",
+        "MobileGpu",
+        "Npu",
+        "Cpu"
+      ]
+    },
+    "ByteSize": {
+      "description": "Strongly typed memory or storage capacity in bytes with checked arithmetic.",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "ComputeBackend": {
+      "description": "Hardware execution and accelerator backend APIs.",
+      "type": "string",
+      "enum": [
+        "CpuSimd",
+        "Vulkan",
+        "Metal",
+        "Dx12",
+        "Cuda",
+        "Rocm",
+        "OpenCl",
+        "Nnapi",
+        "CoreMl",
+        "WebGpu"
+      ]
+    },
+    "CpuCapability": {
+      "description": "CPU hardware specifications and SIMD feature set.",
+      "type": "object",
+      "properties": {
+        "architecture": {
+          "type": "string"
+        },
+        "base_clock_mhz": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "boost_clock_mhz": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "efficiency_cores": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "performance_cores": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "physical_cores": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "simd_avx2": {
+          "type": "boolean"
+        },
+        "simd_avx512": {
+          "type": "boolean"
+        },
+        "simd_neon": {
+          "type": "boolean"
+        },
+        "simd_sve": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "architecture",
+        "physical_cores",
+        "performance_cores",
+        "efficiency_cores",
+        "simd_avx2",
+        "simd_avx512",
+        "simd_neon",
+        "simd_sve",
+        "base_clock_mhz",
+        "boost_clock_mhz"
+      ]
+    },
+    "DeviceClass": {
+      "description": "Hardware class and form-factor of a node.",
+      "type": "string",
+      "enum": [
+        "Smartphone",
+        "Tablet",
+        "Laptop",
+        "Desktop",
+        "Workstation",
+        "Server",
+        "BrowserWasm"
+      ]
+    },
+    "MegabytesPerSec": {
+      "description": "Network or memory transfer rate in megabytes per second.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "MemoryCapability": {
+      "description": "System RAM specifications and bandwidth.",
+      "type": "object",
+      "properties": {
+        "available_ram": {
+          "$ref": "#/$defs/ByteSize"
+        },
+        "bandwidth_mbps": {
+          "$ref": "#/$defs/MegabytesPerSec"
+        },
+        "is_unified_memory": {
+          "type": "boolean"
+        },
+        "total_ram": {
+          "$ref": "#/$defs/ByteSize"
+        }
+      },
+      "required": [
+        "total_ram",
+        "available_ram",
+        "is_unified_memory",
+        "bandwidth_mbps"
+      ]
+    },
+    "NetworkCapability": {
+      "description": "Current network connectivity state.",
+      "type": "object",
+      "properties": {
+        "estimated_bandwidth_mbps": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "link_type": {
+          "$ref": "#/$defs/NetworkLinkType"
+        },
+        "measured_rtt_ms": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "link_type",
+        "estimated_bandwidth_mbps",
+        "measured_rtt_ms"
+      ]
+    },
+    "NetworkLinkType": {
+      "description": "Network link medium.",
+      "type": "string",
+      "enum": [
+        "Unknown",
+        "Loopback",
+        "Ethernet",
+        "Wifi",
+        "Cellular5G",
+        "Cellular4G"
+      ]
+    },
+    "NodeId": {
+      "description": "Cryptographically derived decentralized device identifier (`did:umcf:<hex-fingerprint>`).",
+      "type": "string"
+    },
+    "OperatingSystem": {
+      "description": "Host operating system runtime.",
+      "type": "string",
+      "enum": [
+        "Android",
+        "Ios",
+        "Windows",
+        "Linux",
+        "MacOs",
+        "Web"
+      ]
+    },
+    "PowerThermalState": {
+      "description": "Real-time battery and thermal status of the device.",
+      "type": "object",
+      "properties": {
+        "battery_percent": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "is_charging": {
+          "type": "boolean"
+        },
+        "temperature_milli_celsius": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "thermal_state": {
+          "$ref": "#/$defs/ThermalState"
+        }
+      },
+      "required": [
+        "is_charging",
+        "thermal_state"
+      ]
+    },
+    "StorageCapability": {
+      "description": "Local persistent storage metrics.",
+      "type": "object",
+      "properties": {
+        "available_disk": {
+          "$ref": "#/$defs/ByteSize"
+        },
+        "is_solid_state": {
+          "type": "boolean"
+        },
+        "total_disk": {
+          "$ref": "#/$defs/ByteSize"
+        }
+      },
+      "required": [
+        "total_disk",
+        "available_disk",
+        "is_solid_state"
+      ]
+    },
+    "TeraFlopsFp16": {
+      "description": "Compute throughput measured in FP16 TeraFlops.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "ThermalState": {
+      "description": "OS thermal throttle status.",
+      "type": "string",
+      "enum": [
+        "Nominal",
+        "Fair",
+        "Serious",
+        "Critical"
+      ]
+    }
+  }
+}

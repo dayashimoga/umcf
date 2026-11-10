@@ -78,3 +78,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p2-sp1.sh` and `scripts/test-s1-p2-sp1.ps1` covering `[Unit]`, `[Integration]` (10,000 envelopes streamed over duplex stream), `[Simulation]` (10,000 bit-flip mutations), `[Hardware-Required]` (SIMD acceleration), and `[Manually-Verified]` (Rustdoc generation) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P2_SP1_evidence.json` and `artifacts/evidence/stage-01/umcf_proto_test_report.xml`.
 
+### Added (S1.P2.SP2: `umcf-core` Hardware & Resource Descriptors)
+- **Canonical Domain Identifiers (`crates/umcf-core/src/types.rs`)**:
+  - Implemented `NodeId`, `ClusterId`, `JobId`, `TaskId`, `DeviceClass` (`Smartphone`, `Tablet`, `Laptop`, `Desktop`, `Workstation`, `Server`, `BrowserWasm`), and `OperatingSystem` (`Android`, `Ios`, `Windows`, `Linux`, `MacOs`, `Web`).
+- **Checked Arithmetic Units (`crates/umcf-core/src/units.rs`)**:
+  - Implemented `ByteSize`, `MilliCores`, `TeraFlopsFp16`, and `MegabytesPerSec` with checked addition, subtraction, multiplication, and division preventing integer overflow/underflow across all operations.
+- **Heterogeneous Hardware Capability Descriptors (`crates/umcf-core/src/capabilities.rs`)**:
+  - Implemented `HardwareCapabilityDescriptor` covering `CpuCapability` (SIMD AVX2/AVX512/NEON/SVE flags, P/E cores, clock MHz), `MemoryCapability` (unified memory flag, bandwidth), `AcceleratorCapability` (Vulkan, Metal, Dx12, Cuda, Rocm, OpenCl, Nnapi, CoreMl, WebGpu), `StorageCapability`, `NetworkCapability`, and `PowerThermalState` (`ThermalState` Nominal, Fair, Serious, Critical).
+  - Implemented `HardwareCapabilityDescriptor::satisfies(&ResourceRequirement)` accurately evaluating multi-dimensional hardware constraints across 25 device profiles.
+  - Achieved binary (`bincode`) and canonical JSON (`serde_json`) serialization parity.
+  - Exported standard Draft 2020-12 JSON Schema to `schemas/hardware_capability_v1.schema.json` for TypeScript and Flutter codegen.
+- **Classified Test Harness**: Implemented `scripts/test-s1-p2-sp2.sh` and `scripts/test-s1-p2-sp2.ps1` covering `[Unit]` (25 device profiles + checked arithmetic), `[Integration]` (`WireEnvelope` embedding + schema export), `[Simulation]` (boundary overflows & critical thermal rejection), `[Hardware-Required]` (CPU logical core probing), and `[Manually-Verified]` (Draft 2020-12 JSON Schema validation) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P2_SP2_evidence.json` and `schemas/hardware_capability_v1.schema.json`.
+
