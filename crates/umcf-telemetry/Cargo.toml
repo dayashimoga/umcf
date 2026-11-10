@@ -1,0 +1,13 @@
+[package]
+name = "umcf-telemetry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Structured OpenTelemetry tracing, metrics, and correlation IDs for UMCF"
+
+[dependencies]
+umcf-core = { path = "../umcf-core" }
+umcf-proto = { path = "../umcf-proto" }
+
+[lints]
+workspace = true

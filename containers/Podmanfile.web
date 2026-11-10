@@ -17,3 +17,4 @@ ENV UMCF_PODMAN_MAX_STORAGE_GB=30
 
 WORKDIR /workspace
 CMD ["pnpm", "test"]
+

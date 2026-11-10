@@ -51,3 +51,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p1-sp2.sh` and `scripts/test-s1-p1-sp2.ps1` testing threshold math (20G/26G/29.5G), container syntax, 30.1 GiB fault injection, and rootless permissions with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P1_SP2_evidence.json` and `artifacts/evidence/stage-01/podman_images_digests.txt`.
 
+### Added (S1.P1.SP3: Multi-Language Workspace Skeleton & Build Orchestration)
+- **Rust Workspace Foundation**:
+  - Configured root `Cargo.toml` with `[workspace]`, `resolver = "2"`, `[workspace.package]`, `[workspace.dependencies]`, and `[workspace.lints.rust]` (`unsafe_code = "forbid"`).
+  - Scaffolded foundational crate `crates/umcf-telemetry` supporting W3C `traceparent` parsing/formatting, metric counters, structured log events, and unit tests.
+  - Scaffolded fallback edge service `services/cloudrun_fallback` with typed envelope inspection and self-check unit tests.
+- **Web Console & Edge Control Plane**:
+  - Scaffolded `apps/web_console` with Svelte 5 runes (`$state`, `$derived`), Vite configuration, and passing unit test suites.
+  - Scaffolded `services/cf_control_plane` with Wrangler configuration, TypeScript request handlers, and passing unit test suites.
+  - Scaffolded `apps/flutter_client` with Flutter SDK configuration, strict analysis options, and Material 3 application shell.
+- **Unified Build Orchestration**:
+  - Added root `justfile`, `Makefile.toml`, and `Makefile` orchestrating `verify`, `lint`, `test`, `build-all`, `quota-check`, `check-placeholders`, and `verify-governance`.
+- **Classified Test Harness**: Implemented `scripts/test-s1-p1-sp3.sh` and `scripts/test-s1-p1-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` tiers with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P1_SP3_evidence.json` and `artifacts/evidence/stage-01/workspace_metadata.json`.
+

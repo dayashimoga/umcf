@@ -1,0 +1,10 @@
+{
+  "name": "@umcf/cf_control_plane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Workers Control Plane entrypoint for UMCF",
+  "scripts": {
+    "test": "node --test ./test/worker.test.mjs"
+  }
+}

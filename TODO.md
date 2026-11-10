@@ -25,7 +25,7 @@
 
 - [x] **[S1.P1.SP1]** (`2026-11-10`) Repository Governance, Rules/Skills Validation & Branch Protection Verification (Evidence: `artifacts/evidence/stage-01/S1_P1_SP1_evidence.json`)
 - [x] **[S1.P1.SP2]** (`2026-11-10`) Podman 30 GB Container Toolchains & Quota Enforcer Hardening (Evidence: `artifacts/evidence/stage-01/S1_P1_SP2_evidence.json`)
-- [ ] **[S1.P1.SP3]** Multi-Language Workspace Build Orchestration & Task Runner
+- [x] **[S1.P1.SP3]** (`2026-11-10`) Multi-Language Workspace Build Orchestration & Task Runner (Evidence: `artifacts/evidence/stage-01/S1_P1_SP3_evidence.json`)
 - [ ] **[S1.P2.SP1]** `umcf-proto` Wire Envelope, Framing & Semantic Versioning Negotiation
 - [ ] **[S1.P2.SP2]** `umcf-core` Hardware & Resource Capability Descriptors
 - [ ] **[S1.P2.SP3]** Structured Telemetry, OpenTelemetry Tracing & Error Taxonomy

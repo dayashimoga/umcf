@@ -1,0 +1,17 @@
+[package]
+name = "umcf-cloudrun-fallback"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Stateless container control-plane fallback for UMCF on Google Cloud Run"
+
+[[bin]]
+name = "umcf-cloudrun-fallback"
+path = "src/main.rs"
+
+[dependencies]
+umcf-core = { workspace = true }
+umcf-proto = { workspace = true }
+
+[lints]
+workspace = true

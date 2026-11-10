@@ -3,21 +3,31 @@ resolver = "2"
 members = [
     "crates/umcf-proto",
     "crates/umcf-core",
+    "crates/umcf-telemetry",
     "crates/umcf-coordinator",
     "crates/umcf-worker",
     "crates/umcf-scheduler",
     "crates/umcf-cli",
     "crates/umcf-daemon",
     "services/control-plane-cloudrun",
+    "services/cloudrun_fallback",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.80"
-license = "Apache-2.0"
+license = "Apache-2.0 OR MIT"
 authors = ["UMCF Engineering Team"]
 repository = "https://github.com/umcf/universal-mobile-compute-fabric"
+
+[workspace.dependencies]
+umcf-proto = { path = "crates/umcf-proto" }
+umcf-core = { path = "crates/umcf-core" }
+umcf-telemetry = { path = "crates/umcf-telemetry" }
+umcf-coordinator = { path = "crates/umcf-coordinator" }
+umcf-worker = { path = "crates/umcf-worker" }
+umcf-scheduler = { path = "crates/umcf-scheduler" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

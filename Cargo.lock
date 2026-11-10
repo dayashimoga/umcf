@@ -14,6 +14,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "umcf-cloudrun-fallback"
+version = "0.1.0"
+dependencies = [
+ "umcf-core",
+ "umcf-proto",
+]
+
+[[package]]
 name = "umcf-control-plane-cloudrun"
 version = "0.1.0"
 dependencies = [
@@ -58,6 +66,14 @@ version = "0.1.0"
 dependencies = [
  "umcf-coordinator",
  "umcf-core",
+]
+
+[[package]]
+name = "umcf-telemetry"
+version = "0.1.0"
+dependencies = [
+ "umcf-core",
+ "umcf-proto",
 ]
 
 [[package]]
