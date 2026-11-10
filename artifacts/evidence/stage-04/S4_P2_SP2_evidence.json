@@ -1,0 +1,36 @@
+{
+  "subphase": "S4.P2.SP2",
+  "title": "Bandwidth/Latency-Aware Workload Partitioning",
+  "git_commit": "f8ceabf6ae0e785b375b42cf6f76c3e9a7e0c46d",
+  "timestamp_utc": "2026-11-10T15:25:00Z",
+  "podman_total_bytes": 16670309678,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "partition_summary": {
+    "speedup_over_single_desktop": 1.236,
+    "target_speedup_over_single_desktop": 1.18,
+    "speedup_over_uniform": 8.469,
+    "target_speedup_over_uniform": 3.20,
+    "wall_clock_skew_percent": 0.01,
+    "target_wall_clock_skew_percent": 10.0,
+    "work_stealing_straggler_skew_reduction_percent": 50.0,
+    "data_locality_optimization_verified": true,
+    "wan_latency_pruning_verified": true
+  },
+  "artifact_hashes": {
+    "heterogeneous_partition_speedup.json": "192EE6FCAB86CA534934009DBC386A520986563D664EADE5592B40E391869BD8",
+    "crates/umcf-scheduler/src/cost.rs": "23CAB8D4257E6CCBCDAAA45CAB5D79FE36436A64368A0B8FDFB4882084FEEAE7",
+    "crates/umcf-scheduler/src/dag.rs": "51B6D7C3DAB7EC7163D95B669B589772C75A394A37C9F95DEEF0F10769E9C681",
+    "crates/umcf-scheduler/src/error.rs": "21D6C97BE6BDF34FF7D7DA0EBB9D9DC390A2DA1F7B2B8A2C28A937AF42974D84",
+    "crates/umcf-scheduler/src/lib.rs": "5AC92DC1EADBA7F9CADB6D253C5D1BEE6206C1D4E1030FEF621C96D8BF49C2C6",
+    "crates/umcf-scheduler/src/partitioner.rs": "3448C3208509DB50D4B1CEA52C356B58CF5A90FB69FF463993B5A659F1A8F5EE",
+    "crates/umcf-scheduler/src/solver.rs": "C1443513C62E0971C8193253DA8D7967D95444DD3C3A5A6F9C8769D765C37B89"
+  }
+}

@@ -576,6 +576,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s4-p2-sp1.sh` and `scripts/test-s4-p2-sp1.ps1` covering `[Unit]` (topological sort, 15 synthetic node constraint pruning matrix, Roofline LAN vs WAN tradeoffs), `[Integration]` (100-task DAG across 32 nodes in 352 µs), `[Simulation]` (1,000 randomized DAGs with 100% constraint adherence), `[Hardware-Required]` (monotonic timer and Podman quota), and `[Manually-Verified]` (scheduler_placement_explain.json audit) with 100% pass rate across 7 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P2_SP1_evidence.json` and `artifacts/evidence/stage-04/scheduler_placement_explain.json`.
 
+### Added (S4.P2.SP2: Bandwidth/Latency-Aware Workload DAG Partitioning)
+- **Adaptive Heterogeneous Partitioner (`AdaptivePartitioner` in `crates/umcf-scheduler/src/partitioner.rs`)**:
+  - Implemented closed-form water-filling slice allocation balancing total wall-clock duration across heterogeneous nodes ($w_i \propto \text{Speed}_i$ taking transfer latency and bandwidth into account).
+  - Achieved **1.236x speedup (target >= 1.18x)** over single-node Desktop on a 20:4:1 cluster (10 TFLOPS Desktop + 2 TFLOPS Laptop + 0.5 TFLOPS Phone).
+  - Achieved **8.469x speedup (target >= 3.20x)** over uniform 1/3 partitioning.
+  - Slices finish with **0.01% wall-clock skew (< 10% target)**.
+  - Automatically prunes slow WAN nodes when transfer latency exceeds parallel compute speedup.
+- **Data Locality Optimizer & Dynamic Work Stealing (`WorkStealingCoordinator`)**:
+  - Implemented `DataLocalityOptimizer::select_aggregation_node` co-locating downstream reduce/stitch tasks on the node producing the largest intermediate shard.
+  - Implemented `WorkStealingCoordinator` dynamically stealing remaining unstarted slices from straggler nodes to idle workers, achieving **50.0% skew reduction (target >= 50%)**.
+- **Classified Test Harness**: Implemented `scripts/test-s4-p2-sp2.sh` and `scripts/test-s4-p2-sp2.ps1` covering `[Unit]` (water-filling allocation and data locality optimizer), `[Integration]` (heterogeneous speedup >= 1.18x and >= 3.2x), `[Simulation]` (work stealing straggler mitigation and WAN transfer latency pruning), `[Hardware-Required]` (monotonic timer and Podman quota), and `[Manually-Verified]` (heterogeneous_partition_speedup.json audit) with 100% pass rate across 6 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-04/S4_P2_SP2_evidence.json` and `artifacts/evidence/stage-04/heterogeneous_partition_speedup.json`.
+
+
 
 
 

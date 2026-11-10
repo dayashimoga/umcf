@@ -1,0 +1,67 @@
+{
+  "workload_name": "heterogeneous_cluster_benchmark",
+  "total_units": 50000,
+  "scheme": "DataParallel",
+  "slices": [
+    {
+      "slice_id": 0,
+      "assigned_node_id": "did:umcf:9cdc31cb7d828219881fdcb960fef28c",
+      "start_unit": 0,
+      "unit_count": 40453,
+      "estimated_compute_ms": 1011.325,
+      "estimated_transfer_ms": 0.0,
+      "estimated_wall_clock_ms": 1011.325
+    },
+    {
+      "slice_id": 1,
+      "assigned_node_id": "did:umcf:ace6d17f66662901881fe5b960ff01d7",
+      "start_unit": 40453,
+      "unit_count": 7586,
+      "estimated_compute_ms": 948.25,
+      "estimated_transfer_ms": 63.144512,
+      "estimated_wall_clock_ms": 1011.3945120000001
+    },
+    {
+      "slice_id": 2,
+      "assigned_node_id": "did:umcf:a78e0598c36fbe05881feeb960ff1122",
+      "start_unit": 48039,
+      "unit_count": 1961,
+      "estimated_compute_ms": 980.5,
+      "estimated_transfer_ms": 30.77418666666667,
+      "estimated_wall_clock_ms": 1011.2741866666668
+    }
+  ],
+  "node_allocation_counts": {
+    "did:umcf:9cdc31cb7d828219881fdcb960fef28c": 40453,
+    "did:umcf:a78e0598c36fbe05881feeb960ff1122": 1961,
+    "did:umcf:ace6d17f66662901881fe5b960ff01d7": 7586
+  },
+  "estimated_makespan_ms": 1011.3945120000001,
+  "single_fastest_makespan_ms": 1250.0,
+  "uniform_makespan_ms": 8565.060106666668,
+  "speedup_over_single_fastest": 1.2359173252069218,
+  "speedup_over_uniform": 8.468564941814384,
+  "gantt_chart_data": [
+    {
+      "node_id": "did:umcf:9cdc31cb7d828219881fdcb960fef28c",
+      "slice_id": 0,
+      "start_time_ms": 0.0,
+      "transfer_end_ms": 0.0,
+      "compute_end_ms": 1011.325
+    },
+    {
+      "node_id": "did:umcf:ace6d17f66662901881fe5b960ff01d7",
+      "slice_id": 1,
+      "start_time_ms": 0.0,
+      "transfer_end_ms": 63.144512,
+      "compute_end_ms": 1011.3945120000001
+    },
+    {
+      "node_id": "did:umcf:a78e0598c36fbe05881feeb960ff1122",
+      "slice_id": 2,
+      "start_time_ms": 0.0,
+      "transfer_end_ms": 30.77418666666667,
+      "compute_end_ms": 1011.2741866666668
+    }
+  ]
+}

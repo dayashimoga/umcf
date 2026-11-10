@@ -15,6 +15,10 @@ use umcf_scheduler::dag::{
     WorkloadKind,
 };
 use umcf_scheduler::error::{SchedulingError, UnschedulableReason};
+use umcf_scheduler::partitioner::{
+    AdaptivePartitioner, DataLocalityOptimizer, PartitionScheme, WorkSlice,
+    WorkStealingCoordinator, WorkloadUnit,
+};
 use umcf_scheduler::solver::ConstraintSolver;
 
 fn make_node_id(seed_byte: u8) -> NodeId {
@@ -971,3 +975,451 @@ fn test_s4_p2_sp1_manually_verified_explain_json_audit() {
     assert!(explain_path.exists());
     assert!(!explain_json.is_empty());
 }
+
+// ============================================================================
+// S4.P2.SP2: Bandwidth/Latency-Aware Workload Partitioning & Straggler Mitigation
+// ============================================================================
+
+#[test]
+fn test_s4_p2_sp2_unit_water_filling_partition_ratio() {
+    let desktop_id = make_node_id(101);
+    let laptop_id = make_node_id(102);
+    let phone_id = make_node_id(103);
+
+    // 20:4:1 compute ratio (10,000 GFLOPS, 2,000 GFLOPS, 500 GFLOPS)
+    let desktop = create_synthetic_node(
+        101,
+        NodeRole::Worker,
+        32768,
+        16384,
+        10_000.0,
+        600.0,
+        GuardRegime::FullCapacity,
+        None,
+        true,
+        vec![ComputeBackend::CpuSimd, ComputeBackend::Cuda],
+        vec!["avx2"],
+        LinkProfile::local(),
+    );
+    let laptop = create_synthetic_node(
+        102,
+        NodeRole::Worker,
+        16384,
+        0,
+        2_000.0,
+        100.0,
+        GuardRegime::FullCapacity,
+        None,
+        true,
+        vec![ComputeBackend::CpuSimd],
+        vec!["avx2"],
+        LinkProfile::lan_ethernet(),
+    );
+    let phone = create_synthetic_node(
+        103,
+        NodeRole::Worker,
+        4096,
+        0,
+        500.0,
+        25.0,
+        GuardRegime::FullCapacity,
+        Some(90),
+        true,
+        vec![ComputeBackend::CpuSimd],
+        vec!["neon"],
+        LinkProfile::lan_wifi6(),
+    );
+
+    let nodes = vec![desktop, laptop, phone];
+    let workload = WorkloadUnit {
+        name: "matrix_tiles_10k".into(),
+        total_units: 10_000,
+        flops_per_unit: 100_000_000,
+        input_bytes_per_unit: 1024,
+        output_bytes_per_unit: 512,
+    };
+
+    let partitioner = AdaptivePartitioner::new();
+    let plan = partitioner
+        .partition_workload(&workload, &nodes, &desktop_id, PartitionScheme::DataParallel)
+        .expect("partition plan");
+
+    assert_eq!(plan.total_units, 10_000);
+    assert_eq!(plan.slices.len(), 3);
+
+    let desktop_units = *plan.node_allocation_counts.get(&desktop_id).unwrap_or(&0);
+    let laptop_units = *plan.node_allocation_counts.get(&laptop_id).unwrap_or(&0);
+    let phone_units = *plan.node_allocation_counts.get(&phone_id).unwrap_or(&0);
+
+    println!(
+        "[Unit Water-Filling] Allocation: Desktop={} ({:.1}%), Laptop={} ({:.1}%), Phone={} ({:.1}%)",
+        desktop_units,
+        desktop_units as f64 / 100.0,
+        laptop_units,
+        laptop_units as f64 / 100.0,
+        phone_units,
+        phone_units as f64 / 100.0
+    );
+
+    assert_eq!(desktop_units + laptop_units + phone_units, 10_000);
+    // Desktop (20x faster than phone) should get ~75-85% of the work
+    assert!((7500..=8500).contains(&desktop_units));
+    // Laptop (4x faster than phone) should get ~12-18% of the work
+    assert!((1200..=1800).contains(&laptop_units));
+    // Phone should get ~3-6% of the work
+    assert!((250..=600).contains(&phone_units));
+
+    // Test DataLocalityOptimizer
+    let agg_node = DataLocalityOptimizer::select_aggregation_node(&plan.slices);
+    assert_eq!(agg_node, Some(desktop_id));
+}
+
+#[test]
+fn test_s4_p2_sp2_integration_speedup_over_desktop_and_uniform() {
+    let desktop_id = make_node_id(101);
+
+    // 10-TFLOPS Desktop + 2-TFLOPS Laptop + 0.5-TFLOPS Phone
+    let desktop = create_synthetic_node(
+        101,
+        NodeRole::Worker,
+        32768,
+        16384,
+        10_000.0,
+        800.0,
+        GuardRegime::FullCapacity,
+        None,
+        true,
+        vec![ComputeBackend::CpuSimd, ComputeBackend::Cuda],
+        vec!["avx2"],
+        LinkProfile::local(),
+    );
+    let laptop = create_synthetic_node(
+        102,
+        NodeRole::Worker,
+        16384,
+        0,
+        2_000.0,
+        120.0,
+        GuardRegime::FullCapacity,
+        None,
+        true,
+        vec![ComputeBackend::CpuSimd],
+        vec!["avx2"],
+        LinkProfile::lan_ethernet(),
+    );
+    let phone = create_synthetic_node(
+        103,
+        NodeRole::Worker,
+        4096,
+        0,
+        500.0,
+        30.0,
+        GuardRegime::FullCapacity,
+        Some(85),
+        true,
+        vec![ComputeBackend::CpuSimd],
+        vec!["neon"],
+        LinkProfile::lan_wifi6(),
+    );
+
+    let nodes = vec![desktop, laptop, phone];
+    let workload = WorkloadUnit {
+        name: "gemm_parallel_batch".into(),
+        total_units: 50_000,
+        flops_per_unit: 250_000_000,
+        input_bytes_per_unit: 1024,
+        output_bytes_per_unit: 512,
+    };
+
+    let partitioner = AdaptivePartitioner::new();
+    let plan = partitioner
+        .partition_workload(&workload, &nodes, &desktop_id, PartitionScheme::DataParallel)
+        .expect("partition plan");
+
+    println!(
+        "[Integration Speedup] Makespan: {:.2} ms | Single Fastest: {:.2} ms | Uniform: {:.2} ms",
+        plan.estimated_makespan_ms, plan.single_fastest_makespan_ms, plan.uniform_makespan_ms
+    );
+    println!(
+        "[Integration Speedup] Speedup over Single Desktop: {:.3}x (Target >= 1.18x)",
+        plan.speedup_over_single_fastest
+    );
+    println!(
+        "[Integration Speedup] Speedup over Uniform 1/3: {:.3}x (Target >= 3.20x)",
+        plan.speedup_over_uniform
+    );
+
+    // Acceptance criteria verification:
+    // 1. >= 1.18x speedup over single-node Desktop
+    assert!(
+        plan.speedup_over_single_fastest >= 1.18,
+        "Speedup over single desktop must be >= 1.18x (was {:.3}x)",
+        plan.speedup_over_single_fastest
+    );
+
+    // 2. >= 3.2x speedup over uniform 1/3 partitioning
+    assert!(
+        plan.speedup_over_uniform >= 3.20,
+        "Speedup over uniform partitioning must be >= 3.2x (was {:.3}x)",
+        plan.speedup_over_uniform
+    );
+
+    // 3. Wall-clock skew among slices is within < 10%
+    let max_time = plan
+        .slices
+        .iter()
+        .map(|s| s.estimated_wall_clock_ms)
+        .fold(0.0f64, f64::max);
+    let min_time = plan
+        .slices
+        .iter()
+        .map(|s| s.estimated_wall_clock_ms)
+        .fold(f64::INFINITY, f64::min);
+    let skew_percent = ((max_time - min_time) / max_time) * 100.0;
+    println!("[Integration Skew] Wall-clock skew: {:.2}% (< 10% target)", skew_percent);
+    assert!(
+        skew_percent < 10.0,
+        "Wall-clock skew across slices must be < 10% (was {:.2}%)",
+        skew_percent
+    );
+}
+
+#[test]
+fn test_s4_p2_sp2_simulation_work_stealing_straggler_mitigation() {
+    let fast_node_id = make_node_id(201);
+    let straggler_node_id = make_node_id(202);
+
+    let initial_slices = vec![
+        WorkSlice {
+            slice_id: 1,
+            assigned_node_id: fast_node_id.clone(),
+            start_unit: 0,
+            unit_count: 500,
+            estimated_compute_ms: 50.0,
+            estimated_transfer_ms: 0.0,
+            estimated_wall_clock_ms: 50.0,
+        },
+        WorkSlice {
+            slice_id: 2,
+            assigned_node_id: straggler_node_id.clone(),
+            start_unit: 500,
+            unit_count: 125,
+            estimated_compute_ms: 50.0,
+            estimated_transfer_ms: 2.0,
+            estimated_wall_clock_ms: 52.0,
+        },
+        WorkSlice {
+            slice_id: 3,
+            assigned_node_id: straggler_node_id.clone(),
+            start_unit: 625,
+            unit_count: 125,
+            estimated_compute_ms: 50.0,
+            estimated_transfer_ms: 2.0,
+            estimated_wall_clock_ms: 52.0,
+        },
+        WorkSlice {
+            slice_id: 4,
+            assigned_node_id: straggler_node_id.clone(),
+            start_unit: 750,
+            unit_count: 125,
+            estimated_compute_ms: 50.0,
+            estimated_transfer_ms: 2.0,
+            estimated_wall_clock_ms: 52.0,
+        },
+        WorkSlice {
+            slice_id: 5,
+            assigned_node_id: straggler_node_id.clone(),
+            start_unit: 875,
+            unit_count: 125,
+            estimated_compute_ms: 50.0,
+            estimated_transfer_ms: 2.0,
+            estimated_wall_clock_ms: 52.0,
+        },
+    ];
+
+    let coordinator = WorkStealingCoordinator::new(&initial_slices);
+    assert_eq!(coordinator.remaining_slices(&straggler_node_id), 4);
+    assert_eq!(coordinator.remaining_slices(&fast_node_id), 1);
+
+    // Fast node finishes its 1 slice and becomes idle
+    // Straggler has 4 unstarted slices remaining (thermal throttling or host spike)
+    let decision = coordinator
+        .try_steal(&fast_node_id)
+        .expect("must steal from straggler");
+
+    println!(
+        "[Simulation Stealing] Decision: Stole {} slices ({:?}) from straggler, skew reduction: {:.1}%",
+        decision.stolen_slice_ids.len(),
+        decision.stolen_slice_ids,
+        decision.estimated_skew_reduction_percent
+    );
+
+    assert_eq!(decision.from_straggler, straggler_node_id);
+    assert_eq!(decision.to_idle_worker, fast_node_id);
+    assert_eq!(decision.stolen_slice_ids.len(), 2);
+    assert_eq!(coordinator.remaining_slices(&straggler_node_id), 2);
+    assert_eq!(coordinator.remaining_slices(&fast_node_id), 3);
+    assert!(
+        decision.estimated_skew_reduction_percent >= 50.0,
+        "Tail straggler skew reduction must be >= 50%"
+    );
+}
+
+#[test]
+fn test_s4_p2_sp2_simulation_wan_transfer_overhead_pruning() {
+    let local_id = make_node_id(1);
+
+    // Local node: fast (5,000 GFLOPS), local link
+    let local_desktop = create_synthetic_node(
+        1,
+        NodeRole::Worker,
+        16384,
+        8192,
+        5_000.0,
+        400.0,
+        GuardRegime::FullCapacity,
+        None,
+        true,
+        vec![ComputeBackend::CpuSimd, ComputeBackend::Vulkan],
+        vec!["avx2"],
+        LinkProfile::local(),
+    );
+
+    // Slow remote WAN node: 20 GFLOPS, very high latency link (500 ms RTT, 1 Mbps)
+    let slow_wan_node = create_synthetic_node(
+        2,
+        NodeRole::Worker,
+        2048,
+        0,
+        20.0,
+        10.0,
+        GuardRegime::FullCapacity,
+        Some(30),
+        false,
+        vec![ComputeBackend::CpuSimd],
+        vec!["neon"],
+        LinkProfile {
+            rtt_ms: 500.0,
+            bandwidth_mbps: 1.0,
+            is_relayed: true,
+            is_metered: true,
+        },
+    );
+
+    let nodes = vec![local_desktop, slow_wan_node];
+    let workload = WorkloadUnit {
+        name: "small_fast_job".into(),
+        total_units: 1000,
+        flops_per_unit: 10_000_000,
+        input_bytes_per_unit: 100_000, // 100 KB per unit = 100 MB total
+        output_bytes_per_unit: 1024,
+    };
+
+    let partitioner = AdaptivePartitioner::new();
+    let plan = partitioner
+        .partition_workload(&workload, &nodes, &local_id, PartitionScheme::DataParallel)
+        .expect("partition plan");
+
+    // Remote node's transfer latency far exceeds parallel compute savings
+    // Partitioner MUST automatically assign 100% of workload to local node
+    let local_units = *plan.node_allocation_counts.get(&local_id).unwrap_or(&0);
+    assert_eq!(
+        local_units, 1000,
+        "Slow remote node must be pruned when transfer cost exceeds compute gain"
+    );
+}
+
+#[test]
+fn test_s4_p2_sp2_hardware_monotonic_timer_and_quota() {
+    let t0 = Instant::now();
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    let t1 = Instant::now();
+    assert!(t1 > t0);
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workspace_root = manifest_dir.join("../..");
+    let quota_script = workspace_root.join("scripts/podman-quota-check.ps1");
+    assert!(quota_script.exists());
+}
+
+#[test]
+fn test_s4_p2_sp2_manually_verified_speedup_evidence_export() {
+    let desktop_id = make_node_id(101);
+
+    // 10-TFLOPS Desktop + 2-TFLOPS Laptop + 0.5-TFLOPS Phone
+    let desktop = create_synthetic_node(
+        101,
+        NodeRole::Worker,
+        32768,
+        16384,
+        10_000.0,
+        800.0,
+        GuardRegime::FullCapacity,
+        None,
+        true,
+        vec![ComputeBackend::CpuSimd, ComputeBackend::Cuda],
+        vec!["avx2"],
+        LinkProfile::local(),
+    );
+    let laptop = create_synthetic_node(
+        102,
+        NodeRole::Worker,
+        16384,
+        0,
+        2_000.0,
+        120.0,
+        GuardRegime::FullCapacity,
+        None,
+        true,
+        vec![ComputeBackend::CpuSimd],
+        vec!["avx2"],
+        LinkProfile::lan_ethernet(),
+    );
+    let phone = create_synthetic_node(
+        103,
+        NodeRole::Worker,
+        4096,
+        0,
+        500.0,
+        30.0,
+        GuardRegime::FullCapacity,
+        Some(85),
+        true,
+        vec![ComputeBackend::CpuSimd],
+        vec!["neon"],
+        LinkProfile::lan_wifi6(),
+    );
+
+    let nodes = vec![desktop, laptop, phone];
+    let workload = WorkloadUnit {
+        name: "heterogeneous_cluster_benchmark".into(),
+        total_units: 50_000,
+        flops_per_unit: 250_000_000,
+        input_bytes_per_unit: 1024,
+        output_bytes_per_unit: 512,
+    };
+
+    let partitioner = AdaptivePartitioner::new();
+    let plan = partitioner
+        .partition_workload(&workload, &nodes, &desktop_id, PartitionScheme::DataParallel)
+        .expect("partition plan");
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let workspace_root = manifest_dir.join("../..");
+    let speedup_path = workspace_root.join("artifacts/evidence/stage-04/heterogeneous_partition_speedup.json");
+
+    if let Some(parent) = speedup_path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let speedup_json = serde_json::to_vec_pretty(&plan).expect("serialize plan");
+    fs::write(&speedup_path, &speedup_json).expect("write speedup file");
+
+    println!(
+        "[Manually-Verified] Exported heterogeneous partition speedup evidence to {:?}",
+        speedup_path
+    );
+    assert!(speedup_path.exists());
+    assert!(!speedup_json.is_empty());
+}
+

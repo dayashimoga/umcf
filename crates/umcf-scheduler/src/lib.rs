@@ -7,6 +7,7 @@
 pub mod cost;
 pub mod dag;
 pub mod error;
+pub mod partitioner;
 pub mod solver;
 
 pub use cost::{CostBreakdown, LinkProfile, NodeCandidateProfile, RooflineCostModel};
@@ -15,6 +16,10 @@ pub use dag::{
     WorkloadKind,
 };
 pub use error::{SchedulingError, UnschedulableReason};
+pub use partitioner::{
+    AdaptivePartitioner, DataLocalityOptimizer, GanttBar, PartitionPlan, PartitionScheme,
+    StealDecision, WorkSlice, WorkStealingCoordinator, WorkloadUnit,
+};
 pub use solver::{ConstraintSolver, PlacementDecision, PlacementPlan};
 
 use std::fmt;
