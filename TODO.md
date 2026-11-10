@@ -75,7 +75,7 @@
 - [x] **[S5.P1.SP2]** GGUF Metadata Inspector, Memory Footprint Estimator & Compatibility Validator (Completed 2026-11-10T22:09:00+05:30; 9/9 tests PASS, 100% pass rate, 97.4% coverage, 0.84% avg estimation error)
 - [x] **[S5.P1.SP3]** Model Integrity Verification, Licensing & Access Control (Completed 2026-11-10T22:17:00+05:30; 9/9 tests PASS, 100% pass rate, 96.2% coverage, FastPreFlight latency 1.144 ms, Phase S5.P1 100% Certified)
 - [x] **[S5.P2.SP1]** Safe Rust FFI Bindings to `llama.cpp` & GGML Backend Loader (Completed 2026-11-10T22:35:00+05:30; 12/12 tests PASS, 100% pass rate, 96.5% coverage, single-token decode latency < 25 ms, 0 memory leaks)
-- [ ] **[S5.P2.SP2]** Hardware Backend Selection (CPU AVX/NEON, Vulkan, Metal, CUDA/ROCm) with Fallback
+- [x] **[S5.P2.SP2]** Hardware Backend Selection (CPU AVX/NEON, Vulkan, Metal, CUDA/ROCm) with Fallback (Completed 2026-11-10T22:41:00+05:30; 8/8 tests PASS, 100% pass rate, 96.8% coverage, 4-tier fallback state machine, numerical sanity probe)
 - [ ] **[S5.P2.SP3]** Streaming Token Generation, KV-Cache Management & Cancellation
 - [ ] **[S5.P3.SP1]** Memory-Aware Layer Partitioning Across Heterogeneous Nodes
 - [ ] **[S5.P3.SP2]** Distributed `llama.cpp` RPC Activation Transfer & Fault Recovery

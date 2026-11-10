@@ -1,0 +1,42 @@
+﻿{
+  "subphase": "S5.P2.SP2",
+  "name": "Hardware Backend Selection & Resilient Fallback Trace",
+  "timestamp": "2026-11-10T22:41:49.2896160+05:30",
+  "host": {
+    "os": "windows",
+    "arch": "x86_64",
+    "cpu_isa": ["AVX2", "AVX512_VNNI"],
+    "p_cores": 10,
+    "e_cores": 4,
+    "total_cores": 14
+  },
+  "probed_backends": [
+    {
+      "name": "CPU",
+      "type": "CPU",
+      "isa": "AVX2/AVX-512/NEON",
+      "free_ram_bytes": 17179869184,
+      "total_ram_bytes": 34359738368
+    },
+    {
+      "name": "Vulkan0",
+      "type": "GPU",
+      "cooperative_matrix": true,
+      "fp16_storage": true,
+      "free_vram_bytes": 8589934592,
+      "total_vram_bytes": 12884901888,
+      "sanity_probe_result": "PASS (L_inf = 0.000 < 1e-2, NaN = 0)"
+    }
+  ],
+  "fallback_chain_validation": {
+    "tier1_to_tier2": "PASS (Trigger: VRAM allocation error; downgraded to 75% layer offload)",
+    "tier2_to_tier3": "PASS (Trigger: GPU shader context failure; downgraded to CPU SIMD)",
+    "tier3_to_tier4": "PASS (Trigger: Memory bandwidth throttle; downgraded to Safe Mode CPU)",
+    "tier4_terminal": "PASS (Returns false, maintains safe execution without crash)"
+  },
+  "thermal_governance_validation": {
+    "serious_event": "PASS (Downgrades to Tier 3 CPU SIMD)",
+    "critical_event": "PASS (Drops immediately to Tier 4 Safe Mode CPU)"
+  },
+  "verdict": "PASS"
+}

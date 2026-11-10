@@ -724,6 +724,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s5-p2-sp1.sh` and `scripts/test-s5-p2-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 12 tests (1 in `umcf-llama-sys`, 11 in `umcf-ai`).
 - **Verification Evidence**: Archived `artifacts/stage-05/p2/sp1_ffi_asan_leak_check.log` and `artifacts/stage-05/p2/sp1_multithread_context_stress.json`.
 
+### Added (S5.P2.SP2: Hardware Backend Selection with Fallback)
+- **Hardware Backend Selector & Prober (`crates/umcf-ai/src/backend_selector.rs`)**:
+  - Implemented dynamic probing of CPU topology and SIMD extensions (`AVX2`, `AVX-512`, `NEON`, `dotprod`) and GPU accelerators (`Vulkan`, `Metal`, `CUDA`, `ROCm`).
+  - Implemented a 10 ms numerical sanity probe executing a $64 \times 64$ test matmul, asserting $L_\infty \le 10^{-2}$ and catching buggy GPU shader compiler math before admitting drivers into the compute pool.
+  - Implemented big.LITTLE / hybrid CPU thread optimization: pins sequential token decode to performance cores to eliminate efficiency core synchronization stragglers, while allocating all physical cores to batch prefill.
+  - Implemented VRAM headroom calculation enforcing OS-specific safety reserves ($\ge 1.5\text{ GiB}$ on Android/iOS; $\ge 15\%$ on desktop GPUs).
+- **4-Tier Resilient Fallback State Machine (`FallbackExecutor`)**:
+  - Defined 4-tier degradation chain: Tier 1 (Full GPU Offload) -> Tier 2 (Hybrid Partial GPU Offload in 25% steps) -> Tier 3 (CPU SIMD Accelerated) -> Tier 4 (Safe Mode CPU).
+  - Wired real-time degradation hooks for `ThermalState::Serious` and `ThermalState::Critical` events, automatically stepping down active layer offloads and batch sizes without crashing.
+  - Implemented `execute_with_fallback`, dynamically recovering from injected GPU OOMs or context failures in $\le 500\text{ ms}$.
+- **Architecture Documentation & Invariants**:
+  - Updated `docs/architecture/AI_INFERENCE_ENGINE.md` with Section 2 detailing backend selection formulas, thread pinning rules, and the 4-tier fallback state machine.
+- **Classified Test Harness**: Implemented `scripts/test-s5-p2-sp2.sh` and `scripts/test-s5-p2-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 8 tests.
+- **Verification Evidence**: Archived `artifacts/stage-05/p2/sp2_backend_probe_and_fallback.json` and `artifacts/stage-05/p2/sp2_hardware_throughput_comparison.json`.
+
+
 
 
 

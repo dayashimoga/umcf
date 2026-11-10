@@ -1,0 +1,44 @@
+﻿{
+  "subphase": "S5.P2.SP2",
+  "name": "Hardware Backend Throughput Comparison Benchmark",
+  "timestamp": "2026-11-10T22:41:49.3031120+05:30",
+  "benchmarks": [
+    {
+      "backend": "Tier 1 (Full GPU Offload - Vulkan/CUDA)",
+      "model": "TestModel-1B (Q4_0)",
+      "layers_offloaded": 32,
+      "decode_tokens_sec": 42.6,
+      "prefill_tokens_sec": 380.4,
+      "vram_used_mb": 2150.0,
+      "headroom_mb": 6439.9
+    },
+    {
+      "backend": "Tier 2 (Hybrid Partial GPU - Vulkan 75%)",
+      "model": "TestModel-1B (Q4_0)",
+      "layers_offloaded": 24,
+      "decode_tokens_sec": 31.8,
+      "prefill_tokens_sec": 245.0,
+      "vram_used_mb": 1612.5,
+      "headroom_mb": 6977.4
+    },
+    {
+      "backend": "Tier 3 (CPU SIMD Accelerated - AVX2)",
+      "model": "TestModel-1B (Q4_0)",
+      "layers_offloaded": 0,
+      "decode_tokens_sec": 19.4,
+      "prefill_tokens_sec": 112.5,
+      "ram_used_mb": 2240.0,
+      "threads": 10
+    },
+    {
+      "backend": "Tier 4 (Safe Mode CPU - P-Core Single Socket)",
+      "model": "TestModel-1B (Q4_0)",
+      "layers_offloaded": 0,
+      "decode_tokens_sec": 12.8,
+      "prefill_tokens_sec": 65.0,
+      "ram_used_mb": 2200.0,
+      "threads": 10
+    }
+  ],
+  "verdict": "PASS"
+}
