@@ -1,0 +1,23 @@
+{
+  "subphase": "S1.P3.SP2",
+  "title": "Flutter Multi-OS CI & Artifact Packaging",
+  "git_commit": "e28a904ea7e19dfa47b17a082880656757c2f118",
+  "timestamp_utc": "2026-11-10T08:47:15Z",
+  "podman_total_bytes": 2165355437,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "apps/flutter_client/lib/src/models/hardware_capability.dart": "0fbe4d3a1791a7d1adace23ea82fcfa4e9b1dba5d87eae3e26886ec4117eb845",
+    "apps/flutter_client/lib/src/ui/foundation_status_screen.dart": "30c3fe4deed4e8e8c900a49e03109bf9ac968904944584af717b824d230ec211",
+    "scripts/ci-flutter-podman.ps1": "dd3994616368b03a299287125cd4c7f97fe96773f0e80badc0fca6e5b6a6660e",
+    "scripts/verify-flutter-client.py": "23ee19eb7e3347910fcecbdab0dcb75200bd605a03ec0d775a7ca12b4065976b",
+    "artifacts/evidence/stage-01/flutter_test_lcov.info": "cf926664bb060b7e7978a790bb5171ea9b9d78f5f6e4c1c2cfbf66d737262cc9"
+  }
+}

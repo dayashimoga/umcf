@@ -116,5 +116,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p3-sp1.sh` and `scripts/test-s1-p3-sp1.ps1` covering `[Unit]` (coverage threshold parser unit tests), `[Integration]` (ci-core-podman and ci-web-podman end-to-end execution), `[Simulation]` (coverage deficit 81.5% and quota overflow 31.0 GB safe rejection), `[Hardware-Required]` (14 hardware threads execution probe), and `[Manually-Verified]` (coverage_stage01.json review with 96.7% coverage) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P3_SP1_evidence.json` and `artifacts/evidence/stage-01/coverage_stage01.json`.
 
+### Added (S1.P3.SP2: Flutter Multi-OS CI & Artifact Packaging)
+- **Typed Dart Capability Models (`apps/flutter_client/lib/src/models/hardware_capability.dart`, `apps/mobile-desktop/lib/src/models/hardware_capability.dart`)**:
+  - Implemented typed Dart classes matching `schemas/hardware_capability_v1.schema.json` with 100% enum and property parity: `HardwareCapabilityDescriptor`, `CpuCapability`, `MemoryCapability`, `AcceleratorCapability`, `StorageCapability`, `NetworkCapability`, `PowerThermalState`, and enums `DeviceClass`, `OperatingSystem`, `AcceleratorKind`, `ComputeBackend`, `NetworkLinkType`, and `ThermalState`.
+  - Implemented lossless round-trip JSON serialization (`fromJson` and `toJson`) validated against golden fixtures emitted by `umcf-core`.
+- **Responsive Foundation Status Screen (`apps/flutter_client/lib/src/ui/foundation_status_screen.dart`, `apps/mobile-desktop/lib/src/ui/foundation_status_screen.dart`)**:
+  - Implemented responsive status widget adapting dynamically between mobile compact viewports (`< 600px`: bottom `NavigationBar`) and desktop expanded viewports (`>= 600px`: side `NavigationRail`).
+  - Zero decorative controls: wired interactive controls for sharing toggle (`Switch`), status refresh (`IconButton`), and live node readiness states (`Ready`, `Active Worker`, `Ready (Sharing Disabled)`).
+- **Flutter Multi-OS CI Pipeline (`scripts/ci-flutter-podman.sh`, `scripts/ci-flutter-podman.ps1`, `scripts/verify-flutter-client.py`)**:
+  - Implemented multi-OS verification pipeline executing pre-step quota & placeholder guards, syntax & structural analysis, JSON schema parity assertion, and LCOV coverage evidence generation (`artifacts/evidence/stage-01/flutter_test_lcov.info`).
+- **Classified Test Harness**: Implemented `scripts/test-s1-p3-sp2.sh` and `scripts/test-s1-p3-sp2.ps1` covering `[Unit]` (Dart model golden JSON deserialization and schema parity), `[Integration]` (responsive breakpoint switch & full CI pipeline), `[Simulation]` (malformed JSON injection ArgumentError rejection), `[Hardware-Required]` (14 hardware threads host execution probe), and `[Manually-Verified]` (flutter_test_lcov.info tracefile validation) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P3_SP2_evidence.json` and `artifacts/evidence/stage-01/flutter_test_lcov.info`.
+
+
 
 
