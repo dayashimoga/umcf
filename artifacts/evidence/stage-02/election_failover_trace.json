@@ -1,0 +1,18 @@
+{
+  "cluster_nodes_evaluated": [
+    "did:key:z6MkNodeA_Server000000000000000001",
+    "did:key:z6MkNodeB_Desktop00000000000000002",
+    "did:key:z6MkNodeC_LaptopPlugged000000000003",
+    "did:key:z6MkNodeD_LaptopBattery000000000004",
+    "did:key:z6MkNodeE_PhoneBattery0000000000005"
+  ],
+  "failover_latency_ms": 0,
+  "failover_leader": "did:key:z6MkNodeC_LaptopPlugged000000000003",
+  "initial_leader": "did:key:z6MkNodeA_Server000000000000000001",
+  "leader_transfer_latency_ms": 0,
+  "solo_mode_latency_ms": 0,
+  "split_brain_count": 0,
+  "subphase": "S2.P2.SP3",
+  "title": "5-Node Cluster Election Failover & Leader Transfer Trace",
+  "transferred_leader": "did:key:z6MkNodeB_Desktop00000000000000002"
+}

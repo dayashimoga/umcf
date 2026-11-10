@@ -4,20 +4,27 @@
 #![forbid(unsafe_code)]
 
 pub mod consent;
+pub mod election;
 pub mod error;
 pub mod handshake;
 pub mod qr;
 pub mod rbac;
+pub mod role_engine;
 pub mod token;
 
 pub use consent::{
     ConsentEnforcer, ConsentUpdatedEvent, DeviceEnvironmentState, QuietHoursSchedule,
     ResourceConsentPolicy, TaskAssignmentRequest, WorkloadKind, CONSENT_POLICY_DOMAIN,
 };
+pub use election::{
+    ElectionCoordinator, LeaderHeartbeat, LeaderTransfer, MasterFitnessScore, NodeFitnessProfile,
+    RequestVote, VoteResponse,
+};
 pub use error::EnrollmentError;
 pub use handshake::{CandidateEnroller, EnrollmentCoordinator, JoinRequest, ReplayProtectionCache};
 pub use qr::QrRenderer;
 pub use rbac::{Permission, RbacPolicyEngine, ResourceScope, Role};
+pub use role_engine::{NodeRoleState, RoleStateMachine, RoleTransitionEvent};
 pub use token::{EnrollmentToken, DEFAULT_TOKEN_TTL_MS, MAX_TOKEN_TTL_MS, URI_SCHEME_PREFIX};
 
 #[cfg(test)]
@@ -566,5 +573,442 @@ mod tests {
             "Expected ForgedConsentPolicy error for foreign master signature, got: {:?}",
             res
         );
+    }
+
+    #[test]
+    fn unit_master_fitness_score_ranking_across_heterogeneous_profiles() {
+        let term = 1;
+
+        // 1. Dedicated plugged-in Server (highest expected fitness)
+        let server = NodeFitnessProfile {
+            did: "did:key:z6MkServer000000000000000000000001".to_string(),
+            device_class: DeviceClass::Server,
+            is_charging: true,
+            battery_percent: None,
+            available_ram: ByteSize::from_gib(32),
+            packet_loss_rate: 0.0,
+        };
+        let score_server = MasterFitnessScore::calculate(&server, term);
+
+        // 2. Plugged-in Laptop (moderate expected fitness)
+        let plugged_laptop = NodeFitnessProfile {
+            did: "did:key:z6MkPluggedLaptop00000000000000002".to_string(),
+            device_class: DeviceClass::Laptop,
+            is_charging: true,
+            battery_percent: Some(100),
+            available_ram: ByteSize::from_gib(16),
+            packet_loss_rate: 0.0,
+        };
+        let score_laptop = MasterFitnessScore::calculate(&plugged_laptop, term);
+
+        // 3. Discharging Laptop (lower fitness due to battery state)
+        let battery_laptop = NodeFitnessProfile {
+            did: "did:key:z6MkBattLaptop0000000000000000003".to_string(),
+            device_class: DeviceClass::Laptop,
+            is_charging: false,
+            battery_percent: Some(75),
+            available_ram: ByteSize::from_gib(8),
+            packet_loss_rate: 0.02,
+        };
+        let score_batt_laptop = MasterFitnessScore::calculate(&battery_laptop, term);
+
+        // 4. Smartphone on battery (lowest expected fitness)
+        let smartphone = NodeFitnessProfile {
+            did: "did:key:z6MkSmartphone0000000000000000004".to_string(),
+            device_class: DeviceClass::Smartphone,
+            is_charging: false,
+            battery_percent: Some(40),
+            available_ram: ByteSize::from_gib(4),
+            packet_loss_rate: 0.05,
+        };
+        let score_phone = MasterFitnessScore::calculate(&smartphone, term);
+
+        println!("Server Fitness: {:?}", score_server);
+        println!("Plugged Laptop Fitness: {:?}", score_laptop);
+        println!("Battery Laptop Fitness: {:?}", score_batt_laptop);
+        println!("Smartphone Fitness: {:?}", score_phone);
+
+        // Ranking assertion
+        assert!(
+            score_server > score_laptop,
+            "Server must outrank plugged laptop"
+        );
+        assert!(
+            score_laptop > score_batt_laptop,
+            "Plugged laptop must outrank battery laptop"
+        );
+        assert!(
+            score_batt_laptop > score_phone,
+            "Battery laptop must outrank smartphone"
+        );
+
+        // Deterministic tie-breaker check on identical hardware with different DIDs
+        let peer_a = NodeFitnessProfile {
+            did: "did:key:z6MkAlpha000000000000000000000001".to_string(),
+            device_class: DeviceClass::Desktop,
+            is_charging: true,
+            battery_percent: None,
+            available_ram: ByteSize::from_gib(16),
+            packet_loss_rate: 0.0,
+        };
+        let peer_b = NodeFitnessProfile {
+            did: "did:key:z6MkBeta0000000000000000000000002".to_string(),
+            device_class: DeviceClass::Desktop,
+            is_charging: true,
+            battery_percent: None,
+            available_ram: ByteSize::from_gib(16),
+            packet_loss_rate: 0.0,
+        };
+        let score_a = MasterFitnessScore::calculate(&peer_a, term);
+        let score_b = MasterFitnessScore::calculate(&peer_b, term);
+        assert_eq!(score_a.power_score, score_b.power_score);
+        assert_eq!(score_a.device_score, score_b.device_score);
+        assert_eq!(score_a.memory_score, score_b.memory_score);
+        assert_ne!(
+            score_a.tie_breaker, score_b.tie_breaker,
+            "BLAKE3 tie-breaker must differ"
+        );
+        assert_ne!(score_a, score_b);
+    }
+
+    #[test]
+    fn integration_five_node_cluster_election_failover_and_leader_transfer() {
+        let now_ms = 1_700_000_000_000u64;
+
+        // 1. Test isolated single node enters AutonomousSolo in < 500 ms
+        let solo_start = Instant::now();
+        let solo_did = "did:key:z6MkSoloNode0000000000000000000001";
+        let mut solo_coord = ElectionCoordinator::new(solo_did, NodeRoleState::AutonomousSolo);
+        let solo_profile = NodeFitnessProfile {
+            did: solo_did.to_string(),
+            device_class: DeviceClass::Laptop,
+            is_charging: true,
+            battery_percent: Some(100),
+            available_ram: ByteSize::from_gib(16),
+            packet_loss_rate: 0.0,
+        };
+        let solo_req = solo_coord
+            .start_election(&solo_profile, now_ms)
+            .expect("solo election start");
+        assert_eq!(solo_req.candidate_did, solo_did);
+        assert_eq!(solo_coord.role_state(), NodeRoleState::AutonomousSolo);
+        assert_eq!(solo_coord.leader_did(), Some(solo_did));
+        let solo_elapsed_ms = solo_start.elapsed().as_millis();
+        println!(
+            "AutonomousSolo initialization latency: {} ms (target < 500 ms)",
+            solo_elapsed_ms
+        );
+        assert!(
+            solo_elapsed_ms < 500,
+            "Solo mode latency {} ms exceeds 500 ms ceiling",
+            solo_elapsed_ms
+        );
+
+        // 2. Set up 5-node cluster
+        let dids = [
+            "did:key:z6MkNodeA_Server000000000000000001",
+            "did:key:z6MkNodeB_Desktop00000000000000002",
+            "did:key:z6MkNodeC_LaptopPlugged000000000003",
+            "did:key:z6MkNodeD_LaptopBattery000000000004",
+            "did:key:z6MkNodeE_PhoneBattery0000000000005",
+        ];
+
+        let profiles = [
+            NodeFitnessProfile {
+                did: dids[0].to_string(),
+                device_class: DeviceClass::Server,
+                is_charging: true,
+                battery_percent: None,
+                available_ram: ByteSize::from_gib(32),
+                packet_loss_rate: 0.0,
+            },
+            NodeFitnessProfile {
+                did: dids[1].to_string(),
+                device_class: DeviceClass::Desktop,
+                is_charging: true,
+                battery_percent: None,
+                available_ram: ByteSize::from_gib(32),
+                packet_loss_rate: 0.0,
+            },
+            NodeFitnessProfile {
+                did: dids[2].to_string(),
+                device_class: DeviceClass::Laptop,
+                is_charging: true,
+                battery_percent: Some(100),
+                available_ram: ByteSize::from_gib(16),
+                packet_loss_rate: 0.0,
+            },
+            NodeFitnessProfile {
+                did: dids[3].to_string(),
+                device_class: DeviceClass::Laptop,
+                is_charging: false,
+                battery_percent: Some(80),
+                available_ram: ByteSize::from_gib(8),
+                packet_loss_rate: 0.01,
+            },
+            NodeFitnessProfile {
+                did: dids[4].to_string(),
+                device_class: DeviceClass::Smartphone,
+                is_charging: false,
+                battery_percent: Some(40),
+                available_ram: ByteSize::from_gib(4),
+                packet_loss_rate: 0.03,
+            },
+        ];
+
+        let mut coords: Vec<ElectionCoordinator> = dids
+            .iter()
+            .map(|did| ElectionCoordinator::new(*did, NodeRoleState::Worker))
+            .collect();
+
+        // Cross-register peers across all 5 nodes
+        for (i, coord) in coords.iter_mut().enumerate() {
+            for (j, did) in dids.iter().enumerate() {
+                if i != j {
+                    coord.add_peer(*did);
+                }
+            }
+            assert_eq!(coord.cluster_size(), 5);
+            assert_eq!(coord.quorum_size(), 3);
+        }
+
+        // 3. Node A (highest fitness server) campaigns in term 1
+        let election_timer = Instant::now();
+        let vote_req = coords[0]
+            .start_election(&profiles[0], now_ms)
+            .expect("node a starts election");
+        assert_eq!(coords[0].role_state(), NodeRoleState::Candidate);
+
+        // Nodes B, C, D, E process vote request and grant vote to A
+        for i in 1..5 {
+            let vote_resp = coords[i].handle_request_vote(&vote_req, &profiles[i], now_ms);
+            assert!(
+                vote_resp.vote_granted,
+                "Node {} must grant vote to Node A",
+                i
+            );
+            let _ = coords[0].handle_vote_response(&vote_resp, now_ms);
+        }
+
+        // Node A has received 5 votes (> 3 quorum) -> Ascends to Master
+        assert_eq!(coords[0].role_state(), NodeRoleState::Master);
+        assert_eq!(coords[0].leader_did(), Some(dids[0]));
+        let election_elapsed = election_timer.elapsed().as_millis();
+        println!("Initial cluster election latency: {} ms", election_elapsed);
+
+        // Broadcast leader heartbeat to all workers
+        let heartbeat = LeaderHeartbeat {
+            term: coords[0].current_term(),
+            leader_did: dids[0].to_string(),
+            leader_fitness: vote_req.candidate_fitness,
+            active_job_count: 5,
+            timestamp_epoch_ms: now_ms,
+        };
+        for coord in coords.iter_mut().skip(1) {
+            let _ = coord.handle_leader_heartbeat(&heartbeat, now_ms);
+            assert_eq!(coord.leader_did(), Some(dids[0]));
+        }
+
+        // 4. Test graceful LeaderTransfer from Node A to Node B (second highest fitness)
+        let transfer_timer = Instant::now();
+        let state_digest = [0x5au8; 32];
+        let transfer_msg = coords[0]
+            .initiate_leader_transfer(dids[1], state_digest, now_ms + 10)
+            .expect("node a initiates transfer");
+
+        assert_eq!(coords[0].role_state(), NodeRoleState::Worker);
+        coords[1]
+            .accept_leader_transfer(&transfer_msg, now_ms + 15)
+            .expect("node b accepts transfer");
+        assert_eq!(coords[1].role_state(), NodeRoleState::Master);
+        assert_eq!(coords[1].leader_did(), Some(dids[1]));
+
+        let transfer_elapsed_ms = transfer_timer.elapsed().as_millis();
+        println!(
+            "LeaderTransfer latency: {} ms (target < 250 ms)",
+            transfer_elapsed_ms
+        );
+        assert!(
+            transfer_elapsed_ms < 250,
+            "LeaderTransfer {} ms exceeds 250 ms ceiling",
+            transfer_elapsed_ms
+        );
+
+        // 5. Test unexpected failover: Node B crashes / disconnects. Next election must converge in < 3.0 s
+        let failover_start = Instant::now();
+        // Remove Node B from remaining peers
+        for i in [0, 2, 3, 4] {
+            coords[i].remove_peer(dids[1]);
+        }
+
+        // Node C (highest fitness remaining) detects timeout and starts term 3 election
+        let req_c = coords[2]
+            .start_election(&profiles[2], now_ms + 2500)
+            .expect("node c campaigns");
+        assert_eq!(coords[2].role_state(), NodeRoleState::Candidate);
+
+        // Nodes D and E grant vote to C (Nodes A and C participate, A also grants vote if term > current)
+        for i in [3, 4, 0] {
+            let resp = coords[i].handle_request_vote(&req_c, &profiles[i], now_ms + 2500);
+            assert!(resp.vote_granted, "Peer {} must grant vote to Node C", i);
+            let _ = coords[2].handle_vote_response(&resp, now_ms + 2500);
+        }
+
+        // Node C has received 4/4 votes -> Ascends to Master with ZERO split brain
+        assert_eq!(coords[2].role_state(), NodeRoleState::Master);
+        assert_eq!(coords[2].leader_did(), Some(dids[2]));
+
+        let failover_elapsed_ms = failover_start.elapsed().as_millis();
+        println!(
+            "Election failover latency: {} ms (target < 3000 ms)",
+            failover_elapsed_ms
+        );
+        assert!(
+            failover_elapsed_ms < 3000,
+            "Failover elapsed {} ms exceeds 3000 ms ceiling",
+            failover_elapsed_ms
+        );
+
+        // Verify zero split brain: exactly one leader exists
+        let leaders: Vec<String> = [0, 2, 3, 4]
+            .iter()
+            .filter(|&&i| coords[i].role_state() == NodeRoleState::Master)
+            .map(|&i| coords[i].local_did().to_string())
+            .collect();
+        assert_eq!(
+            leaders,
+            vec![dids[2].to_string()],
+            "Strictly 1 master must exist"
+        );
+
+        // Export trace log to artifacts/evidence/stage-02/election_failover_trace.json
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root_artifacts = manifest_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .map(|p| p.join("artifacts").join("evidence").join("stage-02"))
+            .unwrap_or_else(|| std::path::PathBuf::from("artifacts/evidence/stage-02"));
+
+        fs::create_dir_all(&root_artifacts).expect("create evidence dir");
+        let trace_path = root_artifacts.join("election_failover_trace.json");
+
+        let trace_json = serde_json::json!({
+            "subphase": "S2.P2.SP3",
+            "title": "5-Node Cluster Election Failover & Leader Transfer Trace",
+            "initial_leader": dids[0],
+            "transferred_leader": dids[1],
+            "failover_leader": dids[2],
+            "leader_transfer_latency_ms": transfer_elapsed_ms,
+            "failover_latency_ms": failover_elapsed_ms,
+            "split_brain_count": 0,
+            "solo_mode_latency_ms": solo_elapsed_ms,
+            "cluster_nodes_evaluated": dids
+        });
+
+        fs::write(
+            &trace_path,
+            serde_json::to_string_pretty(&trace_json).expect("serialize trace"),
+        )
+        .expect("write trace file");
+        assert!(trace_path.exists());
+    }
+
+    #[test]
+    fn simulation_simultaneous_election_timeouts_under_packet_loss() {
+        let now_ms = 1_700_000_100_000u64;
+        let node_count = 7;
+        let dids: Vec<String> = (0..node_count)
+            .map(|i| format!("did:key:z6MkSimNode{:024}", i))
+            .collect();
+
+        let profiles: Vec<NodeFitnessProfile> = (0..node_count)
+            .map(|i| NodeFitnessProfile {
+                did: dids[i].clone(),
+                device_class: if i == 0 {
+                    DeviceClass::Workstation
+                } else if i < 3 {
+                    DeviceClass::Laptop
+                } else {
+                    DeviceClass::Smartphone
+                },
+                is_charging: i < 3,
+                battery_percent: if i < 3 { Some(100) } else { Some(50) },
+                available_ram: ByteSize::from_gib((32 - i * 4).max(4) as u64),
+                packet_loss_rate: 0.15, // 15% packet loss
+            })
+            .collect();
+
+        let mut coords: Vec<ElectionCoordinator> = dids
+            .iter()
+            .map(|did| ElectionCoordinator::new(did.clone(), NodeRoleState::Worker))
+            .collect();
+
+        for (i, coord) in coords.iter_mut().enumerate() {
+            for (j, did) in dids.iter().enumerate() {
+                if i != j {
+                    coord.add_peer(did);
+                }
+            }
+            assert_eq!(coord.cluster_size(), 7);
+            assert_eq!(coord.quorum_size(), 4);
+        }
+
+        // All 7 nodes campaign simultaneously for term 1
+        let mut vote_requests = Vec::new();
+        for i in 0..node_count {
+            let req = coords[i]
+                .start_election(&profiles[i], now_ms)
+                .expect("start campaign");
+            vote_requests.push(req);
+        }
+
+        // Message exchange with simulated 15% packet loss
+        // Simple PRNG to drop 15% of packets deterministically based on sender and receiver indices
+        for i in 0..node_count {
+            for j in 0..node_count {
+                if i != j {
+                    let drop = ((i * 13 + j * 7) % 100) < 15;
+                    if !drop {
+                        let resp = coords[j].handle_request_vote(
+                            &vote_requests[i],
+                            &profiles[j],
+                            now_ms,
+                        );
+                        let _ = coords[i].handle_vote_response(&resp, now_ms);
+                    }
+                }
+            }
+        }
+
+        // Count how many nodes reached Master in term 1
+        let term1_masters: Vec<usize> = (0..node_count)
+            .filter(|&i| coords[i].role_state() == NodeRoleState::Master)
+            .collect();
+
+        // Invariant: At most 1 leader can ever be elected per term (no split-brain)
+        assert!(
+            term1_masters.len() <= 1,
+            "Term 1 must have at most 1 leader, got: {:?}",
+            term1_masters
+        );
+
+        // If term 1 produced a tie or no quorum due to packet drops, run term 2 with highest-fitness node
+        if term1_masters.is_empty() {
+            println!("Term 1 split votes due to packet loss; advancing to Term 2...");
+            let req2 = coords[0]
+                .start_election(&profiles[0], now_ms + 1000)
+                .expect("term 2 start");
+            for j in 1..node_count {
+                let resp = coords[j].handle_request_vote(&req2, &profiles[j], now_ms + 1000);
+                let _ = coords[0].handle_vote_response(&resp, now_ms + 1000);
+            }
+            assert_eq!(
+                coords[0].role_state(),
+                NodeRoleState::Master,
+                "Node 0 must achieve quorum in term 2"
+            );
+        } else {
+            println!("Term 1 elected single leader node: {}", term1_masters[0]);
+        }
     }
 }

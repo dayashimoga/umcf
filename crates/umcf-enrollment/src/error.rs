@@ -50,6 +50,16 @@ pub enum EnrollmentError {
 
     #[error("requested workload kind '{workload_kind}' is not permitted by node consent policy")]
     WorkloadNotPermitted { workload_kind: String },
+
+    #[error("invalid role transition from {from} to {to}: {reason}")]
+    InvalidRoleTransition {
+        from: String,
+        to: String,
+        reason: String,
+    },
+
+    #[error("leader election failed: {0}")]
+    ElectionFailed(String),
 }
 
 impl EnrollmentError {
@@ -62,11 +72,13 @@ impl EnrollmentError {
                 ErrorCode::E2002InvalidSignature
             }
             Self::MalformedUri(_) => ErrorCode::E2001InvalidNodeId,
-            Self::RbacDenied { .. } => ErrorCode::E2004UnauthorizedCapability,
+            Self::RbacDenied { .. } | Self::InvalidRoleTransition { .. } => {
+                ErrorCode::E2004UnauthorizedCapability
+            }
             Self::ConsentViolation { .. } | Self::WorkloadNotPermitted { .. } => {
                 ErrorCode::E4004ConsentDenied
             }
-            Self::HandshakeFailed(_) => ErrorCode::E3001ConnectionFailed,
+            Self::HandshakeFailed(_) | Self::ElectionFailed(_) => ErrorCode::E3001ConnectionFailed,
             Self::QrGenerationFailed(_) | Self::SerializationError(_) | Self::IdentityError(_) => {
                 ErrorCode::E8002UnhandledInternalError
             }

@@ -1,6 +1,6 @@
 {
   "default_deny_enforced": true,
-  "measured_avg_latency_micros": 0.59254,
+  "measured_avg_latency_micros": 0.79458,
   "rbac_roles": {
     "ClusterOwner": [
       "SubmitJob",

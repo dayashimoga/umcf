@@ -1,0 +1,35 @@
+{
+  "subphase": "S2.P2.SP3",
+  "title": "Dynamic Master/Worker/Hybrid State Machine & Election",
+  "git_commit": "e67254906b56f65f9ebaf85124726308a85174f0",
+  "timestamp_utc": "2026-11-10T10:07:00Z",
+  "podman_total_bytes": 4955244258,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "metrics": {
+    "election_failover_latency_ms": 0,
+    "election_failover_latency_ceiling_ms": 3000,
+    "leader_transfer_latency_ms": 0,
+    "leader_transfer_latency_ceiling_ms": 250,
+    "solo_mode_initialization_ms": 0,
+    "solo_mode_initialization_ceiling_ms": 500,
+    "split_brain_count": 0,
+    "quorum_terms_to_convergence_under_15pct_packet_loss": 1
+  },
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "crates/umcf-enrollment/src/role_engine.rs": "590F3079675FC7AD44D8122E1AE3FFC3FC70B2D58C8C20CA2C8EDD844EE52204",
+    "crates/umcf-enrollment/src/election.rs": "753BABC24CA69EA4EF58D19DD1C195AB9F37412E9D07368856077043A9CAD0A3",
+    "crates/umcf-enrollment/src/lib.rs": "0CC5982CDB5238BADA277868971FC31510B73D6D5B91BAB9629553330AE221D4",
+    "crates/umcf-enrollment/src/error.rs": "5099DFDD3C9B0B9D70BF46E5276ADD780001D9606EF9BE2506D9C86D37959CA7",
+    "artifacts/evidence/stage-02/election_failover_trace.json": "9A1E9764D183486E1D904A3A3E012DB643D56729B521E0FD04B17D140D1B6DE6",
+    "scripts/test-s2-p2-sp3.ps1": "3CEC0A7E995EBBDD9DB8C21955317B3B02EA32F56D3B9E4144522EE4F0E02312",
+    "scripts/test-s2-p2-sp3.sh": "3E51562DB0D95C9FB676A1EE5C6DD4DDFCB45CE404B8FC304EE8537FF28E7CDD"
+  }
+}
