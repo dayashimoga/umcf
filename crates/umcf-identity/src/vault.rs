@@ -217,12 +217,9 @@ impl LocalEncryptedVault {
         let ciphertext_len = u32::from_le_bytes(len_bytes) as usize;
 
         // Bounded parameter validation: protect against CPU/memory exhaustion DoS
-        if m_cost < MIN_ARGON2_M_COST
-            || m_cost > MAX_ARGON2_M_COST
-            || t_cost < MIN_ARGON2_T_COST
-            || t_cost > MAX_ARGON2_T_COST
-            || p_cost < MIN_ARGON2_P_COST
-            || p_cost > MAX_ARGON2_P_COST
+        if !(MIN_ARGON2_M_COST..=MAX_ARGON2_M_COST).contains(&m_cost)
+            || !(MIN_ARGON2_T_COST..=MAX_ARGON2_T_COST).contains(&t_cost)
+            || !(MIN_ARGON2_P_COST..=MAX_ARGON2_P_COST).contains(&p_cost)
         {
             return Err(IdentityError::VaultIntegrityFailure(format!(
                 "corrupted or out-of-bounds Argon2id parameters: m={}, t={}, p={}",

@@ -42,6 +42,18 @@ pub enum IdentityError {
 
     #[error("requested key or identity not found in storage")]
     KeyNotFound,
+
+    #[error("certificate is invalid or malformed: {0}")]
+    CertificateInvalid(String),
+
+    #[error("certificate has expired: expired at {not_after}, current {current}")]
+    CertificateExpired { not_after: u64, current: u64 },
+
+    #[error("certificate is revoked by CRL: serial {serial}, did {did}")]
+    CertificateRevoked { serial: String, did: String },
+
+    #[error("mutual attestation failed: {0}")]
+    AttestationFailed(String),
 }
 
 impl IdentityError {
@@ -49,16 +61,21 @@ impl IdentityError {
     #[must_use]
     pub const fn error_code(&self) -> ErrorCode {
         match self {
-            Self::InvalidSignature | Self::EnvelopeTampered | Self::PassphraseIncorrect => {
-                ErrorCode::E2002InvalidSignature
-            }
+            Self::InvalidSignature
+            | Self::EnvelopeTampered
+            | Self::PassphraseIncorrect
+            | Self::AttestationFailed(_) => ErrorCode::E2002InvalidSignature,
+            Self::CertificateExpired { .. } => ErrorCode::E2003TokenExpired,
             Self::MalformedDid(_)
             | Self::UnsupportedDidMethod(_)
             | Self::InvalidPublicKey(_)
             | Self::SenderMismatch { .. }
             | Self::VaultLocked
-            | Self::KeyNotFound => ErrorCode::E2001InvalidNodeId,
-            Self::VaultIntegrityFailure(_) => ErrorCode::E2004UnauthorizedCapability,
+            | Self::KeyNotFound
+            | Self::CertificateInvalid(_) => ErrorCode::E2001InvalidNodeId,
+            Self::VaultIntegrityFailure(_) | Self::CertificateRevoked { .. } => {
+                ErrorCode::E2004UnauthorizedCapability
+            }
             Self::SerializationError(_) | Self::StorageError(_) => {
                 ErrorCode::E8002UnhandledInternalError
             }

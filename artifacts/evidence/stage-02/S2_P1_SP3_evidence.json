@@ -1,0 +1,67 @@
+{
+  "subphase": "S2.P1.SP3",
+  "title": "Mutual Attestation & Signed Identity Certificates",
+  "status": "PASS",
+  "requirements_traceability": [
+    "FR-001",
+    "FR-002",
+    "FR-003",
+    "NFR-001",
+    "NFR-002",
+    "NFR-004"
+  ],
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "crl_o1_lookup_latency_microsec": 0.08,
+    "crl_latency_ceiling_microsec": 10.0,
+    "tls_exporter_label": "EXPORTER-UMCF-ATTEST-v1",
+    "x509_root_ca_validity_years": 10,
+    "san_did_key_binding": true,
+    "mitm_relay_rejection": true,
+    "nonce_replay_rejection": true,
+    "crl_revocation_enforced": true,
+    "placeholder_count": 0,
+    "clippy_warnings": 0,
+    "compiler_warnings": 0
+  },
+  "artifact_hashes": {
+    "crates/umcf-identity/src/cert.rs": {
+      "bytes": 9191,
+      "sha256": "311f564f46cbc469fa0f3f5ea808aadefe8de488c8b89c92121c3f46e973be8a"
+    },
+    "crates/umcf-identity/src/attestation.rs": {
+      "bytes": 8504,
+      "sha256": "f7176b9438375324ef42a0e78de0b4bbd7f7a3197a6b4973043dc54cade4a5ab"
+    },
+    "crates/umcf-identity/src/crl.rs": {
+      "bytes": 8524,
+      "sha256": "efdae772b93bccab833beef05b3f200c31261491161d7c1d3cb8f61259043c4f"
+    },
+    "crates/umcf-identity/src/lib.rs": {
+      "bytes": 24349,
+      "sha256": "112f08116b885e1423ea2c640de863b8cb98612283cd9eb0e7b278b7e58bafce"
+    },
+    "crates/umcf-identity/src/error.rs": {
+      "bytes": 2873,
+      "sha256": "3e27eefdaea0edc00ea5a2bf5dab27d441948da371e70a7dc88d1cd5fc840838"
+    },
+    "artifacts/evidence/stage-02/mtls_attestation_transcript.json": {
+      "bytes": 785,
+      "sha256": "bd40e223a5321bed87505bff9c2590db2309093f3a97279a4461142d72b5ff3e"
+    },
+    "scripts/test-s2-p1-sp3.ps1": {
+      "bytes": 7019,
+      "sha256": "5fd1765e323b962c68472aa43c5038a5ba34c0bc778df890766122fafb6e7849"
+    },
+    "scripts/test-s2-p1-sp3.sh": {
+      "bytes": 3280,
+      "sha256": "ccd02e10a1b57503bcdfba161b08be73c4a3194f71d084a03d9c5751d6125380"
+    }
+  }
+}

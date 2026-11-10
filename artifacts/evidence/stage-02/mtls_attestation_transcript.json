@@ -1,0 +1,13 @@
+{
+  "challenge_nonce_hex": "0ae3fdcf3144020207379f747632ba363093bcbb7b472b2c68e1793f02142135",
+  "challenger_did": "did:key:z6MkhCJRF9q6WowXnRrYtzUvzMCDidUZ48s4dUSQXBVYGSs9",
+  "hardware_fingerprint_hex": "05df9043dafe3d7d539fe3a2fd3400332f1523bd4400f383060bfc6bf4488d4c",
+  "protocol": "2-RTT Mutual Attestation",
+  "prover_did": "did:key:z6MkvZ4D2fVpsorSwUnAMSXQ1QCN9zR65yxPrNWnronCuTU7",
+  "signature_hex": "5fc72b82a913eff31bb31d7c835f1c093f21d37147bba14aa887582987bc9d5975e256a514192de1dc357282da29b99441bdb66eaf351d68ac9871833f41db00",
+  "subphase": "S2.P1.SP3",
+  "timestamp_epoch_ms": 1794303061522,
+  "tls_exporter_hex": "cd5f237278c48caf27f3e486dcc8f5c3a260e802229412b94dd4cf5b92170aa6",
+  "tls_exporter_label": "EXPORTER-UMCF-ATTEST-v1",
+  "verification_status": "SUCCESS"
+}

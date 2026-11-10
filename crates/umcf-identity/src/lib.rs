@@ -1,9 +1,12 @@
 //! `umcf-identity` — Cryptographic device identity, Ed25519/X25519 keypairs,
-//! encrypted local vault, and W3C DID document generation.
+//! encrypted local vault, W3C DID documents, and X.509 mutual attestation.
 //! Strictly enforces `#![forbid(unsafe_code)]` and zero-placeholder invariants.
 
 #![forbid(unsafe_code)]
 
+pub mod attestation;
+pub mod cert;
+pub mod crl;
 pub mod did;
 pub mod envelope_auth;
 pub mod error;
@@ -12,6 +15,11 @@ pub mod os_keystore;
 pub mod storage;
 pub mod vault;
 
+pub use attestation::{
+    AttestationChallenge, AttestationProof, MutualAttestationProtocol, TLS_EXPORTER_LABEL,
+};
+pub use cert::{ClusterCa, NodeCertificate};
+pub use crl::{ClusterCrl, CrlRevocationReason, RevokedCertificateEntry};
 pub use did::{DidDocument, DidKey, VerificationMethod};
 pub use envelope_auth::{sign_envelope, verify_envelope};
 pub use error::IdentityError;
@@ -27,6 +35,7 @@ mod tests {
     use std::path::Path;
     use std::time::Instant;
     use tempfile::tempdir;
+    use umcf_core::NodeRole;
     use umcf_proto::envelope::MessageFlags;
     use umcf_proto::{MessageKind, PlaneKind, WireEnvelope};
 
@@ -165,6 +174,92 @@ mod tests {
         assert!(!vault.exists());
     }
 
+    #[test]
+    fn unit_cluster_ca_generation_and_leaf_issuance() {
+        let cluster_id = "umcf-mesh-alpha";
+        let ca = ClusterCa::generate(cluster_id).expect("generate cluster ca");
+        assert_eq!(ca.cluster_id(), cluster_id);
+        assert!(!ca.ca_cert_der().is_empty());
+        assert!(ca.ca_cert_pem().contains("BEGIN CERTIFICATE"));
+
+        let worker = NodeKeypair::generate();
+        let cert = ca
+            .issue_node_certificate(&worker, NodeRole::Worker, 30)
+            .expect("issue leaf certificate");
+
+        assert_eq!(cert.did(), worker.did_key());
+        assert_eq!(cert.cluster_id, cluster_id);
+        assert_eq!(cert.role, NodeRole::Worker);
+        assert!(!cert.serial_number().is_empty());
+        assert!(cert.cert_pem.contains("BEGIN CERTIFICATE"));
+
+        // Fresh certificate must not be expired
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+        assert!(!cert.is_expired(now_ms));
+        // Check future expiry
+        let future_ms = now_ms + (35 * 86400 * 1000);
+        assert!(cert.is_expired(future_ms));
+    }
+
+    #[test]
+    fn unit_crl_lookup_latency_microbenchmark() {
+        let ca_keypair = NodeKeypair::generate();
+        let cluster_id = "umcf-mesh-test";
+
+        let mut entries = Vec::new();
+        for i in 0..100 {
+            entries.push(RevokedCertificateEntry {
+                serial_number: format!("0123456789abcdef{:04x}", i),
+                revoked_node_did: format!("did:key:z6MkTestNodeRevoked{}", i),
+                revocation_date_epoch_ms: 1700000000000,
+                reason: CrlRevocationReason::KeyCompromise,
+            });
+        }
+
+        let mut crl = ClusterCrl::new(
+            cluster_id,
+            ca_keypair.did_key(),
+            1,
+            1700000000000,
+            1700086400000,
+            entries,
+        );
+        crl.sign(&ca_keypair);
+        assert!(crl
+            .verify_signature(&ca_keypair.ed25519_public_bytes())
+            .is_ok());
+
+        // Microbenchmark O(1) lookup
+        let target_serial = "0123456789abcdef0042";
+        let target_did = "did:key:z6MkTestNodeRevoked42";
+
+        assert!(crl.is_revoked_serial(target_serial));
+        assert!(crl.is_revoked_did(target_did));
+        assert!(!crl.is_revoked_serial("non_existent_serial"));
+
+        let start = Instant::now();
+        let iterations = 10_000;
+        for _ in 0..iterations {
+            assert!(crl.is_revoked_serial(target_serial));
+            assert!(crl.is_revoked_did(target_did));
+        }
+        let elapsed = start.elapsed();
+        let per_lookup_micros = elapsed.as_micros() as f64 / (iterations as f64 * 2.0);
+
+        println!(
+            "CRL O(1) lookup latency: {:.4} µs per op (target < 10 µs)",
+            per_lookup_micros
+        );
+        assert!(
+            per_lookup_micros < 10.0,
+            "CRL lookup latency exceeds 10 µs ceiling: {:.4} µs",
+            per_lookup_micros
+        );
+    }
+
     #[tokio::test]
     async fn integration_vault_identity_continuity_across_simulated_restart() {
         let dir = tempdir().expect("create tempdir");
@@ -215,6 +310,161 @@ mod tests {
             let sig = loaded.keypair().sign(message);
             assert!(loaded.keypair().verify(message, &sig).is_ok());
         }
+    }
+
+    #[test]
+    fn integration_mutual_attestation_protocol_with_tls_exporter() {
+        let alice = NodeKeypair::generate();
+        let bob = NodeKeypair::generate();
+
+        // Simulated RFC 8446 TLS 1.3 keying exporter (32 bytes derived from session)
+        let tls_exporter = blake3::derive_key("EXPORTER-UMCF-ATTEST-v1", b"tls-session-secret-alice-bob");
+        let hardware_fp = *blake3::hash(b"arm64-16gb-vulkan-qualcomm").as_bytes();
+
+        // 1. Challenger (Alice) generates attestation challenge
+        let challenge = MutualAttestationProtocol::create_challenge(&alice);
+        assert_eq!(challenge.challenger_did, alice.did_key());
+        assert_ne!(challenge.challenge_nonce, [0u8; 32]);
+
+        // 2. Prover (Bob) generates attestation proof
+        let proof = MutualAttestationProtocol::create_proof(
+            &bob,
+            &challenge,
+            tls_exporter,
+            hardware_fp,
+        );
+        assert_eq!(proof.prover_did, bob.did_key());
+        assert_eq!(proof.challenge_nonce, challenge.challenge_nonce);
+        assert_eq!(proof.tls_exporter_binding, tls_exporter);
+
+        // 3. Alice verifies Bob's proof
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+
+        let verify_res = MutualAttestationProtocol::verify_proof(
+            &proof,
+            &challenge,
+            &tls_exporter,
+            &bob.ed25519_public_bytes(),
+            5000,
+            now_ms,
+        );
+        assert!(verify_res.is_ok());
+
+        // 4. Export sample mTLS attestation transcript for certification evidence
+        let transcript = serde_json::json!({
+            "subphase": "S2.P1.SP3",
+            "protocol": "2-RTT Mutual Attestation",
+            "tls_exporter_label": "EXPORTER-UMCF-ATTEST-v1",
+            "challenger_did": challenge.challenger_did,
+            "prover_did": proof.prover_did,
+            "challenge_nonce_hex": hex::encode(challenge.challenge_nonce),
+            "tls_exporter_hex": hex::encode(tls_exporter),
+            "hardware_fingerprint_hex": hex::encode(hardware_fp),
+            "timestamp_epoch_ms": proof.timestamp_epoch_ms,
+            "signature_hex": hex::encode(proof.signature),
+            "verification_status": "SUCCESS"
+        });
+
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root_artifacts = manifest_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .map(|p| p.join("artifacts").join("evidence").join("stage-02"))
+            .unwrap_or_else(|| std::path::PathBuf::from("artifacts/evidence/stage-02"));
+
+        fs::create_dir_all(&root_artifacts).expect("create evidence dir");
+        let transcript_path = root_artifacts.join("mtls_attestation_transcript.json");
+        fs::write(
+            &transcript_path,
+            serde_json::to_string_pretty(&transcript).expect("serialize transcript"),
+        )
+        .expect("write mtls transcript");
+        assert!(transcript_path.exists());
+    }
+
+    #[test]
+    fn simulation_attestation_fault_injection_mitm_and_replay_rejection() {
+        let alice = NodeKeypair::generate();
+        let bob = NodeKeypair::generate();
+        let eve = NodeKeypair::generate();
+
+        let tls_exporter = blake3::derive_key("EXPORTER-UMCF-ATTEST-v1", b"tls-session-alice-bob");
+        let hardware_fp = *blake3::hash(b"intel-x86_64-32gb").as_bytes();
+
+        let challenge = MutualAttestationProtocol::create_challenge(&alice);
+        let legitimate_proof = MutualAttestationProtocol::create_proof(
+            &bob,
+            &challenge,
+            tls_exporter,
+            hardware_fp,
+        );
+
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+
+        // 1. Fault: MITM relay attack (attacker forwards proof over a different TLS connection)
+        let mitm_tls_exporter = blake3::derive_key("EXPORTER-UMCF-ATTEST-v1", b"tls-session-mitm-eve");
+        let mitm_res = MutualAttestationProtocol::verify_proof(
+            &legitimate_proof,
+            &challenge,
+            &mitm_tls_exporter,
+            &bob.ed25519_public_bytes(),
+            5000,
+            now_ms,
+        );
+        assert!(matches!(mitm_res, Err(IdentityError::AttestationFailed(_))));
+
+        // 2. Fault: Nonce replay (replay proof against a different challenge)
+        let mut second_challenge = challenge.clone();
+        second_challenge.challenge_nonce[0] ^= 0xff;
+        let replay_res = MutualAttestationProtocol::verify_proof(
+            &legitimate_proof,
+            &second_challenge,
+            &tls_exporter,
+            &bob.ed25519_public_bytes(),
+            5000,
+            now_ms,
+        );
+        assert!(matches!(replay_res, Err(IdentityError::AttestationFailed(_))));
+
+        // 3. Fault: Sender DID impersonation (Eve claims she sent Bob's proof)
+        let impersonate_res = MutualAttestationProtocol::verify_proof(
+            &legitimate_proof,
+            &challenge,
+            &tls_exporter,
+            &eve.ed25519_public_bytes(),
+            5000,
+            now_ms,
+        );
+        assert!(matches!(impersonate_res, Err(IdentityError::SenderMismatch { .. })));
+
+        // 4. Fault: CRL revoked certificate rejection
+        let ca = ClusterCa::generate("mesh-test-cluster").expect("generate ca");
+        let cert = ca
+            .issue_node_certificate(&bob, NodeRole::Worker, 30)
+            .expect("issue leaf cert");
+
+        let crl = ClusterCrl::new(
+            "mesh-test-cluster",
+            ca.cluster_id(),
+            1,
+            now_ms - 1000,
+            now_ms + 86400000,
+            vec![RevokedCertificateEntry {
+                serial_number: cert.serial_number().to_string(),
+                revoked_node_did: cert.did().to_string(),
+                revocation_date_epoch_ms: now_ms,
+                reason: CrlRevocationReason::KeyCompromise,
+            }],
+        );
+
+        let check_res = crl.check_certificate(&cert);
+        assert!(matches!(check_res, Err(IdentityError::CertificateRevoked { .. })));
     }
 
     #[tokio::test]
@@ -401,5 +651,11 @@ mod tests {
             per_op_micros,
             ceiling
         );
+    }
+
+    mod hex {
+        pub fn encode(data: impl AsRef<[u8]>) -> String {
+            data.as_ref().iter().map(|b| format!("{b:02x}")).collect()
+        }
     }
 }

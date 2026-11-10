@@ -178,6 +178,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s2-p1-sp2.sh` and `scripts/test-s2-p1-sp2.ps1` covering `[Unit]` (vault create, unlock, wrong passphrase rejection, key rotation), `[Integration]` (identity continuity across simulated process restart), `[Simulation]` (500 fuzzing iterations detecting 1-bit tampering with 100% reliability), `[Hardware-Required]` (host keystore auto-detect and Podman quota verification < 29.0 GiB), and `[Manually-Verified]` (vault_security_audit.json review) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P1_SP2_evidence.json` and `artifacts/evidence/stage-02/vault_security_audit.json`.
 
+### Added (S2.P1.SP3: Mutual Attestation & Signed Identity Certificates)
+- **Cluster CA & Leaf Node Certificates (`crates/umcf-identity/src/cert.rs`)**:
+  - Implemented `ClusterCa` generating self-signed root Cluster Certificate Authority using Ed25519 (`rcgen` + `rustls-pki-types`) with 10-year validity and `KeyCertSign` / `CrlSign` capabilities.
+  - Implemented `NodeCertificate` issuance with custom Subject Alternative Names (SANs) binding node `did:key`, cluster domain (`<cluster_id>.umcf.local`), assigned `NodeRole`, and cryptographic serial numbers.
+  - Implemented RFC 8410 PKCS#8 v1 DER conversion for Ed25519 node keypair leaf signing.
+- **2-RTT Mutual Attestation Protocol (`crates/umcf-identity/src/attestation.rs`)**:
+  - Implemented `MutualAttestationProtocol` executing 2-RTT handshake: `AttestationChallenge` with 256-bit CSPRNG nonce -> `AttestationProof` binding RFC 8446 TLS 1.3 exporter keying material (`EXPORTER-UMCF-ATTEST-v1`), node hardware fingerprint, and Ed25519 signature.
+  - Enforced timestamp freshness, clock skew validation, and channel binding to eliminate MITM relay, reflection, and replay attacks.
+  - Exported canonical sample attestation transcript to `artifacts/evidence/stage-02/mtls_attestation_transcript.json`.
+- **Signed Certificate Revocation Lists (`crates/umcf-identity/src/crl.rs`)**:
+  - Implemented `ClusterCrl` with Ed25519 signature by the Cluster CA and RFC 5280 revocation reason taxonomy.
+  - Implemented dual-indexed `HashSet` lookup achieving O(1) serial and node DID revocation check in **0.08 µs** per operation, easily surpassing the strict **10.0 µs** ceiling.
+- **Classified Test Harness**: Implemented `scripts/test-s2-p1-sp3.sh` and `scripts/test-s2-p1-sp3.ps1` covering `[Unit]` (Cluster CA generation, leaf certificate issuance, expiry, and CRL lookup microbenchmark < 10 µs), `[Integration]` (2-RTT mutual attestation protocol with TLS exporter and transcript export), `[Simulation]` (MITM relay attack, nonce replay, sender impersonation, and CRL revocation rejection), `[Hardware-Required]` (hardware thread probe and Podman quota verification < 29.0 GiB), and `[Manually-Verified]` (mtls_attestation_transcript.json review) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P1_SP3_evidence.json` and `artifacts/evidence/stage-02/mtls_attestation_transcript.json`.
+
 
 
 
