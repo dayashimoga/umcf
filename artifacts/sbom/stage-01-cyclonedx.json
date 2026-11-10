@@ -1,0 +1,2254 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:e40a9037-95ac-4248-9bd9-9c9098595d6b",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-11-10T08:53:30.317756+00:00",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "author": "Google DeepMind Advanced Agentic Coding",
+          "name": "umcf-sbom-generator",
+          "version": "0.1.0"
+        }
+      ]
+    },
+    "component": {
+      "type": "framework",
+      "name": "umcf",
+      "version": "0.1.0",
+      "description": "Universal Mobile Compute Fabric (UMCF) \u2014 Stage 1 Foundation",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "aho-corasick",
+      "version": "1.1.5",
+      "purl": "pkg:cargo/aho-corasick@1.1.5",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency aho-corasick v1.1.5"
+    },
+    {
+      "type": "library",
+      "name": "arrayvec",
+      "version": "0.7.8",
+      "purl": "pkg:cargo/arrayvec@0.7.8",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency arrayvec v0.7.8"
+    },
+    {
+      "type": "library",
+      "name": "autocfg",
+      "version": "1.5.1",
+      "purl": "pkg:cargo/autocfg@1.5.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency autocfg v1.5.1"
+    },
+    {
+      "type": "library",
+      "name": "bincode",
+      "version": "1.3.3",
+      "purl": "pkg:cargo/bincode@1.3.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency bincode v1.3.3"
+    },
+    {
+      "type": "library",
+      "name": "bit-set",
+      "version": "0.11.1",
+      "purl": "pkg:cargo/bit-set@0.11.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency bit-set v0.11.1"
+    },
+    {
+      "type": "library",
+      "name": "bit-vec",
+      "version": "0.10.1",
+      "purl": "pkg:cargo/bit-vec@0.10.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency bit-vec v0.10.1"
+    },
+    {
+      "type": "library",
+      "name": "bitflags",
+      "version": "2.13.2",
+      "purl": "pkg:cargo/bitflags@2.13.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency bitflags v2.13.2"
+    },
+    {
+      "type": "library",
+      "name": "blake3",
+      "version": "1.8.7",
+      "purl": "pkg:cargo/blake3@1.8.7",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency blake3 v1.8.7"
+    },
+    {
+      "type": "library",
+      "name": "borsh",
+      "version": "1.8.1",
+      "purl": "pkg:cargo/borsh@1.8.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency borsh v1.8.1"
+    },
+    {
+      "type": "library",
+      "name": "borsh-derive",
+      "version": "1.8.1",
+      "purl": "pkg:cargo/borsh-derive@1.8.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency borsh-derive v1.8.1"
+    },
+    {
+      "type": "library",
+      "name": "bytes",
+      "version": "1.12.1",
+      "purl": "pkg:cargo/bytes@1.12.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency bytes v1.12.1"
+    },
+    {
+      "type": "library",
+      "name": "cc",
+      "version": "1.11.1",
+      "purl": "pkg:cargo/cc@1.11.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency cc v1.11.1"
+    },
+    {
+      "type": "library",
+      "name": "cfg-if",
+      "version": "1.0.5",
+      "purl": "pkg:cargo/cfg-if@1.0.5",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency cfg-if v1.0.5"
+    },
+    {
+      "type": "library",
+      "name": "cfg_aliases",
+      "version": "0.2.2",
+      "purl": "pkg:cargo/cfg_aliases@0.2.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency cfg_aliases v0.2.2"
+    },
+    {
+      "type": "library",
+      "name": "chacha20",
+      "version": "0.10.2",
+      "purl": "pkg:cargo/chacha20@0.10.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency chacha20 v0.10.2"
+    },
+    {
+      "type": "library",
+      "name": "constant_time_eq",
+      "version": "0.4.2",
+      "purl": "pkg:cargo/constant_time_eq@0.4.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency constant_time_eq v0.4.2"
+    },
+    {
+      "type": "library",
+      "name": "core_detect",
+      "version": "1.0.0",
+      "purl": "pkg:cargo/core_detect@1.0.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency core_detect v1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "cpufeatures",
+      "version": "0.3.1",
+      "purl": "pkg:cargo/cpufeatures@0.3.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency cpufeatures v0.3.1"
+    },
+    {
+      "type": "library",
+      "name": "dyn-clone",
+      "version": "1.0.20",
+      "purl": "pkg:cargo/dyn-clone@1.0.20",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency dyn-clone v1.0.20"
+    },
+    {
+      "type": "library",
+      "name": "equivalent",
+      "version": "1.0.3",
+      "purl": "pkg:cargo/equivalent@1.0.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency equivalent v1.0.3"
+    },
+    {
+      "type": "library",
+      "name": "errno",
+      "version": "0.3.14",
+      "purl": "pkg:cargo/errno@0.3.14",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency errno v0.3.14"
+    },
+    {
+      "type": "library",
+      "name": "fastrand",
+      "version": "2.5.0",
+      "purl": "pkg:cargo/fastrand@2.5.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency fastrand v2.5.0"
+    },
+    {
+      "type": "library",
+      "name": "find-msvc-tools",
+      "version": "0.1.15",
+      "purl": "pkg:cargo/find-msvc-tools@0.1.15",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency find-msvc-tools v0.1.15"
+    },
+    {
+      "type": "library",
+      "name": "fnv",
+      "version": "1.0.7",
+      "purl": "pkg:cargo/fnv@1.0.7",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency fnv v1.0.7"
+    },
+    {
+      "type": "library",
+      "name": "futures-core",
+      "version": "0.3.34",
+      "purl": "pkg:cargo/futures-core@0.3.34",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency futures-core v0.3.34"
+    },
+    {
+      "type": "library",
+      "name": "futures-sink",
+      "version": "0.3.34",
+      "purl": "pkg:cargo/futures-sink@0.3.34",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency futures-sink v0.3.34"
+    },
+    {
+      "type": "library",
+      "name": "getrandom",
+      "version": "0.4.3",
+      "purl": "pkg:cargo/getrandom@0.4.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency getrandom v0.4.3"
+    },
+    {
+      "type": "library",
+      "name": "hashbrown",
+      "version": "0.17.1",
+      "purl": "pkg:cargo/hashbrown@0.17.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency hashbrown v0.17.1"
+    },
+    {
+      "type": "library",
+      "name": "indexmap",
+      "version": "2.14.2",
+      "purl": "pkg:cargo/indexmap@2.14.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency indexmap v2.14.2"
+    },
+    {
+      "type": "library",
+      "name": "itoa",
+      "version": "1.0.19",
+      "purl": "pkg:cargo/itoa@1.0.19",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency itoa v1.0.19"
+    },
+    {
+      "type": "library",
+      "name": "jobserver",
+      "version": "0.1.35",
+      "purl": "pkg:cargo/jobserver@0.1.35",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency jobserver v0.1.35"
+    },
+    {
+      "type": "library",
+      "name": "lazy_static",
+      "version": "1.5.1",
+      "purl": "pkg:cargo/lazy_static@1.5.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency lazy_static v1.5.1"
+    },
+    {
+      "type": "library",
+      "name": "libc",
+      "version": "0.2.191",
+      "purl": "pkg:cargo/libc@0.2.191",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency libc v0.2.191"
+    },
+    {
+      "type": "library",
+      "name": "linux-raw-sys",
+      "version": "0.12.1",
+      "purl": "pkg:cargo/linux-raw-sys@0.12.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency linux-raw-sys v0.12.1"
+    },
+    {
+      "type": "library",
+      "name": "log",
+      "version": "0.4.35",
+      "purl": "pkg:cargo/log@0.4.35",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency log v0.4.35"
+    },
+    {
+      "type": "library",
+      "name": "matchers",
+      "version": "0.2.0",
+      "purl": "pkg:cargo/matchers@0.2.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency matchers v0.2.0"
+    },
+    {
+      "type": "library",
+      "name": "memchr",
+      "version": "2.8.3",
+      "purl": "pkg:cargo/memchr@2.8.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency memchr v2.8.3"
+    },
+    {
+      "type": "library",
+      "name": "nu-ansi-term",
+      "version": "0.50.3",
+      "purl": "pkg:cargo/nu-ansi-term@0.50.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency nu-ansi-term v0.50.3"
+    },
+    {
+      "type": "library",
+      "name": "num-traits",
+      "version": "0.2.19",
+      "purl": "pkg:cargo/num-traits@0.2.19",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency num-traits v0.2.19"
+    },
+    {
+      "type": "library",
+      "name": "once_cell",
+      "version": "1.21.4",
+      "purl": "pkg:cargo/once_cell@1.21.4",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency once_cell v1.21.4"
+    },
+    {
+      "type": "library",
+      "name": "pin-project-lite",
+      "version": "0.2.17",
+      "purl": "pkg:cargo/pin-project-lite@0.2.17",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency pin-project-lite v0.2.17"
+    },
+    {
+      "type": "library",
+      "name": "pkg-config",
+      "version": "0.3.34",
+      "purl": "pkg:cargo/pkg-config@0.3.34",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency pkg-config v0.3.34"
+    },
+    {
+      "type": "library",
+      "name": "proc-macro-crate",
+      "version": "3.5.0",
+      "purl": "pkg:cargo/proc-macro-crate@3.5.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency proc-macro-crate v3.5.0"
+    },
+    {
+      "type": "library",
+      "name": "proc-macro2",
+      "version": "1.0.107",
+      "purl": "pkg:cargo/proc-macro2@1.0.107",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency proc-macro2 v1.0.107"
+    },
+    {
+      "type": "library",
+      "name": "proptest",
+      "version": "1.12.0",
+      "purl": "pkg:cargo/proptest@1.12.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency proptest v1.12.0"
+    },
+    {
+      "type": "library",
+      "name": "quick-error",
+      "version": "1.2.3",
+      "purl": "pkg:cargo/quick-error@1.2.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency quick-error v1.2.3"
+    },
+    {
+      "type": "library",
+      "name": "quote",
+      "version": "1.0.47",
+      "purl": "pkg:cargo/quote@1.0.47",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency quote v1.0.47"
+    },
+    {
+      "type": "library",
+      "name": "r-efi",
+      "version": "6.0.0",
+      "purl": "pkg:cargo/r-efi@6.0.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency r-efi v6.0.0"
+    },
+    {
+      "type": "library",
+      "name": "rand",
+      "version": "0.10.3",
+      "purl": "pkg:cargo/rand@0.10.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency rand v0.10.3"
+    },
+    {
+      "type": "library",
+      "name": "rand_core",
+      "version": "0.10.1",
+      "purl": "pkg:cargo/rand_core@0.10.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency rand_core v0.10.1"
+    },
+    {
+      "type": "library",
+      "name": "rand_xorshift",
+      "version": "0.5.0",
+      "purl": "pkg:cargo/rand_xorshift@0.5.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency rand_xorshift v0.5.0"
+    },
+    {
+      "type": "library",
+      "name": "ref-cast",
+      "version": "1.0.27",
+      "purl": "pkg:cargo/ref-cast@1.0.27",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency ref-cast v1.0.27"
+    },
+    {
+      "type": "library",
+      "name": "ref-cast-impl",
+      "version": "1.0.27",
+      "purl": "pkg:cargo/ref-cast-impl@1.0.27",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency ref-cast-impl v1.0.27"
+    },
+    {
+      "type": "library",
+      "name": "regex-automata",
+      "version": "0.4.18",
+      "purl": "pkg:cargo/regex-automata@0.4.18",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency regex-automata v0.4.18"
+    },
+    {
+      "type": "library",
+      "name": "regex-syntax",
+      "version": "0.8.11",
+      "purl": "pkg:cargo/regex-syntax@0.8.11",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency regex-syntax v0.8.11"
+    },
+    {
+      "type": "library",
+      "name": "rustix",
+      "version": "1.1.6",
+      "purl": "pkg:cargo/rustix@1.1.6",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency rustix v1.1.6"
+    },
+    {
+      "type": "library",
+      "name": "rusty-fork",
+      "version": "0.3.1",
+      "purl": "pkg:cargo/rusty-fork@0.3.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency rusty-fork v0.3.1"
+    },
+    {
+      "type": "library",
+      "name": "schemars",
+      "version": "1.2.3",
+      "purl": "pkg:cargo/schemars@1.2.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency schemars v1.2.3"
+    },
+    {
+      "type": "library",
+      "name": "schemars_derive",
+      "version": "1.2.3",
+      "purl": "pkg:cargo/schemars_derive@1.2.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency schemars_derive v1.2.3"
+    },
+    {
+      "type": "library",
+      "name": "serde",
+      "version": "1.0.229",
+      "purl": "pkg:cargo/serde@1.0.229",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency serde v1.0.229"
+    },
+    {
+      "type": "library",
+      "name": "serde_core",
+      "version": "1.0.229",
+      "purl": "pkg:cargo/serde_core@1.0.229",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency serde_core v1.0.229"
+    },
+    {
+      "type": "library",
+      "name": "serde_derive",
+      "version": "1.0.229",
+      "purl": "pkg:cargo/serde_derive@1.0.229",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency serde_derive v1.0.229"
+    },
+    {
+      "type": "library",
+      "name": "serde_derive_internals",
+      "version": "0.30.0",
+      "purl": "pkg:cargo/serde_derive_internals@0.30.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency serde_derive_internals v0.30.0"
+    },
+    {
+      "type": "library",
+      "name": "serde_json",
+      "version": "1.0.154",
+      "purl": "pkg:cargo/serde_json@1.0.154",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency serde_json v1.0.154"
+    },
+    {
+      "type": "library",
+      "name": "sharded-slab",
+      "version": "0.1.7",
+      "purl": "pkg:cargo/sharded-slab@0.1.7",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency sharded-slab v0.1.7"
+    },
+    {
+      "type": "library",
+      "name": "shlex",
+      "version": "2.0.1",
+      "purl": "pkg:cargo/shlex@2.0.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency shlex v2.0.1"
+    },
+    {
+      "type": "library",
+      "name": "smallvec",
+      "version": "1.16.5",
+      "purl": "pkg:cargo/smallvec@1.16.5",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency smallvec v1.16.5"
+    },
+    {
+      "type": "library",
+      "name": "syn",
+      "version": "2.0.119",
+      "purl": "pkg:cargo/syn@2.0.119",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency syn v2.0.119"
+    },
+    {
+      "type": "library",
+      "name": "syn",
+      "version": "3.0.10",
+      "purl": "pkg:cargo/syn@3.0.10",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency syn v3.0.10"
+    },
+    {
+      "type": "library",
+      "name": "tempfile",
+      "version": "3.27.0",
+      "purl": "pkg:cargo/tempfile@3.27.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tempfile v3.27.0"
+    },
+    {
+      "type": "library",
+      "name": "thiserror",
+      "version": "2.0.21",
+      "purl": "pkg:cargo/thiserror@2.0.21",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency thiserror v2.0.21"
+    },
+    {
+      "type": "library",
+      "name": "thiserror-impl",
+      "version": "2.0.21",
+      "purl": "pkg:cargo/thiserror-impl@2.0.21",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency thiserror-impl v2.0.21"
+    },
+    {
+      "type": "library",
+      "name": "thread_local",
+      "version": "1.1.10",
+      "purl": "pkg:cargo/thread_local@1.1.10",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency thread_local v1.1.10"
+    },
+    {
+      "type": "library",
+      "name": "tokio",
+      "version": "1.54.1",
+      "purl": "pkg:cargo/tokio@1.54.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tokio v1.54.1"
+    },
+    {
+      "type": "library",
+      "name": "tokio-macros",
+      "version": "2.7.2",
+      "purl": "pkg:cargo/tokio-macros@2.7.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tokio-macros v2.7.2"
+    },
+    {
+      "type": "library",
+      "name": "tokio-util",
+      "version": "0.7.20",
+      "purl": "pkg:cargo/tokio-util@0.7.20",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tokio-util v0.7.20"
+    },
+    {
+      "type": "library",
+      "name": "toml_datetime",
+      "version": "1.1.3+spec-1.1.0",
+      "purl": "pkg:cargo/toml_datetime@1.1.3+spec-1.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency toml_datetime v1.1.3+spec-1.1.0"
+    },
+    {
+      "type": "library",
+      "name": "toml_edit",
+      "version": "0.25.19+spec-1.1.0",
+      "purl": "pkg:cargo/toml_edit@0.25.19+spec-1.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency toml_edit v0.25.19+spec-1.1.0"
+    },
+    {
+      "type": "library",
+      "name": "toml_parser",
+      "version": "1.1.5+spec-1.1.0",
+      "purl": "pkg:cargo/toml_parser@1.1.5+spec-1.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency toml_parser v1.1.5+spec-1.1.0"
+    },
+    {
+      "type": "library",
+      "name": "tracing",
+      "version": "0.1.44",
+      "purl": "pkg:cargo/tracing@0.1.44",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tracing v0.1.44"
+    },
+    {
+      "type": "library",
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "purl": "pkg:cargo/tracing-attributes@0.1.31",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tracing-attributes v0.1.31"
+    },
+    {
+      "type": "library",
+      "name": "tracing-core",
+      "version": "0.1.36",
+      "purl": "pkg:cargo/tracing-core@0.1.36",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tracing-core v0.1.36"
+    },
+    {
+      "type": "library",
+      "name": "tracing-log",
+      "version": "0.2.0",
+      "purl": "pkg:cargo/tracing-log@0.2.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tracing-log v0.2.0"
+    },
+    {
+      "type": "library",
+      "name": "tracing-serde",
+      "version": "0.2.0",
+      "purl": "pkg:cargo/tracing-serde@0.2.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tracing-serde v0.2.0"
+    },
+    {
+      "type": "library",
+      "name": "tracing-subscriber",
+      "version": "0.3.23",
+      "purl": "pkg:cargo/tracing-subscriber@0.3.23",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency tracing-subscriber v0.3.23"
+    },
+    {
+      "type": "application",
+      "name": "umcf-cli",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-cli@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-cli v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-cloudrun-fallback",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-cloudrun-fallback@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-cloudrun-fallback v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-control-plane-cloudrun",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-control-plane-cloudrun@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-control-plane-cloudrun v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-coordinator",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-coordinator@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-coordinator v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-core",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-core@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-core v0.1.0"
+    },
+    {
+      "type": "application",
+      "name": "umcf-daemon",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-daemon@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-daemon v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-proto",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-proto@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-proto v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-scheduler",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-scheduler@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-scheduler v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-telemetry",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-telemetry@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-telemetry v0.1.0"
+    },
+    {
+      "type": "framework",
+      "name": "umcf-worker",
+      "version": "0.1.0",
+      "purl": "pkg:cargo/umcf-worker@0.1.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency umcf-worker v0.1.0"
+    },
+    {
+      "type": "library",
+      "name": "unarray",
+      "version": "0.1.4",
+      "purl": "pkg:cargo/unarray@0.1.4",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency unarray v0.1.4"
+    },
+    {
+      "type": "library",
+      "name": "unicode-ident",
+      "version": "1.0.27",
+      "purl": "pkg:cargo/unicode-ident@1.0.27",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency unicode-ident v1.0.27"
+    },
+    {
+      "type": "library",
+      "name": "valuable",
+      "version": "0.1.1",
+      "purl": "pkg:cargo/valuable@0.1.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency valuable v0.1.1"
+    },
+    {
+      "type": "library",
+      "name": "wait-timeout",
+      "version": "0.2.1",
+      "purl": "pkg:cargo/wait-timeout@0.2.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency wait-timeout v0.2.1"
+    },
+    {
+      "type": "library",
+      "name": "windows-link",
+      "version": "0.2.1",
+      "purl": "pkg:cargo/windows-link@0.2.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency windows-link v0.2.1"
+    },
+    {
+      "type": "library",
+      "name": "windows-sys",
+      "version": "0.61.2",
+      "purl": "pkg:cargo/windows-sys@0.61.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency windows-sys v0.61.2"
+    },
+    {
+      "type": "library",
+      "name": "winnow",
+      "version": "1.0.5",
+      "purl": "pkg:cargo/winnow@1.0.5",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency winnow v1.0.5"
+    },
+    {
+      "type": "library",
+      "name": "zmij",
+      "version": "1.0.23",
+      "purl": "pkg:cargo/zmij@1.0.23",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency zmij v1.0.23"
+    },
+    {
+      "type": "library",
+      "name": "zstd",
+      "version": "0.14.3",
+      "purl": "pkg:cargo/zstd@0.14.3",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency zstd v0.14.3"
+    },
+    {
+      "type": "library",
+      "name": "zstd-safe",
+      "version": "8.2.0",
+      "purl": "pkg:cargo/zstd-safe@8.2.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency zstd-safe v8.2.0"
+    },
+    {
+      "type": "library",
+      "name": "zstd-sys",
+      "version": "2.1.2+zstd.1.5.7",
+      "purl": "pkg:cargo/zstd-sys@2.1.2+zstd.1.5.7",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Rust dependency zstd-sys v2.1.2+zstd.1.5.7"
+    },
+    {
+      "type": "application",
+      "name": "@umcf/web_console",
+      "version": "0.1.0",
+      "purl": "pkg:npm/@umcf/web_console@0.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Svelte 5 Web Console for UMCF"
+    },
+    {
+      "type": "application",
+      "name": "@umcf/web-dashboard",
+      "version": "0.1.0",
+      "purl": "pkg:npm/@umcf/web-dashboard@0.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Svelte 5 Web & Admin Dashboard for UMCF"
+    },
+    {
+      "type": "application",
+      "name": "@umcf/cf_control_plane",
+      "version": "0.1.0",
+      "purl": "pkg:npm/@umcf/cf_control_plane@0.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Cloudflare Workers Control Plane"
+    },
+    {
+      "type": "application",
+      "name": "umcf_flutter_client",
+      "version": "0.1.0",
+      "purl": "pkg:pub/umcf_flutter_client@0.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Flutter Client for UMCF"
+    },
+    {
+      "type": "application",
+      "name": "umcf_mobile_desktop",
+      "version": "0.1.0",
+      "purl": "pkg:pub/umcf_mobile_desktop@0.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "description": "Flutter Cross-Platform Node Controller"
+    }
+  ]
+}

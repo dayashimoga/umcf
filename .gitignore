@@ -45,6 +45,8 @@ service-account*.json
 .podman/
 artifacts/*
 !artifacts/evidence/
+!artifacts/sbom/
+!artifacts/manifests/
 coverage/
 *.tar.gz
 *.zip

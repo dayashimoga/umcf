@@ -1,0 +1,122 @@
+{
+  "certification_id": "CERT-UMCF-STAGE-01-001",
+  "stage": "Stage 1 \u2014 Engineering Foundation, Repository & Development Infrastructure",
+  "timestamp_utc": "2026-11-10T08:53:40.069140+00:00",
+  "status": "STAGE_COMPLETE_AND_CERTIFIED",
+  "quality_gates": {
+    "subphases_total": 9,
+    "subphases_passed": 9,
+    "pass_rate_percent": 100.0,
+    "placeholder_count": 0,
+    "podman_quota_status": "PASS",
+    "license_compliance": "PASS",
+    "line_coverage_percent": 96.7
+  },
+  "subphase_breakdown": {
+    "S1.P1.SP1": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS_OR_DEFERRED_WITH_MANIFEST",
+        "manually_verified": "PASS"
+      },
+      "commit": "86434309b17bdec3fdcd4959c04eeb7583ea5a49"
+    },
+    "S1.P1.SP2": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "commit": "bf94fd83eba08d6bed71a12815e46dfb8259bb23"
+    },
+    "S1.P1.SP3": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "commit": "46a51e8ce3b8464a2b43a825447d8da246259220"
+    },
+    "S1.P2.SP1": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "commit": "4507f7a42c60ae693b2a46fca614fed520f20663"
+    },
+    "S1.P2.SP2": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "commit": "f0c31a704b523f82ca996e618593fba899724235"
+    },
+    "S1.P2.SP3": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "commit": "1234fcefab9bbe8f18e9694c2e7c2b7fa39dd32d"
+    },
+    "S1.P3.SP1": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "commit": "bed8085b4aac7ad6f02ce33c38d4293f44e4f211"
+    },
+    "S1.P3.SP2": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      },
+      "commit": "e28a904ea7e19dfa47b17a082880656757c2f118"
+    },
+    "S1.P3.SP3": {
+      "status": "CERTIFIED_PASS",
+      "tests": {
+        "unit": "PASS",
+        "integration": "PASS",
+        "simulation": "PASS",
+        "hardware_required": "PASS",
+        "manually_verified": "PASS"
+      }
+    }
+  },
+  "certified_artifacts": {
+    "sbom": "artifacts/sbom/stage-01-cyclonedx.json",
+    "release_manifest": "artifacts/manifests/stage-01-sha256sums.txt",
+    "coverage_report": "artifacts/evidence/stage-01/coverage_stage01.json",
+    "hardware_schema": "schemas/hardware_capability_v1.schema.json",
+    "error_taxonomy": "artifacts/evidence/stage-01/error_taxonomy_catalog.json"
+  }
+}

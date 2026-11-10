@@ -31,7 +31,7 @@
 - [x] **[S1.P2.SP3]** (`2026-11-10`) Structured Telemetry, OpenTelemetry Tracing & Error Taxonomy (Evidence: `artifacts/evidence/stage-01/S1_P2_SP3_evidence.json`)
 - [x] **[S1.P3.SP1]** (`2026-11-10`) Rust/Web/Control-Plane CI & Coverage Gates (Evidence: `artifacts/evidence/stage-01/S1_P3_SP1_evidence.json`)
 - [x] **[S1.P3.SP2]** (`2026-11-10`) Flutter Multi-OS CI & Independent Artifact Packaging (Evidence: `artifacts/evidence/stage-01/S1_P3_SP2_evidence.json`)
-- [ ] **[S1.P3.SP3]** Release Manifest, CycloneDX/SPDX SBOM Generation & Stage 1 Certification
+- [x] **[S1.P3.SP3]** (`2026-11-10`) Release Manifest, CycloneDX/SPDX SBOM Generation & Stage 1 Certification (Evidence: `artifacts/evidence/stage-01/S1_P3_SP3_evidence.json`, `artifacts/evidence/stage-01/STAGE_01_CERTIFICATION.json`)
 
 ## Stage 2 — Rust Core, Identity, Enrollment, Device Registry & Cluster Management
 

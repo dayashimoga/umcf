@@ -128,6 +128,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p3-sp2.sh` and `scripts/test-s1-p3-sp2.ps1` covering `[Unit]` (Dart model golden JSON deserialization and schema parity), `[Integration]` (responsive breakpoint switch & full CI pipeline), `[Simulation]` (malformed JSON injection ArgumentError rejection), `[Hardware-Required]` (14 hardware threads host execution probe), and `[Manually-Verified]` (flutter_test_lcov.info tracefile validation) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P3_SP2_evidence.json` and `artifacts/evidence/stage-01/flutter_test_lcov.info`.
 
+### Added (S1.P3.SP3: Release Manifest, CycloneDX SBOM Generation & Stage 1 Certification)
+- **Dependency & License Policy Gate (`deny.toml`)**:
+  - Implemented strict `cargo-deny` configuration allow-listing permissive licenses (`MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `Unicode-3.0`, `Zlib`, `CC0-1.0`), blocking unknown registries, banning yanked versions and unpatched RustSec advisories.
+- **CycloneDX v1.5 SBOM & SHA-256 Release Manifest (`scripts/generate_sbom_and_manifest.py`, `scripts/generate-sbom-and-manifest.sh`, `scripts/generate-sbom-and-manifest.ps1`)**:
+  - Generated deterministic CycloneDX v1.5 SBOM (`artifacts/sbom/stage-01-cyclonedx.json`) cataloging 111 workspace and dependency components across Rust, Web, and Flutter.
+  - Generated cryptographic SHA-256 Release Checksum Manifest (`artifacts/manifests/stage-01-sha256sums.txt`) verifying integrity of 17 foundational files.
+- **Master Stage 1 Certification Verifier (`scripts/verify_stage_01.py`, `scripts/verify-stage-01.sh`, `scripts/verify-stage-01.ps1`)**:
+  - Automated master audit validating all 9 Stage 1 subphase evidence files (`S1.P1.SP1` through `S1.P3.SP3`), placeholder enforcement (0 tokens), Podman quota compliance (< 29.0 GiB ceiling), license policy allowlist, and bit-accurate SHA-256 manifest verification.
+  - Emitted official Stage 1 certification: `artifacts/evidence/stage-01/STAGE_01_CERTIFICATION.json` (`CERT-UMCF-STAGE-01-001`).
+- **Classified Test Harness**: Implemented `scripts/test-s1-p3-sp3.sh` and `scripts/test-s1-p3-sp3.ps1` covering `[Unit]` (manifest checksum validation and tampering detection), `[Integration]` (full Stage 1 verification pipeline and certification emission), `[Simulation]` (prohibited copyleft license policy rejection), `[Hardware-Required]` (14 hardware threads host probe), and `[Manually-Verified]` (STAGE_01_CERTIFICATION.json review) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P3_SP3_evidence.json`, `artifacts/evidence/stage-01/STAGE_01_CERTIFICATION.json`, `artifacts/sbom/stage-01-cyclonedx.json`, and `artifacts/manifests/stage-01-sha256sums.txt`.
+
+
 
 
 

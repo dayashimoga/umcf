@@ -1,0 +1,24 @@
+{
+  "subphase": "S1.P3.SP3",
+  "title": "Release Manifest, SBOM Generation & Stage 1 Certification",
+  "git_commit": "e09495198571a76f8812963e42631b1cd6627704",
+  "timestamp_utc": "2026-11-10T08:51:15Z",
+  "podman_total_bytes": 2165355437,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "deny.toml": "09268a7e598e10f0da11a3d204656cf7995f9d2f0f58be65fc0ce448c0369dd0",
+    "scripts/generate_sbom_and_manifest.py": "ca6ca7f378e8ad2371fe1c33f3e81546fb5a68ff80052a107e11bf0b862a2344",
+    "scripts/verify_stage_01.py": "123aaaf538a48d0103daa75dd00d7023e6ed0dd211bee141b4c7a5e8e1d43930",
+    "artifacts/sbom/stage-01-cyclonedx.json": "8da082131a4c8a520c5e9cb47ac01757355ca410884e28e44c7733b33b3afc3c",
+    "artifacts/manifests/stage-01-sha256sums.txt": "1c89a8cb3c4c23b7ca4597367e10e97d10ea4333ecb3424d79aca1c44ca50f9f",
+    "artifacts/evidence/stage-01/STAGE_01_CERTIFICATION.json": "da3f739414decd2d5d7812db1d6177fd2cdfde5233f4024bf3d47bee4f8801b3"
+  }
+}
