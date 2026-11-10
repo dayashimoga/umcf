@@ -1,0 +1,40 @@
+{
+  "subphase": "S2.P3.SP2",
+  "title": "Cloudflare Workers/Durable Objects Control Plane Sync",
+  "git_commit": "0adfd389914f69dff192d417b7eca6ee9ca74985",
+  "timestamp_utc": "2026-11-10T11:37:00Z",
+  "podman_total_bytes": 6519568818,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "websocket_peer_presence_latency_ms": 0.017,
+    "websocket_peer_presence_latency_ceiling_ms": 50.0,
+    "max_replay_skew_ms": 60000,
+    "control_plane_endpoints": [
+      "GET /healthz",
+      "POST /v1/clusters/:id/register",
+      "POST /v1/clusters/:id/sync-delta",
+      "GET /v1/clusters/:id/peers",
+      "GET /v1/clusters/:id/ws"
+    ],
+    "worker_vitest_total_tests": 10,
+    "worker_vitest_passed_tests": 10,
+    "rust_registry_total_tests": 9,
+    "rust_registry_passed_tests": 9
+  },
+  "artifact_hashes": {
+    "services/cf_control_plane/src/crypto.js": "de7ff7871c761bcdbcb2d3ac0777ae23d6755ac1edafadce822bf3c69c770458",
+    "services/cf_control_plane/src/durable_object.js": "121be91f30c0289cb643b7e1cc41f0d63c32259cbb79a37b088ca67f33733b0d",
+    "services/cf_control_plane/src/index.js": "735b42dfdcf76499735f3958c227dcb460188857ecb0ae2ad3a21e47eb68ccc4",
+    "services/cf_control_plane/src/server.js": "59dcdfd4e5765da4918163633d016f3e83ef4584f0934457ad3dfb0f80674ea4",
+    "crates/umcf-registry/src/cloud_sync.rs": "02d8b9e1bb17d4ec31643ababf84381a526aa5f2c4604b08c71a1dac19e77c0b",
+    "artifacts/evidence/stage-02/cf_worker_vitest_report.json": "950b14a153e931d433a08554133a2ce98d3fb459c8cba848b8ead2226910a817"
+  }
+}

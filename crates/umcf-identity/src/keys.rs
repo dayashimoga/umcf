@@ -85,6 +85,13 @@ impl NodeKeypair {
         signature.to_bytes()
     }
 
+    /// Signs a message directly with Ed25519 without domain separation prefix.
+    #[must_use]
+    pub fn sign_raw(&self, message: &[u8]) -> [u8; 64] {
+        let signature: Signature = self.signing_key.sign(message);
+        signature.to_bytes()
+    }
+
     /// Verifies a domain-separated signature against a provided message using this keypair's public key.
     pub fn verify(&self, message: &[u8], signature_bytes: &[u8; 64]) -> Result<(), IdentityError> {
         Self::verify_with_key(&self.verifying_key, message, signature_bytes)

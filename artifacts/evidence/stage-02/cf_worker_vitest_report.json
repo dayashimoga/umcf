@@ -1,0 +1,83 @@
+{
+  "subphase": "S2.P3.SP2",
+  "test_suite": "cf_control_plane_vitest_runner",
+  "timestamp_utc": "2026-11-10T11:39:30.715Z",
+  "total_tests": 10,
+  "passed_tests": 10,
+  "failed_tests": 0,
+  "total_duration_ms": 84.03,
+  "tests": [
+    {
+      "tier": "UNIT",
+      "name": "Base58 and Hex decoding/encoding roundtrip",
+      "duration_ms": 0.71,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "UNIT",
+      "name": "Extract Ed25519 public key from DID and explicit hex",
+      "duration_ms": 0.3,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "UNIT",
+      "name": "WebCrypto Ed25519 signature validation and verification",
+      "duration_ms": 24.67,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "UNIT",
+      "name": "Durable Object coordinator in-memory peer lifecycle and HLC monotonicity",
+      "duration_ms": 0.66,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "SIMULATION",
+      "name": "Replay attack protection rejects expired timestamp (> 60s)",
+      "duration_ms": 7.05,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "SIMULATION",
+      "name": "Tampered payload with unmodified signature rejected with 401 E2001",
+      "duration_ms": 2.11,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "SIMULATION",
+      "name": "Missing or unauthenticated headers rejected with 401 E2001",
+      "duration_ms": 0.57,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "INTEGRATION",
+      "name": "HTTP registration, delta-sync, and peers listing against local control plane",
+      "duration_ms": 47.1,
+      "status": "PASS",
+      "details": {}
+    },
+    {
+      "tier": "INTEGRATION",
+      "name": "WebSocket peer presence broadcast latency < 50 ms",
+      "duration_ms": 0.15,
+      "status": "PASS",
+      "details": {
+        "broadcast_duration_ms": 0.018000000000000682
+      }
+    },
+    {
+      "tier": "MANUALLY-VERIFIED",
+      "name": "wrangler.toml bindings and route contract verification",
+      "duration_ms": 0.71,
+      "status": "PASS",
+      "details": {}
+    }
+  ]
+}

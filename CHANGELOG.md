@@ -267,6 +267,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s2-p3-sp1.sh` and `scripts/test-s2-p3-sp1.ps1` covering `[Unit]` (HLC monotonicity, drift rejection, redb commit latency < 1.5 ms p99, and 10,000 CRDT randomized sequences), `[Integration]` (3-store mesh delta exchange across all 6 permutation delivery orders with byte-identical convergence), `[Simulation]` (simulated crash during write and ACID recovery), `[Hardware-Required]` (hardware thread probe and Podman quota verification < 29.0 GiB), and `[Manually-Verified]` (redb compaction metrics and crdt_proptest_summary.json review) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P3_SP1_evidence.json` and `artifacts/evidence/stage-02/crdt_proptest_summary.json`.
 
+### Added (S2.P3.SP2: Cloudflare Workers + Durable Objects Control Plane Sync)
+- **Cloudflare Edge Control Plane (`services/cf_control_plane`)**:
+  - Implemented `services/cf_control_plane/src/crypto.ts` & `src/crypto.js` providing Base58btc decoding, hex conversions, WebCrypto Ed25519 signature verification (`X-UMCF-DID`, `X-UMCF-Timestamp`, `X-UMCF-Signature`, `X-UMCF-Public-Key`), and anti-replay protection with a strict 60-second clock skew ceiling (`MAX_REPLAY_SKEW_MS = 60_000`).
+  - Implemented `services/cf_control_plane/src/durable_object.ts` & `src/durable_object.js` (`ClusterCoordinatorDO`) managing peer records, CRDT deltas, SQLite schema, and instant WebSocket presence broadcasting (`< 50 ms` ceiling; measured: **0.017 ms**).
+  - Implemented `services/cf_control_plane/src/index.ts` & `src/index.js` routing `GET /healthz`, `POST /v1/clusters/:id/register`, `POST /v1/clusters/:id/sync-delta`, `GET /v1/clusters/:id/peers`, and `GET /v1/clusters/:id/ws` with local simulation fallback.
+  - Implemented `services/cf_control_plane/src/server.js` providing local Node.js HTTP server wrapper for integration testing against real network sockets.
+- **Rust Cloudflare Control Plane Client (`crates/umcf-registry/src/cloud_sync.rs`)**:
+  - Implemented `CloudflareControlPlaneClient` backing async Tokio operations with `reqwest`.
+  - Implemented canonical request signing (`sign_request`) constructing `${method}:${pathname}:${timestampMs}:${bodySha256Hex}` and generating Ed25519 signatures.
+  - Implemented `check_health`, `register`, `sync_delta`, `fetch_peers`, and `websocket_url` with URL-encoding and trailing slash normalization.
+- **Classified Test Harness**: Implemented `scripts/test-s2-p3-sp2.sh` and `scripts/test-s2-p3-sp2.ps1` covering `[Unit]` (Base58/Hex roundtrip, DID extraction, WebCrypto Ed25519 verification, HLC monotonicity, and Rust client sign_request & URL construction), `[Integration]` (control plane HTTP registration, delta-sync, peers query, WebSocket presence latency < 50 ms, and live Rust client integration), `[Simulation]` (anti-replay expired timestamp rejection > 60s with 401 E2001, tampered payload rejection with 401 E2001, and missing auth rejection with 401 E2001), `[Hardware-Required]` (host hardware execution thread probe and Podman quota verification < 29.0 GiB), and `[Manually-Verified]` (wrangler.toml bindings audit and cf_worker_vitest_report.json verification) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-02/S2_P3_SP2_evidence.json` and `artifacts/evidence/stage-02/cf_worker_vitest_report.json`.
+
+
 
 
 

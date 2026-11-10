@@ -45,6 +45,18 @@ pub enum RegistryError {
     #[error("Clock drift exceeded limit: {0} ms")]
     ClockDrift(u64),
 
+    #[error("Cloud sync HTTP error: {status} - {message}")]
+    CloudHttp {
+        status: u16,
+        message: String,
+    },
+
+    #[error("Network error during cloud sync: {0}")]
+    Network(String),
+
+    #[error("Invalid control plane URL: {0}")]
+    InvalidUrl(String),
+
     #[error("Registry IO error: {0}")]
     Io(#[from] std::io::Error),
 }

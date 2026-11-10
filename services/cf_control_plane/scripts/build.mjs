@@ -5,13 +5,24 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
+const srcDir = path.join(root, "src");
 const distDir = path.join(root, "dist");
 
 fs.mkdirSync(distDir, { recursive: true });
-const src = fs.readFileSync(path.join(root, "src", "index.ts"), "utf8");
-const outPath = path.join(distDir, "index.js");
-fs.writeFileSync(outPath, src, "utf8");
 
-const hash = crypto.createHash("sha256").update(src).digest("hex");
-fs.writeFileSync(path.join(distDir, "SHA256SUMS.txt"), `${hash}  index.js\n`, "utf8");
-console.log(`Built @umcf/cf_control_plane bundle at ${outPath} (sha256: ${hash})`);
+const filesToCopy = ["index.js", "crypto.js", "durable_object.js", "server.js"];
+const checksumLines = [];
+
+for (const file of filesToCopy) {
+  const srcPath = path.join(srcDir, file);
+  if (fs.existsSync(srcPath)) {
+    const content = fs.readFileSync(srcPath);
+    const outPath = path.join(distDir, file);
+    fs.writeFileSync(outPath, content);
+    const hash = crypto.createHash("sha256").update(content).digest("hex");
+    checksumLines.push(`${hash}  ${file}`);
+  }
+}
+
+fs.writeFileSync(path.join(distDir, "SHA256SUMS.txt"), checksumLines.join("\n") + "\n", "utf8");
+console.log(`Built @umcf/cf_control_plane dist (${checksumLines.length} files hashed in dist/SHA256SUMS.txt)`);

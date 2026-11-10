@@ -3,9 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
 [[durable_objects.bindings]]
-name = "CLUSTER_REGISTRY"
-class_name = "ClusterRegistryDO"
+name = "CLUSTER_COORDINATOR"
+class_name = "ClusterCoordinatorDO"
 
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["ClusterRegistryDO"]
+new_sqlite_classes = ["ClusterCoordinatorDO"]

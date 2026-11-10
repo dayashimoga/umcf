@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Cloudflare Workers Control Plane entrypoint for UMCF",
   "scripts": {
-    "test": "node --test ./test/worker.test.mjs"
+    "test": "node --test ./test/worker.test.mjs",
+    "build": "node ./scripts/build.mjs"
   }
 }

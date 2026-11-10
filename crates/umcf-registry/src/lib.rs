@@ -3,11 +3,16 @@
 
 #![forbid(unsafe_code)]
 
+pub mod cloud_sync;
 pub mod crdt;
 pub mod error;
 pub mod hlc;
 pub mod store;
 
+pub use cloud_sync::{
+    CloudPeerRecord, CloudflareControlPlaneClient, ControlPlaneHealth, RegisterResponse,
+    SyncDeltaResponse,
+};
 pub use crdt::{
     CapabilityCrdtEntry, ClusterRegistryState, ConsentCrdtEntry, CrlCrdtEntry, MergeSummary,
     NodeCrdtEntry, NodeRecord, NodeStatus, RegistryDelta,
@@ -22,9 +27,11 @@ pub use store::{
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sha2::Digest;
     use std::collections::HashSet;
     use std::fs;
     use std::path::Path;
+    use std::sync::Arc;
     use std::time::Instant;
     use tempfile::tempdir;
     use umcf_core::capabilities::{
@@ -691,5 +698,208 @@ mod tests {
         )
         .expect("write crdt proptest summary");
         assert!(summary_path.exists());
+    }
+
+    #[test]
+    fn unit_cloudflare_client_sign_headers_format_and_crypto() {
+        use ed25519_dalek::{Signature, VerifyingKey};
+
+        let keypair = Arc::new(NodeKeypair::generate());
+        let node_id = NodeId::parse("did:umcf:00000000000000client01").expect("id");
+        let client = CloudflareControlPlaneClient::new(
+            "http://127.0.0.1:8787",
+            "cluster-sync-test",
+            Arc::clone(&keypair),
+            node_id.clone(),
+        )
+        .expect("client creation");
+
+        let body = br#"{"role":"Worker","rendezvous_endpoints":["127.0.0.1:9000"]}"#;
+        let ts_ms = 1_700_000_123_456_u64;
+        let path = "/v1/clusters/cluster-sync-test/register";
+
+        let headers = client
+            .sign_request("POST", path, body, ts_ms)
+            .expect("sign headers");
+
+        assert_eq!(
+            headers.get("x-umcf-did").expect("did"),
+            node_id.as_str()
+        );
+        assert_eq!(
+            headers.get("x-umcf-timestamp").expect("ts"),
+            ts_ms.to_string().as_str()
+        );
+
+        let sig_hex = headers
+            .get("x-umcf-signature")
+            .expect("sig")
+            .to_str()
+            .expect("str");
+        let pk_hex = headers
+            .get("x-umcf-public-key")
+            .expect("pk")
+            .to_str()
+            .expect("str");
+
+        assert_eq!(pk_hex, hex::encode(keypair.ed25519_public_bytes()));
+
+        // Cryptographically verify the signature directly
+        let mut hasher = sha2::Sha256::new();
+        hasher.update(body);
+        let body_hash_hex = hex::encode(hasher.finalize());
+        let canonical = format!("POST:{path}:{ts_ms}:{body_hash_hex}");
+
+        let sig_bytes: [u8; 64] = hex::decode(sig_hex)
+            .expect("decode sig")
+            .try_into()
+            .expect("64 bytes");
+        let sig = Signature::from_bytes(&sig_bytes);
+
+        let vk = VerifyingKey::from_bytes(&keypair.ed25519_public_bytes()).expect("valid vk");
+        vk.verify_strict(canonical.as_bytes(), &sig)
+            .expect("strict signature verification must pass");
+    }
+
+    #[test]
+    fn unit_cloudflare_client_url_construction_and_validation() {
+        let keypair = Arc::new(NodeKeypair::generate());
+        let node_id = NodeId::parse("did:umcf:00000000000000client02").expect("id");
+
+        // Trailing slash trimming
+        let client_http = CloudflareControlPlaneClient::new(
+            "http://control.umcf.dev///",
+            "alpha cluster",
+            Arc::clone(&keypair),
+            node_id.clone(),
+        )
+        .expect("http client");
+        assert_eq!(client_http.base_url(), "http://control.umcf.dev");
+        assert_eq!(
+            client_http.websocket_url().expect("ws url"),
+            "ws://control.umcf.dev/v1/clusters/alpha%20cluster/ws"
+        );
+
+        // HTTPS conversion to WSS
+        let client_https = CloudflareControlPlaneClient::new(
+            "https://edge.umcf.dev",
+            "c1",
+            Arc::clone(&keypair),
+            node_id.clone(),
+        )
+        .expect("https client");
+        assert_eq!(
+            client_https.websocket_url().expect("wss url"),
+            "wss://edge.umcf.dev/v1/clusters/c1/ws"
+        );
+
+        // Rejection of invalid protocols
+        assert!(matches!(
+            CloudflareControlPlaneClient::new("ftp://invalid.com", "c1", Arc::clone(&keypair), node_id.clone()),
+            Err(RegistryError::InvalidUrl(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn integration_rust_client_against_local_control_plane_server() {
+        use std::process::{Child, Command};
+        use std::time::Duration;
+
+        let port = 8792;
+        let base_url = format!("http://127.0.0.1:{port}");
+
+        // Find root repo directory
+        let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let repo_root = manifest_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .expect("repo root");
+
+        let server_script = repo_root
+            .join("services")
+            .join("cf_control_plane")
+            .join("src")
+            .join("server.js");
+
+        // Spawn node server
+        let server_child: Child = Command::new("node")
+            .arg(&server_script)
+            .arg(port.to_string())
+            .spawn()
+            .expect("spawn local control plane server");
+
+        // Wait up to 3 seconds for server readiness
+        let mut ready = false;
+        let health_url = format!("{base_url}/healthz");
+        let http_client = reqwest::Client::new();
+
+        for _ in 0..30 {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            if let Ok(resp) = http_client.get(&health_url).send().await {
+                if resp.status().is_success() {
+                    ready = true;
+                    break;
+                }
+            }
+        }
+
+        struct ProcessGuard(Option<Child>);
+        impl Drop for ProcessGuard {
+            fn drop(&mut self) {
+                if let Some(mut child) = self.0.take() {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                }
+            }
+        }
+        let _guard = ProcessGuard(Some(server_child));
+
+        assert!(ready, "Local control plane server failed to start within 3 seconds");
+
+        let keypair = Arc::new(NodeKeypair::generate());
+        let node_id = NodeId::parse("did:umcf:00000000000000rust01").expect("id");
+        let cluster_id = "test-cluster-integration";
+
+        let client = CloudflareControlPlaneClient::new(
+            &base_url,
+            cluster_id,
+            Arc::clone(&keypair),
+            node_id.clone(),
+        )
+        .expect("client creation");
+
+        // 1. Healthcheck
+        let health = client.check_health().await.expect("health check");
+        assert_eq!(health.status, "healthy");
+        assert_eq!(health.service, "cf_control_plane");
+
+        // 2. Register node
+        let reg = client
+            .register(NodeRole::Worker, vec!["127.0.0.1:9500".into()])
+            .await
+            .expect("register node");
+        assert_eq!(reg.status, "registered");
+        assert_eq!(reg.node_id, node_id.as_str());
+        assert_eq!(reg.active_peer_count, 1);
+
+        // 3. Sync Delta
+        let delta = RegistryDelta {
+            cluster_id: cluster_id.to_string(),
+            sender_node_id: node_id.clone(),
+            delta_hlc: HlcTimestamp::new(1_700_000_500_000, 1, 0x1234),
+            nodes: vec![],
+            capabilities: vec![],
+            consent: vec![],
+            crl_entries: vec![],
+        };
+        let sync_res = client.sync_delta(&delta).await.expect("sync delta");
+        assert!(sync_res.accepted);
+        assert_eq!(sync_res.peer_count, 1);
+
+        // 4. Fetch Peers
+        let peers = client.fetch_peers().await.expect("fetch peers");
+        assert_eq!(peers.len(), 1);
+        assert_eq!(peers[0].node_id, node_id.as_str());
+        assert_eq!(peers[0].role, "Worker");
     }
 }
