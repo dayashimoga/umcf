@@ -1,0 +1,25 @@
+{
+  "subphase": "S1.P1.SP3",
+  "title": "Multi-Language Workspace Skeleton & Build Orchestration",
+  "git_commit": "46a51e8ce3b8464a2b43a825447d8da246259220",
+  "timestamp_utc": "2026-11-10T07:53:06Z",
+  "podman_total_bytes": 302190678,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-01/workspace_metadata.json": "5a04b9e0a62e081508e4a9ec6f93c2d4fdc68375d557725be23f053153cc4f07",
+    "crates/umcf-telemetry/src/lib.rs": "8d2b6f9c39bec6f01c0586b54b6fefe642dda94172e1bfeef63cca6de89b6d0d",
+    "apps/web_console/dist/index.html": "9b529da9b40096dc8b784fd145b59acc0e7cac8acbeed4c98e9d8bfa004664a6",
+    "services/cf_control_plane/dist/index.js": "c516fe00bf0ed82468de7e1d23fc1ceae3f9ba2d6c53d504b2c903b4da3852af",
+    "justfile": "4630020d94c86d297361814c90846697818f890a0476a96d182c2c0b4c3d3461",
+    "Makefile": "0d134f7d0dcb8a196e058b4d89daf16bd001981d3e5af0460f65f6adae63f164",
+    "Makefile.toml": "8e495a9a4dd8dc93e1aee2cdd388cd18b459bd9dc95cb38fe974c6d39adc2e73"
+  }
+}

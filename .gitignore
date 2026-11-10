@@ -43,7 +43,8 @@ service-account*.json
 
 # Podman / Container Local Volumes & Temp Artifacts
 .podman/
-artifacts/
+artifacts/*
+!artifacts/evidence/
 coverage/
 *.tar.gz
 *.zip

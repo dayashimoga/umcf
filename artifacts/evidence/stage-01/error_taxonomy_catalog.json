@@ -1,0 +1,191 @@
+[
+  {
+    "code": "E1001",
+    "title": "Incompatible Protocol Version",
+    "http_status": 426,
+    "grpc_status": 9,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E1002",
+    "title": "Plane Isolation Violation",
+    "http_status": 422,
+    "grpc_status": 3,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E1003",
+    "title": "Frame Exceeds Maximum Size Limit",
+    "http_status": 413,
+    "grpc_status": 11,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E1004",
+    "title": "Frame Integrity Checksum Mismatch",
+    "http_status": 400,
+    "grpc_status": 3,
+    "retryability": "RetryableImmediate"
+  },
+  {
+    "code": "E1005",
+    "title": "Malformed Wire Frame Header or Structure",
+    "http_status": 400,
+    "grpc_status": 3,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E2001",
+    "title": "Invalid Node Identifier Format",
+    "http_status": 401,
+    "grpc_status": 16,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E2002",
+    "title": "Cryptographic Signature Verification Failed",
+    "http_status": 401,
+    "grpc_status": 16,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E2003",
+    "title": "Security or Enrollment Token Expired",
+    "http_status": 401,
+    "grpc_status": 16,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E2004",
+    "title": "Action Not Permitted by Capability Token",
+    "http_status": 403,
+    "grpc_status": 7,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E3001",
+    "title": "P2P or Control Plane Connection Failed",
+    "http_status": 502,
+    "grpc_status": 14,
+    "retryability": "RetryableAfter(500ms)"
+  },
+  {
+    "code": "E3002",
+    "title": "Operation Timed Out Over Transport",
+    "http_status": 504,
+    "grpc_status": 4,
+    "retryability": "RetryableImmediate"
+  },
+  {
+    "code": "E3003",
+    "title": "STUN/TURN NAT Traversal Failed",
+    "http_status": 502,
+    "grpc_status": 14,
+    "retryability": "RetryableAfter(2000ms)"
+  },
+  {
+    "code": "E4001",
+    "title": "Insufficient Hardware Capacity for Task",
+    "http_status": 507,
+    "grpc_status": 8,
+    "retryability": "RetryableAfter(5000ms)"
+  },
+  {
+    "code": "E4002",
+    "title": "Thermal Headroom Exceeded Safe Ceiling",
+    "http_status": 503,
+    "grpc_status": 14,
+    "retryability": "RetryableAfter(10000ms)"
+  },
+  {
+    "code": "E4003",
+    "title": "Battery Level Below User Configured Policy Floor",
+    "http_status": 503,
+    "grpc_status": 14,
+    "retryability": "RetryableAfter(30000ms)"
+  },
+  {
+    "code": "E4004",
+    "title": "Explicit User Resource-Sharing Consent Denied",
+    "http_status": 503,
+    "grpc_status": 14,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E5001",
+    "title": "Model Loading or Verification Failed",
+    "http_status": 500,
+    "grpc_status": 13,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E5002",
+    "title": "Insufficient Physical VRAM for Model Shard",
+    "http_status": 500,
+    "grpc_status": 13,
+    "retryability": "RetryableAfter(2000ms)"
+  },
+  {
+    "code": "E5003",
+    "title": "Inference Token Generation Failed",
+    "http_status": 500,
+    "grpc_status": 13,
+    "retryability": "RetryableImmediate"
+  },
+  {
+    "code": "E6001",
+    "title": "Requested Hardware Accelerator Backend Unavailable",
+    "http_status": 503,
+    "grpc_status": 14,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E6002",
+    "title": "Hardware Video Frame Encoding Failed",
+    "http_status": 503,
+    "grpc_status": 14,
+    "retryability": "RetryableImmediate"
+  },
+  {
+    "code": "E6003",
+    "title": "GPU or Accelerator Driver Device Lost",
+    "http_status": 503,
+    "grpc_status": 14,
+    "retryability": "RetryableAfter(1000ms)"
+  },
+  {
+    "code": "E7001",
+    "title": "Local Storage Quota Exceeded",
+    "http_status": 507,
+    "grpc_status": 8,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E7002",
+    "title": "Requested Content-Addressed Chunk Not Found",
+    "http_status": 404,
+    "grpc_status": 5,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E7003",
+    "title": "Accounting Ledger Integrity Check Failed",
+    "http_status": 500,
+    "grpc_status": 15,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E8001",
+    "title": "Internal Runtime Invariant Violation",
+    "http_status": 500,
+    "grpc_status": 13,
+    "retryability": "Fatal"
+  },
+  {
+    "code": "E8002",
+    "title": "Unhandled Internal Error",
+    "http_status": 500,
+    "grpc_status": 13,
+    "retryability": "Fatal"
+  }
+]

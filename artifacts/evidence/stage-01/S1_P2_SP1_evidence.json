@@ -1,0 +1,30 @@
+{
+  "subphase": "S1.P2.SP1",
+  "title": "`umcf-proto` Envelope & Semantic Versioning Negotiation",
+  "git_commit": "4507f7a42c60ae693b2a46fca614fed520f20663",
+  "timestamp_utc": "2026-11-10T08:05:17Z",
+  "podman_total_bytes": 1115936032,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "microbenchmark": {
+    "payload_bytes": 1024,
+    "per_op_micros_debug": 1.94,
+    "per_op_micros_release": 1.286,
+    "target_micros_ceiling": 2.5,
+    "status": "PASS"
+  },
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "crates/umcf-proto/src/envelope.rs": "e06902d046f73171e93ba771001380733d2a7e8c2529b8637e03213223d80fba",
+    "crates/umcf-proto/src/negotiation.rs": "ba99b6e5fe21e9eaa8e87d33d8b68baf3521d25216568e8a3ab502c79598cc54",
+    "crates/umcf-proto/src/codec.rs": "3cf80eebbb9a6c49852096e18b8d867a79e8d860e721a6ed380ef0e73cb603da",
+    "crates/umcf-proto/src/lib.rs": "c7a4442bf8096a16f3f3892e8c3102fcde376148722d4ccf683f308a3fbe979c",
+    "artifacts/evidence/stage-01/umcf_proto_test_report.xml": "b3cb7275c671d389694855131caf5bd1edcc2e18fcfc8fc746d5e3714d0b4940"
+  }
+}

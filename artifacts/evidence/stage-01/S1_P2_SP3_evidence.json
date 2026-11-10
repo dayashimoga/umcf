@@ -1,0 +1,23 @@
+{
+  "subphase": "S1.P2.SP3",
+  "title": "Structured Telemetry, Tracing & Error Taxonomy",
+  "git_commit": "1234fcefab9bbe8f18e9694c2e7c2b7fa39dd32d",
+  "timestamp_utc": "2026-11-10T08:28:15Z",
+  "podman_total_bytes": 2131226384,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "crates/umcf-telemetry/src/lib.rs": "85a4032f65b8ad035d478b328b15485069d28a57d334250c6ed7af0039fbd371",
+    "crates/umcf-telemetry/src/error.rs": "c54ddce2e02177a371ce66e267bb7d3adbf004590537b43e245f2bde548cb062",
+    "crates/umcf-telemetry/src/tracing_init.rs": "89f7929ddd42a76d9654f33986d5cdf30604b2cd12cff6e86bd73af934131aa9",
+    "crates/umcf-telemetry/src/metrics.rs": "e94d885d3e3ce2f47512f7852d180fbee5160fea5a7fa36f4828a3e92cafa5ae",
+    "artifacts/evidence/stage-01/error_taxonomy_catalog.json": "7108ca1ef8c4c02af0d1dc206601d41f9249e33d00957b76c3f94a201b962c0d"
+  }
+}

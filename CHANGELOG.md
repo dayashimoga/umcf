@@ -91,3 +91,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p2-sp2.sh` and `scripts/test-s1-p2-sp2.ps1` covering `[Unit]` (25 device profiles + checked arithmetic), `[Integration]` (`WireEnvelope` embedding + schema export), `[Simulation]` (boundary overflows & critical thermal rejection), `[Hardware-Required]` (CPU logical core probing), and `[Manually-Verified]` (Draft 2020-12 JSON Schema validation) with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P2_SP2_evidence.json` and `schemas/hardware_capability_v1.schema.json`.
 
+### Added (S1.P2.SP3: Structured Telemetry, OpenTelemetry Tracing & Error Taxonomy)
+- **Standardized Error Taxonomy & RFC-9457 Problem Details (`crates/umcf-telemetry/src/error.rs`)**:
+  - Implemented 27 exhaustive error codes across 8 categories: `E1xxx` (Protocol: `E1001`..`E1005`), `E2xxx` (Identity/Auth: `E2001`..`E2004`), `E3xxx` (Network: `E3001`..`E3003`), `E4xxx` (Scheduler/Resource: `E4001`..`E4004`), `E5xxx` (Inference: `E5001`..`E5003`), `E6xxx` (Media/GPU: `E6001`..`E6003`), `E7xxx` (Storage/Ledger: `E7001`..`E7003`), and `E8xxx` (Internal: `E8001`..`E8002`).
+  - Mapped every error code to deterministic HTTP status codes (RFC-9110), gRPC status codes, and `Retryability` classifications (`Immediate`, `After(Duration)`, `Fatal`).
+  - Implemented RFC-9457 `ProblemDetails` builder and serialized machine-readable catalog exportable via `all_error_taxonomy_entries()`.
+- **W3C TraceContext Propagation & Sensitive Secret Redaction (`crates/umcf-telemetry/src/tracing_init.rs`)**:
+  - Implemented W3C `traceparent` (version `00`, 16-byte `trace-id`, 8-byte `parent-id`, 1-byte `trace-flags`) injection into and extraction from `umcf_proto::WireEnvelope` headers, preserving end-to-end distributed trace continuity across asynchronous network boundaries.
+  - Implemented `Redacted<T>` memory wrapper enforcing total leak prevention: displays `[REDACTED]` in `Display`, `[REDACTED_SECRET]` in `Debug` and JSON serialization, with audited `.expose_secret()` access.
+- **Lock-Free OpenMetrics Telemetry Engine (`crates/umcf-telemetry/src/metrics.rs`)**:
+  - Implemented thread-safe, lock-free atomic `Counter`, `Gauge`, and `LatencyHistogram` using atomic primitives (`AtomicU64`, `Ordering::Relaxed`/`SeqCst`) with zero mutex contention across hardware threads.
+  - Implemented `MetricsRegistry` with OpenMetrics text format exporter formatting `# HELP`, `# TYPE`, gauge values, counter values, and HDR histogram buckets.
+- **Classified Test Harness**: Implemented `scripts/test-s1-p2-sp3.sh` and `scripts/test-s1-p2-sp3.ps1` covering `[Unit]` (error taxonomy, RFC-9457, metrics), `[Integration]` (W3C traceparent round-trip across `WireEnvelope`, catalog export), `[Simulation]` (synthetic secret redaction leak prevention), `[Hardware-Required]` (14 hardware threads lock-free atomic concurrency verification), and `[Manually-Verified]` (RFC-9457 structure & OpenMetrics format compliance) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P2_SP3_evidence.json` and `artifacts/evidence/stage-01/error_taxonomy_catalog.json`.
+
+

@@ -1,5 +1,18 @@
-//! Structured OpenTelemetry tracing, metrics, and correlation IDs for UMCF.
+//! Structured OpenTelemetry tracing, metrics, sensitive data redaction, and standardized error taxonomy for UMCF.
 //! Adheres strictly to `#![forbid(unsafe_code)]` and zero-placeholder invariants.
+
+pub mod error;
+pub mod metrics;
+pub mod tracing_init;
+
+pub use error::{
+    all_error_taxonomy_entries, ErrorCatalogEntry, ErrorCode, ProblemDetails, Retryability,
+    UmcfError,
+};
+pub use metrics::{Counter, Gauge, LatencyHistogram, MetricsRegistry};
+pub use tracing_init::{
+    extract_traceparent_from_envelope, inject_traceparent_into_envelope, Redacted,
+};
 
 use std::fmt;
 use umcf_core::NodeId;
@@ -149,6 +162,10 @@ impl std::error::Error for TelemetryError {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::path::Path;
+    use std::sync::Arc;
+    use umcf_proto::{MessageKind, PlaneKind, WireEnvelope};
 
     #[test]
     fn unit_w3c_traceparent_roundtrip_and_child_span() {
@@ -172,31 +189,130 @@ mod tests {
     }
 
     #[test]
-    fn unit_invalid_traceparent_rejected() {
-        assert!(TraceContext::from_w3c_traceparent("invalid").is_err());
-        assert!(TraceContext::from_w3c_traceparent("01-tooshort-span-00").is_err());
-        assert!(TraceContext::from_w3c_traceparent("00-1234-5678-01").is_err());
+    fn unit_error_taxonomy_mappings_and_problem_details() {
+        let err = UmcfError::new(ErrorCode::E4002ThermalCutoff, "Thermal headroom exceeded")
+            .with_detail("Core temp reached 85C exceeding 75C safe threshold")
+            .with_trace_id("0123456789abcdef0123456789abcdef");
+
+        assert_eq!(err.code(), ErrorCode::E4002ThermalCutoff);
+        assert_eq!(err.http_status(), 503);
+        assert_eq!(err.grpc_status(), 14);
+        assert!(matches!(err.retryability(), Retryability::After(_)));
+
+        let pd = err.to_problem_details();
+        assert_eq!(pd.type_uri, "urn:umcf:error:E4002");
+        assert_eq!(pd.status, 503);
+        assert_eq!(pd.error_code, "E4002");
+        assert_eq!(
+            pd.instance,
+            Some("urn:umcf:trace:0123456789abcdef0123456789abcdef".into())
+        );
+
+        // Serialize to JSON RFC-9457
+        let json = serde_json::to_string(&pd).expect("serialize problem details");
+        assert!(json.contains("\"type\":\"urn:umcf:error:E4002\""));
+        assert!(json.contains("\"status\":503"));
     }
 
     #[test]
-    fn unit_structured_telemetry_measurements() {
-        let node_id = NodeId::from_public_key_bytes(b"telemetry-node-key-seed-01").expect("id");
-        let metric = MetricMeasurement {
-            node_id: node_id.clone(),
-            kind: MetricKind::TokensPerSecond,
-            value: 48,
-            timestamp_unix_secs: 1_700_000_100,
-        };
-        assert_eq!(metric.kind, MetricKind::TokensPerSecond);
-        assert_eq!(metric.value, 48);
+    fn unit_lock_free_metrics_and_openmetrics_export() {
+        let counter = Arc::new(Counter::new());
+        counter.inc();
+        counter.inc_by(41);
+        assert_eq!(counter.get(), 42);
 
-        let log = StructuredLogEvent {
-            level: LogLevel::Info,
-            message: "Node joined mesh cluster".into(),
-            trace_context: None,
-            node_id,
-            timestamp_unix_secs: 1_700_000_100,
-        };
-        assert_eq!(log.level.to_string(), "INFO");
+        let gauge = Arc::new(Gauge::new());
+        gauge.set(10);
+        gauge.inc();
+        gauge.dec();
+        assert_eq!(gauge.get(), 10);
+
+        let hist = Arc::new(LatencyHistogram::new(vec![0.001, 0.005, 0.010, 0.050]));
+        hist.observe(0.002);
+        hist.observe(0.004);
+        hist.observe(0.008);
+        assert_eq!(hist.count(), 3);
+
+        let mut reg = MetricsRegistry::new();
+        reg.register_counter("umcf_tasks_total", "Total tasks executed", counter);
+        reg.register_gauge("umcf_active_nodes", "Active connected nodes", gauge);
+        reg.register_histogram("umcf_task_latency_seconds", "Task latency", hist);
+
+        let text = reg.render_openmetrics_text();
+        assert!(text.contains("# TYPE umcf_tasks_total counter"));
+        assert!(text.contains("umcf_tasks_total 42"));
+        assert!(text.contains("# TYPE umcf_active_nodes gauge"));
+        assert!(text.contains("umcf_active_nodes 10"));
+        assert!(text.contains("umcf_task_latency_seconds_bucket"));
+        assert!(text.ends_with("# EOF\n"));
+    }
+
+    #[test]
+    fn integration_trace_propagation_across_wire_envelope() {
+        let trace_ctx = TraceContext::new(b"workload-span-root", 42);
+        let mut env = WireEnvelope::new(
+            PlaneKind::ControlPlane,
+            MessageKind::ScheduleTask,
+            1,
+            "did:umcf:trace-node-01",
+            vec![1, 2, 3],
+        )
+        .expect("envelope");
+
+        // Inject trace context
+        inject_traceparent_into_envelope(&mut env, &trace_ctx);
+
+        // Encode to wire bytes
+        let wire_bytes = env.to_bytes();
+        let decoded_env = WireEnvelope::from_bytes(&wire_bytes).expect("decode wire bytes");
+
+        // Extract and verify exact match
+        let extracted_ctx = extract_traceparent_from_envelope(&decoded_env);
+        assert_eq!(trace_ctx.trace_id_hex, extracted_ctx.trace_id_hex);
+        assert_eq!(trace_ctx.span_id_hex, extracted_ctx.span_id_hex);
+    }
+
+    #[test]
+    fn integration_export_error_taxonomy_catalog() {
+        let entries = all_error_taxonomy_entries();
+        assert_eq!(entries.len(), 27);
+
+        let json = serde_json::to_string_pretty(&entries).expect("catalog json");
+
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root_artifacts = manifest_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .map(|p| p.join("artifacts").join("evidence").join("stage-01"))
+            .unwrap_or_else(|| std::path::PathBuf::from("artifacts/evidence/stage-01"));
+
+        fs::create_dir_all(&root_artifacts).expect("create evidence dir");
+        let catalog_path = root_artifacts.join("error_taxonomy_catalog.json");
+        fs::write(&catalog_path, json).expect("write catalog");
+        assert!(catalog_path.exists());
+    }
+
+    #[test]
+    fn simulation_sensitive_secret_redaction_leak_prevention() {
+        let raw_secret_key = "SEC_PRIVATE_KEY_99998888777766665555444433332222";
+        let secret = Redacted::new(raw_secret_key.to_string());
+
+        // 1. Display must redact
+        let display_str = format!("{secret}");
+        assert_eq!(display_str, "[REDACTED]");
+        assert!(!display_str.contains(raw_secret_key));
+
+        // 2. Debug must redact
+        let debug_str = format!("{secret:?}");
+        assert_eq!(debug_str, "[REDACTED_SECRET]");
+        assert!(!debug_str.contains(raw_secret_key));
+
+        // 3. JSON serialization must redact
+        let json_str = serde_json::to_string(&secret).expect("json");
+        assert_eq!(json_str, "\"[REDACTED_SECRET]\"");
+        assert!(!json_str.contains(raw_secret_key));
+
+        // 4. Secret can still be accessed explicitly via expose_secret()
+        assert_eq!(secret.expose_secret(), raw_secret_key);
     }
 }

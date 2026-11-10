@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="umcf-proto-test-suite" tests="11" failures="0" errors="0" time="0.030">
+  <testsuite name="umcf_proto::tests" tests="11" failures="0" errors="0" time="0.030">
+    <testcase name="tests::unit_version_negotiation_and_compatibility" classname="umcf_proto::tests" time="0.001" status="passed"/>
+    <testcase name="tests::unit_semantic_version_range_negotiation_matrix" classname="umcf_proto::tests" time="0.001" status="passed"/>
+    <testcase name="tests::unit_wire_envelope_flags_and_metadata" classname="umcf_proto::tests" time="0.001" status="passed"/>
+    <testcase name="tests::unit_wire_envelope_zstd_compression_toggle" classname="umcf_proto::tests" time="0.002" status="passed"/>
+    <testcase name="tests::unit_wire_envelope_micro_benchmark_latency" classname="umcf_proto::tests" time="0.012" status="passed"/>
+    <testcase name="tests::unit_control_plane_size_cap_enforced" classname="umcf_proto::tests" time="0.001" status="passed"/>
+    <testcase name="tests::unit_plane_isolation_rejects_bulk_data_on_control_plane" classname="umcf_proto::tests" time="0.001" status="passed"/>
+    <testcase name="tests::unit_all_message_kinds_roundtrip_and_error_cases" classname="umcf_proto::tests" time="0.001" status="passed"/>
+    <testcase name="tests::integration_stream_10000_framed_envelopes_over_duplex_stream" classname="umcf_proto::tests" time="0.005" status="passed"/>
+    <testcase name="tests::simulation_header_magic_and_length_fault_injection_oom_defense" classname="umcf_proto::tests" time="0.001" status="passed"/>
+    <testcase name="tests::simulation_10000_bit_flip_fault_injections_no_panics" classname="umcf_proto::tests" time="0.005" status="passed"/>
+  </testsuite>
+</testsuites>

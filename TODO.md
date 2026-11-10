@@ -28,7 +28,7 @@
 - [x] **[S1.P1.SP3]** (`2026-11-10`) Multi-Language Workspace Build Orchestration & Task Runner (Evidence: `artifacts/evidence/stage-01/S1_P1_SP3_evidence.json`)
 - [x] **[S1.P2.SP1]** (`2026-11-10`) `umcf-proto` Wire Envelope, Framing & Semantic Versioning Negotiation (Evidence: `artifacts/evidence/stage-01/S1_P2_SP1_evidence.json`)
 - [x] **[S1.P2.SP2]** (`2026-11-10`) `umcf-core` Hardware & Resource Capability Descriptors (Evidence: `artifacts/evidence/stage-01/S1_P2_SP2_evidence.json`)
-- [ ] **[S1.P2.SP3]** Structured Telemetry, OpenTelemetry Tracing & Error Taxonomy
+- [x] **[S1.P2.SP3]** (`2026-11-10`) Structured Telemetry, OpenTelemetry Tracing & Error Taxonomy (Evidence: `artifacts/evidence/stage-01/S1_P2_SP3_evidence.json`)
 - [ ] **[S1.P3.SP1]** Rust/Web/Control-Plane CI & `>=95%` Coverage Gates
 - [ ] **[S1.P3.SP2]** Flutter Multi-OS CI & Independent Artifact Packaging
 - [ ] **[S1.P3.SP3]** Release Manifest, CycloneDX/SPDX SBOM Generation & Stage 1 Certification

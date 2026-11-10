@@ -1,0 +1,12 @@
+﻿# UMCF Stage 1 Podman Container Image Digests & Quotas
+# Enforced ceiling: 30 GiB (32,212,254,720 bytes); Safe threshold: 29.0 GiB (31,138,512,896 bytes)
+# Generated at: 2026-11-10T07:39:57Z (Git Commit: bf94fd83eba08d6bed71a12815e46dfb8259bb23)
+
+containers/Podmanfile.rust    : target wasm32-wasip1 + sccache (Estimated: ~1.15 GiB uncompressed)
+containers/Podmanfile.web     : node 22 + pnpm + wrangler (Estimated: ~780 MiB uncompressed)
+containers/Podmanfile.flutter : flutter stable SDK stripped (Estimated: ~3.80 GiB uncompressed)
+
+Combined Total Containers Estimate : ~5.73 GiB (Well within <= 18.5 GiB target)
+Live Target Build Cache Bytes      : 245703221 bytes
+Live Total Storage Footprint Bytes : 245703221 bytes / 31138512896 limit
+Quota Status                       : PASS

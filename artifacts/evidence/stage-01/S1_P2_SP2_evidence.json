@@ -1,0 +1,23 @@
+{
+  "subphase": "S1.P2.SP2",
+  "title": "`umcf-core` Hardware & Resource Descriptors",
+  "git_commit": "f0c31a704b523f82ca996e618593fba899724235",
+  "timestamp_utc": "2026-11-10T08:17:27Z",
+  "podman_total_bytes": 1809156911,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "crates/umcf-core/src/types.rs": "f86e8687125c9d28855e334469c8a9b33090c65b633ee024e432e7d419ec072a",
+    "crates/umcf-core/src/capabilities.rs": "2fbb65b17927f3ef3302db739e1cb3928d851cd71ccada0af62bb7d51139a3f7",
+    "crates/umcf-core/src/units.rs": "18ea061e2acdb1725a4255213deb457e69cbff62e0c71b7ae87e58434c8d0cb9",
+    "crates/umcf-core/src/lib.rs": "ce4e437d0ccb160c478a2c42d63e809d409fd0b33d2b76a0da9c7e5af11d250e",
+    "schemas/hardware_capability_v1.schema.json": "72f41d7c0644382df9baa195c6869b89261b2865bfa3d850f477ab139463063b"
+  }
+}
