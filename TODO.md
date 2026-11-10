@@ -17,6 +17,7 @@
 - [x] **[BOOT-09]** (`2026-11-10`) Implement baseline Rust workspace (`umcf-proto`, `umcf-core`, `umcf-coordinator`, `umcf-worker`, `umcf-scheduler`, `umcf-cli`, `umcf-daemon`), Svelte 5 web dashboard (`apps/web-dashboard`), Flutter multi-platform app (`apps/mobile-desktop`), and Cloudflare/CloudRun control planes (`services/`).
 - [x] **[BOOT-10]** (`2026-11-10`) Create complete GitHub Actions CI/CD workflows (`.github/workflows/ci-rust.yml`, `ci-web.yml`, `ci-flutter.yml`, `ci-security-sbom.yml`, `release.yml`) and issue/PR templates.
 - [x] **[BOOT-11]** (`2026-11-10`) Execute initial builds, unit/integration tests, Podman 30 GB quota check, and independent artifact packaging verification; produce `docs/certification/BOOTSTRAP_CERTIFICATION_REPORT.md`.
+- [x] **[BOOT-12]** (`2026-11-10`) Add `.agent/workflows/stage-execution-workflow.md` reusable stage execution workflow to Antigravity workflow collection.
 
 ---
 

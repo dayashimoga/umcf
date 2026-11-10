@@ -16,7 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Established Cloudflare Workers + Durable Objects primary control plane (`services/control-plane-cf`) and Google Cloud Run stateless fallback control plane (`services/control-plane-cloudrun`).
 - **Engineering Governance & Antigravity Customizations**:
   - Created `ENGINEERING_CONTRACT.md`, `AGENTS.md`, `SECURITY.md`, `CONTRIBUTING.md`, `TODO.md`, and `CHANGELOG.md`.
-  - Created 7 workspace rules in `.agent/rules/`, 9 domain skills in `.agent/skills/`, and 6 repeatable workflows in `.agent/workflows/`.
+  - Created 7 workspace rules in `.agent/rules/`, 9 domain skills in `.agent/skills/`, and 7 repeatable workflows in `.agent/workflows/` (including `stage-execution-workflow.md`).
 - **Architecture, Requirements & 8-Stage Implementation Roadmap**:
   - Authored `docs/architecture/SYSTEM_OVERVIEW.md`, `COMPONENT_CONTRACTS.md`, `DATA_FLOWS.md`, `RISK_REGISTER_AND_PROTOTYPES.md`, and `ADR-0001` through `ADR-0006`.
   - Authored `docs/requirements/FUNCTIONAL_REQUIREMENTS.md` (`FR-001`..`FR-080`), `NON_FUNCTIONAL_REQUIREMENTS.md` (`NFR-001`..`NFR-040`), and `TRACEABILITY_MATRIX.md`.

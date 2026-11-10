@@ -84,3 +84,4 @@ An independent **Principal Security & Cross-Component Reviewer** audited the rep
 4. **Safe Defaults**: `sharing_enabled = false`, `allow_on_battery = false`, and `privateAiLocalOnly = true` across Rust, Svelte 5, and Flutter.
 5. **iOS Signing Honesty**: `.github/workflows/ci-flutter.yml` and `release.yml` explicitly produce `umcf-ios-unsigned-archive` with `"signed": false` in `ios-build-manifest.json` when Apple Developer signing secrets are absent.
 6. **Zero Secret Leakage**: Zero private keys, certificates, or tokens exist in the repository.
+

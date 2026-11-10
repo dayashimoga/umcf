@@ -81,6 +81,7 @@ ucf/
 - `umcf-devops-podman` — [`.agent/skills/umcf-devops-podman/SKILL.md`](./.agent/skills/umcf-devops-podman/SKILL.md)
 
 ### 3.3 Repeatable Workflows (`.agent/workflows/`)
+- [`.agent/workflows/stage-execution-workflow.md`](./.agent/workflows/stage-execution-workflow.md)
 - [`.agent/workflows/audit-workflow.md`](./.agent/workflows/audit-workflow.md)
 - [`.agent/workflows/subphase-implementation-workflow.md`](./.agent/workflows/subphase-implementation-workflow.md)
 - [`.agent/workflows/code-review-workflow.md`](./.agent/workflows/code-review-workflow.md)
