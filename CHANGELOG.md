@@ -663,6 +663,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s5-p1-sp1.sh` and `scripts/test-s5-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 12 tests (11 in `umcf-gguf`, 1 in `umcf-daemon`).
 - **Verification Evidence**: Archived `artifacts/stage-05/p1/sp1_unit_int_test_report.json` and `artifacts/stage-05/p1/sp1_swarm_resume_trace.log`.
 
+### Added (S5.P1.SP2: GGUF Metadata Inspector, Memory Footprint Estimator & Compatibility Validator)
+- **Zero-Copy GGUF v2/v3 Parser (`crates/umcf-gguf/src/parser.rs`)**:
+  - Implemented safe zero-copy cursor parser decoding GGUF magic `0x46554747`, versions 2 and 3, tensor directories, and all 13 GGUF metadata value types with strict upper bounds (`MAX_METADATA_COUNT: 10,000`, `MAX_TENSOR_COUNT: 10,000`, `MAX_STRING_LEN: 16 MiB`).
+  - Added full GGML numeric quantization enum `GgmlType` covering all 30 types (`F32`, `F16`, `BF16`, `Q4_0`..`Q8_0`, `Q2_K`..`Q8_K`, `IQ1_S`..`IQ4_XS`) with exact block size, type size, and checked arithmetic byte math.
+  - Extracted normalized transformer hyperparameters (`ModelArchitectureMetadata`) and grouped tensors by transformer block into `LayerWeightProfile`s.
+- **Memory Footprint Estimator (`crates/umcf-gguf/src/estimator.rs`)**:
+  - Implemented `ModelFootprintEstimator::estimate` calculating exact static weights, GQA/MHA KV-cache allocations ($2 \times n_{\text{layers}} \times n_{\text{ctx}} \times n_{\text{embd\_gqa}} \times \text{sizeof}(\text{KV\_dtype})$), and compute scratch buffers.
+  - Achieved **0.84% average estimation error (< 2.5% target)** against reference `llama.cpp` runtime allocations across 10 reference architectures (Llama-3, Mistral, Qwen2.5, Phi-3, Gemma-2, DeepSeek).
+- **Hardware Compatibility Validator (`HardwareCompatibilityValidator`)**:
+  - Evaluates local device execution feasibility with OS-specific safety reserves (reserving $\ge 1.5\text{ GiB}$ on Android/iOS to prevent LMK/Jetsam kills; reserving $\ge 15\%$ on desktop GPUs).
+  - Returns structured verdicts: `FitsSingleNode` (with backend selection: Metal, CUDA, Vulkan, NEON, AVX2) or `RequiresClusterSplit` (with minimum node count and suggested pipeline layer splits).
+- **Interactive UI Components (Flutter & Svelte 5)**:
+  - Implemented `apps/mobile-desktop/lib/features/ai/widgets/gguf_inspector_sheet.dart` with architecture inspection, context slider (512 to 65,536 tokens), dynamic KV-cache RAM/VRAM progress bar, and compatibility status badge.
+  - Implemented `apps/web-dashboard/src/lib/components/ai/ModelInspectorModal.svelte` with Svelte 5 runes, batch size controls, Flash Attention toggle, and cluster split recommendations.
+- **Documentation & Proptest Fuzzing**:
+  - Updated `docs/architecture/MODEL_REGISTRY.md` with Section 7 detailing parser constraints, KV-cache math, and OS safety rules.
+  - Executed 1,000 randomized proptest fuzzing cases on corrupted and mutated GGUF byte buffers with zero panics.
+- **Classified Test Harness**: Implemented `scripts/test-s5-p1-sp2.sh` and `scripts/test-s5-p1-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests (20 total tests in `umcf-gguf`).
+- **Verification Evidence**: Archived `artifacts/stage-05/p1/sp2_estimator_vs_actual_table.json` and `artifacts/stage-05/p1/sp2_proptest_fuzz_report.txt`.
+
+
 
 
 

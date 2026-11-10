@@ -17,3 +17,4 @@
 [2026-11-10T21:55:01.044Z INFO umcf_gguf::p2p_sync] Verifying full-file BLAKE3 Merkle root against manifest model_id: 0da9fe6e... -> MATCH
 [2026-11-10T21:55:01.045Z INFO umcf_gguf::p2p_sync] Atomically promoted .part.data to models/0da9fe6e8d2d83208e27e0d2c6630fd0376c5e4512d1a1fe0f14d99a7ae89567.gguf. Removed .part.bitfield.
 [2026-11-10T21:55:01.046Z INFO umcf_gguf::p2p_sync] Sync session completed successfully. Total verified: 8388608 bytes. Redundant chunks re-downloaded: 0.
+

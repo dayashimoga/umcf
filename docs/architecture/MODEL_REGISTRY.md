@@ -112,3 +112,40 @@ $$\text{Score}(p) = \begin{cases}
 ## 6. Zero-Unsafe Memory Protection
 
 All memory views (`VerifiedModelMmap`, `LayerRangeHandle`) adhere strictly to `#![forbid(unsafe_code)]`. Memory is backed by safe contiguous buffers (`Arc<[u8]>`) and verified against the BLAKE3 manifest before exposure to downstream inference or FFI layers.
+
+---
+
+## 7. GGUF Metadata Inspector & Memory Footprint Formulas (S5.P1.SP2)
+
+### 7.1 Binary Header & Hyperparameter Parsing
+The zero-copy GGUF inspector (`crates/umcf-gguf/src/parser.rs`) decodes v2/v3 models, enforcing strict upper caps:
+- `MAX_METADATA_COUNT`: 10,000 keys
+- `MAX_TENSOR_COUNT`: 10,000 tensors
+- `MAX_STRING_LEN`: 16 MiB
+- All 13 GGUF metadata types decoded without dynamic heap allocation bombs.
+
+### 7.2 KV-Cache Calculation Equations
+For both Grouped-Query Attention (GQA) and Multi-Head Attention (MHA):
+$$n_{\text{embd\_gqa}} = \left( \frac{\text{embedding\_length}}{\text{head\_count}} \right) \times \text{head\_count\_kv}$$
+$$\text{KV}_{\text{bytes}} = 2 \times n_{\text{layers}} \times n_{\text{ctx}} \times n_{\text{embd\_gqa}} \times \text{sizeof}(\text{KV\_dtype})$$
+
+where:
+- $\text{sizeof}(\text{F16}) = 2$ bytes
+- $\text{sizeof}(\text{Q8\_0}) \approx 1.0625$ bytes ($34/32$)
+- $\text{sizeof}(\text{Q4\_0}) \approx 0.5625$ bytes ($18/32$)
+
+### 7.3 Compute & Scratch Buffer Estimation
+$$\text{ComputeScratch} = \text{FFN}_{\text{scratch}} + \text{Attention}_{\text{scratch}} + \text{BaseOverhead}$$
+- $\text{FFN}_{\text{scratch}} = 4 \times \text{feed\_forward\_length} \times n_{\text{ubatch}} \times 4$
+- $\text{Attention}_{\text{scratch}} = \text{head\_count} \times \text{head\_dim} \times n_{\text{ubatch}} \times 4$ (with Flash Attention)
+- $\text{BaseOverhead} = 48 \text{ MiB}$
+
+### 7.4 Device Compatibility & Safety Headroom Rules
+$$\text{SafeAvailableRAM} = \begin{cases}
+\text{RAM}_{\text{available}} - 1.5 \text{ GiB} & \text{on Android / iOS (LMK protection)} \\
+\text{RAM}_{\text{available}} - (0.15 \times \text{RAM}_{\text{total}}) & \text{on Desktop macOS/Windows/Linux}
+\end{cases}$$
+
+If $\text{TotalRequired} > \text{SafeAvailableMemory}$, the validator returns `RequiresClusterSplit` with recommended pipeline layer partitions.
+
+

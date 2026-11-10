@@ -170,3 +170,4 @@ if ($allPass) {
 } else {
   exit 1
 }
+

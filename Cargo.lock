@@ -2814,6 +2814,7 @@ dependencies = [
  "blake3",
  "bytes",
  "ed25519-dalek",
+ "proptest",
  "rayon",
  "serde",
  "serde_json",
