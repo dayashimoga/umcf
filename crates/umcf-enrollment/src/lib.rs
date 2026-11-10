@@ -3,14 +3,21 @@
 
 #![forbid(unsafe_code)]
 
+pub mod consent;
 pub mod error;
 pub mod handshake;
 pub mod qr;
+pub mod rbac;
 pub mod token;
 
+pub use consent::{
+    ConsentEnforcer, ConsentUpdatedEvent, DeviceEnvironmentState, QuietHoursSchedule,
+    ResourceConsentPolicy, TaskAssignmentRequest, WorkloadKind, CONSENT_POLICY_DOMAIN,
+};
 pub use error::EnrollmentError;
 pub use handshake::{CandidateEnroller, EnrollmentCoordinator, JoinRequest, ReplayProtectionCache};
 pub use qr::QrRenderer;
+pub use rbac::{Permission, RbacPolicyEngine, ResourceScope, Role};
 pub use token::{EnrollmentToken, DEFAULT_TOKEN_TTL_MS, MAX_TOKEN_TTL_MS, URI_SCHEME_PREFIX};
 
 #[cfg(test)]
@@ -286,6 +293,278 @@ mod tests {
             matches!(cert_bob, Err(EnrollmentError::TokenReplayed(_))),
             "Second redemption by Bob must be rejected with TokenReplayed error, got: {:?}",
             cert_bob
+        );
+    }
+
+    #[test]
+    fn unit_rbac_permission_matrix_and_default_deny_microbenchmark() {
+        let rbac = RbacPolicyEngine::new();
+        let actor = "did:key:z6MkuTestActor1234567890abcdef";
+        let scope = ResourceScope::Global;
+
+        // Verify ClusterOwner has all permissions
+        for p in [
+            Permission::SubmitJob,
+            Permission::ScheduleTask,
+            Permission::ReadClusterState,
+            Permission::EnrollNode,
+            Permission::RevokeNode,
+            Permission::AccessPrivateAi,
+            Permission::StreamDesktop,
+            Permission::ReadWriteStorage,
+        ] {
+            assert!(
+                rbac.authorize(actor, Role::ClusterOwner, p, &scope).is_ok(),
+                "ClusterOwner must have {p:?}"
+            );
+        }
+
+        // Verify ObserverGuest only has ReadClusterState
+        assert!(rbac
+            .authorize(actor, Role::ObserverGuest, Permission::ReadClusterState, &scope)
+            .is_ok());
+        for p in [
+            Permission::SubmitJob,
+            Permission::ScheduleTask,
+            Permission::EnrollNode,
+            Permission::RevokeNode,
+            Permission::AccessPrivateAi,
+            Permission::StreamDesktop,
+            Permission::ReadWriteStorage,
+        ] {
+            assert!(
+                matches!(
+                    rbac.authorize(actor, Role::ObserverGuest, p, &scope),
+                    Err(EnrollmentError::RbacDenied { .. })
+                ),
+                "ObserverGuest must NOT have {p:?}"
+            );
+        }
+
+        // Microbenchmark: Default-deny authorization check latency (< 5 µs target)
+        let iterations = 10_000;
+        let start = Instant::now();
+        for _ in 0..iterations {
+            let res = rbac.authorize(actor, Role::ComputeWorker, Permission::EnrollNode, &scope);
+            assert!(res.is_err());
+        }
+        let elapsed = start.elapsed();
+        let avg_micros = (elapsed.as_nanos() as f64) / (iterations as f64 * 1000.0);
+        println!(
+            "RBAC authorization latency: {:.3} µs / op (target < 5.0 µs)",
+            avg_micros
+        );
+        assert!(
+            avg_micros < 5.0,
+            "RBAC check average {avg_micros} µs exceeds 5 µs ceiling"
+        );
+
+        // Export canonical RBAC matrix to artifacts/evidence/stage-02/rbac_consent_matrix.json
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root_artifacts = manifest_dir
+            .parent()
+            .and_then(|p| p.parent())
+            .map(|p| p.join("artifacts").join("evidence").join("stage-02"))
+            .unwrap_or_else(|| std::path::PathBuf::from("artifacts/evidence/stage-02"));
+
+        fs::create_dir_all(&root_artifacts).expect("create evidence dir");
+        let matrix_path = root_artifacts.join("rbac_consent_matrix.json");
+
+        let matrix_json = serde_json::json!({
+            "subphase": "S2.P2.SP2",
+            "title": "UMCF RBAC & Resource-Sharing Consent Matrix",
+            "rbac_roles": {
+                "ClusterOwner": rbac.get_role_permissions(Role::ClusterOwner).iter().map(|p| p.to_string()).collect::<Vec<_>>(),
+                "MasterCoordinator": rbac.get_role_permissions(Role::MasterCoordinator).iter().map(|p| p.to_string()).collect::<Vec<_>>(),
+                "HybridNode": rbac.get_role_permissions(Role::HybridNode).iter().map(|p| p.to_string()).collect::<Vec<_>>(),
+                "ComputeWorker": rbac.get_role_permissions(Role::ComputeWorker).iter().map(|p| p.to_string()).collect::<Vec<_>>(),
+                "StorageProvider": rbac.get_role_permissions(Role::StorageProvider).iter().map(|p| p.to_string()).collect::<Vec<_>>(),
+                "ObserverGuest": rbac.get_role_permissions(Role::ObserverGuest).iter().map(|p| p.to_string()).collect::<Vec<_>>()
+            },
+            "default_deny_enforced": true,
+            "measured_avg_latency_micros": avg_micros
+        });
+
+        fs::write(
+            &matrix_path,
+            serde_json::to_string_pretty(&matrix_json).expect("serialize matrix json"),
+        )
+        .expect("write rbac matrix file");
+        assert!(matrix_path.exists());
+    }
+
+    #[test]
+    fn integration_worker_consent_enforcer_rejects_gpu_workload_and_immediate_policy_update() {
+        let worker_keypair = NodeKeypair::generate();
+        let worker_node_id =
+            NodeId::parse("did:umcf:000000000000worker00001").expect("valid node id");
+
+        let rbac = Arc::new(RbacPolicyEngine::new());
+
+        // Worker policy initially allows ONLY CpuBatch
+        let mut initial_allowed = std::collections::HashSet::new();
+        initial_allowed.insert(WorkloadKind::CpuBatch);
+
+        let initial_policy = ResourceConsentPolicy::sign_new(
+            &worker_keypair,
+            worker_node_id.clone(),
+            80,
+            ByteSize::from_gib(16),
+            ByteSize::from_gib(8),
+            ByteSize::from_gib(100),
+            initial_allowed,
+            true, // require charging
+            20,   // min battery 20%
+            None,
+            vec![], // open to cluster
+            1,      // generation 1
+            1_000_000,
+        )
+        .expect("sign initial policy");
+
+        let enforcer = ConsentEnforcer::new(
+            initial_policy,
+            worker_keypair.ed25519_public_bytes(),
+            Arc::clone(&rbac),
+        )
+        .expect("create enforcer");
+
+        let master_keypair = NodeKeypair::generate();
+        let current_env = DeviceEnvironmentState {
+            battery_percent: Some(85),
+            is_charging: true,
+            thermal_state: ThermalState::Nominal,
+            current_epoch_ms: 1_000_100,
+            current_hour_utc: 14,
+        };
+
+        // 1. Master attempts to schedule GpuInference on Worker
+        let gpu_request = TaskAssignmentRequest {
+            requester_did: master_keypair.did_key(),
+            requester_role: Role::MasterCoordinator,
+            workload_kind: WorkloadKind::GpuInference,
+            requested_cpu_cores: 4.0,
+            requested_ram: ByteSize::from_gib(4),
+            requested_vram: ByteSize::from_gib(2),
+            requested_storage: ByteSize::from_gib(1),
+        };
+
+        let reject_res = enforcer.evaluate_task_assignment(&gpu_request, &current_env);
+        assert!(
+            matches!(reject_res, Err(EnrollmentError::WorkloadNotPermitted { .. })),
+            "Expected WorkloadNotPermitted error for GPU inference, got: {:?}",
+            reject_res
+        );
+
+        // 2. Worker owner updates policy to also allow GpuInference
+        let update_start = Instant::now();
+        let mut updated_allowed = std::collections::HashSet::new();
+        updated_allowed.insert(WorkloadKind::CpuBatch);
+        updated_allowed.insert(WorkloadKind::GpuInference);
+
+        let updated_policy = ResourceConsentPolicy::sign_new(
+            &worker_keypair,
+            worker_node_id,
+            90,
+            ByteSize::from_gib(16),
+            ByteSize::from_gib(8),
+            ByteSize::from_gib(100),
+            updated_allowed,
+            true,
+            20,
+            None,
+            vec![],
+            2, // generation 2
+            1_000_200,
+        )
+        .expect("sign updated policy");
+
+        let update_event = enforcer.update_policy(updated_policy).expect("update policy");
+        let update_elapsed = update_start.elapsed();
+        let update_ms = update_elapsed.as_millis();
+        println!("Policy update latency: {} ms (target < 10 ms)", update_ms);
+
+        // Acceptance criterion: Policy updates take effect immediately in < 10 ms
+        assert!(
+            update_ms < 10,
+            "Policy update elapsed {} ms exceeds 10 ms ceiling",
+            update_ms
+        );
+        assert_eq!(update_event.policy_generation, 2);
+
+        // 3. Master attempts GPU task again -> Now succeeds!
+        let accept_res = enforcer.evaluate_task_assignment(&gpu_request, &current_env);
+        assert!(
+            accept_res.is_ok(),
+            "Expected task assignment to succeed after consent update"
+        );
+    }
+
+    #[test]
+    fn simulation_forged_consent_policy_by_foreign_master_rejected() {
+        let worker_keypair = NodeKeypair::generate();
+        let worker_node_id =
+            NodeId::parse("did:umcf:000000000000worker00002").expect("valid node id");
+
+        let rbac = Arc::new(RbacPolicyEngine::new());
+        let mut initial_allowed = std::collections::HashSet::new();
+        initial_allowed.insert(WorkloadKind::CpuBatch);
+
+        let legitimate_policy = ResourceConsentPolicy::sign_new(
+            &worker_keypair,
+            worker_node_id.clone(),
+            50,
+            ByteSize::from_gib(8),
+            ByteSize::ZERO,
+            ByteSize::from_gib(10),
+            initial_allowed,
+            true,
+            50,
+            None,
+            vec![],
+            1,
+            1_000_000,
+        )
+        .expect("sign legitimate policy");
+
+        let enforcer = ConsentEnforcer::new(
+            legitimate_policy,
+            worker_keypair.ed25519_public_bytes(),
+            Arc::clone(&rbac),
+        )
+        .expect("create enforcer");
+
+        // Adversarial Master node attempts to forge an update to override local sovereignty
+        let foreign_master_keypair = NodeKeypair::generate();
+        let mut forged_allowed = std::collections::HashSet::new();
+        forged_allowed.insert(WorkloadKind::CpuBatch);
+        forged_allowed.insert(WorkloadKind::GpuInference);
+        forged_allowed.insert(WorkloadKind::GpuRendering);
+
+        // Foreign master signs with its own keypair claiming to represent the worker
+        let forged_policy = ResourceConsentPolicy::sign_new(
+            &foreign_master_keypair, // FORGED SIGNER
+            worker_node_id,
+            100, // force 100% CPU
+            ByteSize::from_gib(64),
+            ByteSize::from_gib(32),
+            ByteSize::from_gib(1000),
+            forged_allowed,
+            false, // remove AC power requirement
+            0,     // remove battery floor
+            None,
+            vec![],
+            2,
+            1_000_500,
+        )
+        .expect("sign forged policy");
+
+        // Worker enforcer must strictly reject this foreign-signed update
+        let res = enforcer.update_policy(forged_policy);
+        assert!(
+            matches!(res, Err(EnrollmentError::ForgedConsentPolicy { .. })),
+            "Expected ForgedConsentPolicy error for foreign master signature, got: {:?}",
+            res
         );
     }
 }

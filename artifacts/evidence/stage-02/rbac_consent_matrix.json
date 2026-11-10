@@ -1,0 +1,45 @@
+{
+  "default_deny_enforced": true,
+  "measured_avg_latency_micros": 0.59254,
+  "rbac_roles": {
+    "ClusterOwner": [
+      "SubmitJob",
+      "ScheduleTask",
+      "ReadClusterState",
+      "EnrollNode",
+      "RevokeNode",
+      "AccessPrivateAi",
+      "StreamDesktop",
+      "ReadWriteStorage"
+    ],
+    "ComputeWorker": [
+      "ReadClusterState",
+      "AccessPrivateAi"
+    ],
+    "HybridNode": [
+      "SubmitJob",
+      "ScheduleTask",
+      "ReadClusterState",
+      "AccessPrivateAi",
+      "StreamDesktop",
+      "ReadWriteStorage"
+    ],
+    "MasterCoordinator": [
+      "ScheduleTask",
+      "ReadClusterState",
+      "EnrollNode",
+      "RevokeNode",
+      "AccessPrivateAi",
+      "ReadWriteStorage"
+    ],
+    "ObserverGuest": [
+      "ReadClusterState"
+    ],
+    "StorageProvider": [
+      "ReadClusterState",
+      "ReadWriteStorage"
+    ]
+  },
+  "subphase": "S2.P2.SP2",
+  "title": "UMCF RBAC & Resource-Sharing Consent Matrix"
+}

@@ -33,6 +33,23 @@ pub enum EnrollmentError {
 
     #[error("serialization error: {0}")]
     SerializationError(String),
+
+    #[error("operation denied by RBAC policy: actor {actor_did} with role {role} lacks permission {permission} on scope {resource_scope}")]
+    RbacDenied {
+        actor_did: String,
+        role: String,
+        permission: String,
+        resource_scope: String,
+    },
+
+    #[error("local resource-sharing consent violation: {reason}")]
+    ConsentViolation { reason: String },
+
+    #[error("resource consent policy signature is invalid or not signed by device owner {owner_did}")]
+    ForgedConsentPolicy { owner_did: String },
+
+    #[error("requested workload kind '{workload_kind}' is not permitted by node consent policy")]
+    WorkloadNotPermitted { workload_kind: String },
 }
 
 impl EnrollmentError {
@@ -41,8 +58,14 @@ impl EnrollmentError {
     pub const fn error_code(&self) -> ErrorCode {
         match self {
             Self::TokenExpired { .. } | Self::MaxTtlExceeded { .. } => ErrorCode::E2003TokenExpired,
-            Self::TokenReplayed(_) | Self::InvalidSignature => ErrorCode::E2002InvalidSignature,
+            Self::TokenReplayed(_) | Self::InvalidSignature | Self::ForgedConsentPolicy { .. } => {
+                ErrorCode::E2002InvalidSignature
+            }
             Self::MalformedUri(_) => ErrorCode::E2001InvalidNodeId,
+            Self::RbacDenied { .. } => ErrorCode::E2004UnauthorizedCapability,
+            Self::ConsentViolation { .. } | Self::WorkloadNotPermitted { .. } => {
+                ErrorCode::E4004ConsentDenied
+            }
             Self::HandshakeFailed(_) => ErrorCode::E3001ConnectionFailed,
             Self::QrGenerationFailed(_) | Self::SerializationError(_) | Self::IdentityError(_) => {
                 ErrorCode::E8002UnhandledInternalError

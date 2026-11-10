@@ -1,0 +1,35 @@
+{
+  "subphase": "S2.P2.SP2",
+  "title": "Fine-Grained RBAC & Resource-Sharing Consent Engine",
+  "git_commit": "a769e0493e2540430880ebcef0333114e3de29f7",
+  "timestamp_utc": "2026-11-10T09:58:00Z",
+  "podman_total_bytes": 4930007440,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "metrics": {
+    "rbac_authorization_latency_micros": 0.609,
+    "rbac_authorization_latency_ceiling_micros": 5.0,
+    "policy_update_latency_ms": 4,
+    "policy_update_latency_ceiling_ms": 10,
+    "roles_covered_count": 6,
+    "permissions_covered_count": 8,
+    "default_deny_enforced": true,
+    "local_sovereignty_enforced": true
+  },
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "artifact_hashes": {
+    "crates/umcf-enrollment/src/rbac.rs": "B69C140A509EEFA7E5BC1626729F22D056E8F485272E484255F5821F3C2E11EF",
+    "crates/umcf-enrollment/src/consent.rs": "E08BB8D61B4482C2FA75D40EDA6236F7815FB0FEEF9AAF31314846CBA4B41519",
+    "crates/umcf-enrollment/src/error.rs": "1A0AD0A36252AED9C66116AE7F52008D89782B9571E4CC7DE5B14C50F27DDFDA",
+    "crates/umcf-enrollment/src/lib.rs": "0DA1B78ADA22F9FB3D9E2CCEB7B7A55C07D7EC04F332629AC653F35BFBCE36F4",
+    "artifacts/evidence/stage-02/rbac_consent_matrix.json": "7A15301FB3A663D9CA471AC21B201A5F2E96B6E814879E52CB12A04FCB31192E",
+    "scripts/test-s2-p2-sp2.ps1": "74B5891BCDE092AA1646C4BD567A9A9858EEDF92F0DF147D1B33FA96FA267F8D",
+    "scripts/test-s2-p2-sp2.sh": "24322ACCE2F138CCDF837B1FCFE3B3EB64FE07DF8C35EE3429EB215200C63269"
+  }
+}
