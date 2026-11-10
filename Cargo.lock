@@ -1615,6 +1615,9 @@ name = "smallvec"
 version = "1.16.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "149309498a5f7334b12ddae0cad8aba81ce785fe91755068867e017cf98fee46"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "socket2"
@@ -2098,6 +2101,31 @@ dependencies = [
  "umcf-telemetry",
  "x25519-dalek",
  "zeroize",
+]
+
+[[package]]
+name = "umcf-net"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "blake3",
+ "bytes",
+ "ed25519-dalek",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "smallvec",
+ "socket2",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "umcf-core",
+ "umcf-identity",
+ "umcf-proto",
+ "umcf-registry",
 ]
 
 [[package]]

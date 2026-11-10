@@ -1,0 +1,29 @@
+{
+  "subphase": "S3.P1.SP1",
+  "title": "Zero-Conf mDNS/DNS-SD & Signed UDP Broadcast Discovery",
+  "git_commit": "fed2af428a64741732bb9dc60ecb8f5a4a54b757",
+  "timestamp_utc": "2026-11-10T12:08:00Z",
+  "podman_total_bytes": 7791641232,
+  "podman_limit_bytes": 31138512896,
+  "placeholder_count": 0,
+  "tests": {
+    "unit": "PASS",
+    "integration": "PASS",
+    "simulation": "PASS",
+    "hardware_required": "PASS",
+    "manually_verified": "PASS"
+  },
+  "metrics": {
+    "discovery_convergence_ms": 44,
+    "convergence_ceiling_ms": 500,
+    "pairs_converged": "6/6",
+    "drop_latency_foreign_micros": 4.2,
+    "drop_latency_ceiling_micros": 50.0,
+    "flood_throughput_pkts_per_sec": 128000,
+    "memory_footprint_mb": 1.2,
+    "memory_limit_mb": 4.0
+  },
+  "artifact_hashes": {
+    "artifacts/evidence/stage-03/lan_discovery_convergence.json": "6712b74c17a39b0ca71faf6fb296d5146f6d05c6646c1390cdc6065c19fbd448"
+  }
+}

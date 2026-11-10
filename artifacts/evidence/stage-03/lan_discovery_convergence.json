@@ -1,0 +1,25 @@
+{
+  "convergence_duration_ms": 44,
+  "convergence_threshold_ms": 500,
+  "nodes": [
+    {
+      "node_id": "did:umcf:42afc256c273555c60725c59f9d3b81f",
+      "port": 44881,
+      "role": "Master"
+    },
+    {
+      "node_id": "did:umcf:4088ba3b3831ee5aac083f4b80e59ef7",
+      "port": 44882,
+      "role": "Worker"
+    },
+    {
+      "node_id": "did:umcf:c214d66b592d84f2d14343dee9cc4c71",
+      "port": 44883,
+      "role": "Worker"
+    }
+  ],
+  "pairs_discovered": 6,
+  "status": "CONVERGED_SUCCESSFULLY",
+  "target_pairs": 6,
+  "timestamp_utc": "1794312428.771Z"
+}

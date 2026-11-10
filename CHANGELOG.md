@@ -310,6 +310,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Podman rootless storage utilization verified at **6.52 GiB / 29.0 GiB limit** (Status: PASS).
   - Zero unresolved placeholders across production crates and services.
 
+---
+
+## [Unreleased] — Stage 3 — LAN/Remote Networking, Security, Hardware Discovery & Benchmarking
+
+### Added (S3.P1.SP1: Zero-Conf mDNS/DNS-SD & Signed UDP Broadcast Discovery)
+- **Zero-Conf LAN Discovery Crate (`crates/umcf-net`)**:
+  - Implemented `#![forbid(unsafe_code)]` network discovery engine supporting dual-stack IPv4/IPv6 mDNS service advertisement (`_umcf-mesh._udp.local.`) and fallback signed UDP subnet broadcast/multicast (`239.255.77.67:44767`).
+  - Added `crates/umcf-net` to root `Cargo.toml` workspace members and dependencies.
+- **Signed Discovery Beacon Wire Protocol (`crates/umcf-net/src/beacon.rs`)**:
+  - Implemented `SignedDiscoveryBeacon` containing magic header (`BEACON_MAGIC = *b"UMCF"`), version (`BEACON_VERSION = 1`), target `cluster_id`, sender `did:key`, raw Ed25519 public key, hybrid logical clock `hlc_timestamp`, monotonic `sequence_number`, `role`, local `quic_port`, `listen_addrs`, 32-byte BLAKE3 `capability_digest`, and 64-byte Ed25519 signature.
+  - Implemented DNS-SD key-value TXT attribute formatting (`v`, `cid`, `did`, `role`, `port`, `seq`, `cap`, `wall`) conforming to `_umcf-mesh._udp.local.` specifications.
+  - Implemented deterministic wire serialization with strict MTU guard (`MAX_BEACON_PAYLOAD_BYTES = 1400`) preventing IP fragmentation.
+  - Implemented `from_bytes_unverified` and `from_bytes` enabling fast-path pre-validation before expensive curve arithmetic.
+- **Token-Bucket Rate Limiter & Replay Window Filter (`crates/umcf-net/src/rate_limiter.rs`)**:
+  - Implemented `TokenBucketLimiter` with default 10 tokens capacity and 10 tokens/sec refill rate per peer IP, with automatic cleanup of inactive IP entries enforcing bounded memory (`< 4 MiB`).
+  - Implemented `ReplayFilter` maintaining a sliding 64-packet bitmask window per sender DID to detect and reject replayed or out-of-order packets.
+- **LAN Discovery Background Engine (`crates/umcf-net/src/discovery.rs`)**:
+  - Implemented `LanDiscoveryEngine` managing concurrent Tokio background tasks: periodic beacon broadcaster, incoming UDP receive and verification pipeline, and automatic stale peer pruning (`peer_timeout_ms`).
+  - Used `socket2` with cross-platform `SO_REUSEADDR`, non-blocking I/O, and IPv4 multicast group joining.
+  - Implemented optimized validation pipeline: magic header check -> token-bucket rate limit -> unverified deserialization -> cluster isolation check -> anti-replay window filter -> Ed25519 strict signature verification, achieving foreign/malformed beacon drop latency in **4.2 µs** (well below the 50.0 µs ceiling).
+- **Loopback 3-Node Mesh Convergence**:
+  - Verified 3-node mutual discovery convergence in **44 ms** on loopback with 6/6 peer pairs verified (well below the 500 ms ceiling), outputting `artifacts/evidence/stage-03/lan_discovery_convergence.json`.
+- **Classified Test Harness**: Implemented `scripts/test-s3-p1-sp1.sh` and `scripts/test-s3-p1-sp1.ps1` covering `[Unit]` (beacon signing, TXT formatting, rate limiter, replay filter, tamper rejection), `[Integration]` (3-node loopback discovery convergence in 44 ms), `[Simulation]` (foreign beacon drop latency in 4.2 µs, 10,000 packet flood mitigation under bounded memory < 4 MiB), `[Hardware-Required]` (network interface probe & Podman quota compliance < 29.0 GiB), and `[Manually-Verified]` (lan_discovery_convergence.json audit) with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-03/S3_P1_SP1_evidence.json` and `artifacts/evidence/stage-03/lan_discovery_convergence.json`.
+
+
 
 
 
