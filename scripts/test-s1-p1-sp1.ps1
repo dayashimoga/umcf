@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Executes classified tests for Subphase S1.P1.SP1:
   - Unit: verify-governance execution and failure detection on missing file

@@ -57,8 +57,14 @@ $requiredFiles = @(
   "docs\implementation\MASTER_ROADMAP.md",
   "infra\podman\storage.conf",
   "infra\podman\Containerfile",
+  "compose.podman.yml",
+  "containers\Podmanfile.rust",
+  "containers\Podmanfile.web",
+  "containers\Podmanfile.flutter",
   "scripts\enforce-podman-quota.sh",
   "scripts\enforce-podman-quota.ps1",
+  "scripts\podman-quota-check.sh",
+  "scripts\podman-quota-check.ps1",
   "scripts\check-no-placeholders.sh",
   "scripts\check-no-placeholders.ps1"
 )
@@ -131,3 +137,4 @@ if ($failures.Count -gt 0) {
   exit 1
 }
 exit 0
+

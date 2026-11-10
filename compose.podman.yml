@@ -1,0 +1,52 @@
+version: "3.9"
+
+# Rootless Podman Compose configuration for Universal Mobile Compute Fabric (UMCF)
+# Strictly bounded within the 30 GB maximum storage quota.
+
+services:
+  umcf-rust:
+    build:
+      context: .
+      dockerfile: containers/Podmanfile.rust
+    userns_mode: "keep-id"
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:Z
+      - umcf_cargo_cache:/usr/local/cargo/registry:Z
+      - umcf_sccache:/workspace/.podman-cache/sccache:Z
+    environment:
+      - RUST_BACKTRACE=1
+      - RUSTFLAGS=-D warnings
+      - UMCF_PODMAN_MAX_STORAGE_GB=30
+    command: ["cargo", "test", "--workspace"]
+
+  umcf-web:
+    build:
+      context: .
+      dockerfile: containers/Podmanfile.web
+    userns_mode: "keep-id"
+    working_dir: /workspace/apps/web-dashboard
+    volumes:
+      - ./:/workspace:Z
+    environment:
+      - NODE_ENV=development
+      - UMCF_PODMAN_MAX_STORAGE_GB=30
+    ports:
+      - "5173:5173"
+    command: ["pnpm", "test"]
+
+  umcf-flutter:
+    build:
+      context: .
+      dockerfile: containers/Podmanfile.flutter
+    userns_mode: "keep-id"
+    working_dir: /workspace/apps/mobile-desktop
+    volumes:
+      - ./:/workspace:Z
+    environment:
+      - UMCF_PODMAN_MAX_STORAGE_GB=30
+    command: ["flutter", "test"]
+
+volumes:
+  umcf_cargo_cache:
+  umcf_sccache:

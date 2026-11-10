@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+# Podmanfile.web — Minimal reproducible Node 22 + pnpm + Wrangler container for UMCF Web & Edge services
+# Target: <= 800 MB uncompressed to preserve the strict 30 GB Podman quota.
+
+FROM docker.io/library/node:22-bookworm-slim AS web-toolchain
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN corepack enable && corepack prepare pnpm@latest --activate \
+    && npm install -g wrangler@latest typescript@latest \
+    && npm cache clean --force
+
+ENV NODE_ENV=development
+ENV UMCF_PODMAN_MAX_STORAGE_GB=30
+
+WORKDIR /workspace
+CMD ["pnpm", "test"]

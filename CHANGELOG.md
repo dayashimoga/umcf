@@ -39,3 +39,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s1-p1-sp1.sh` and `scripts/test-s1-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, and `[Manually-Verified]` tiers with 100% pass rate.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P1_SP1_evidence.json` and `artifacts/evidence/stage-01/placeholder_scan_S1_P1_SP1.log`.
 
+### Added (S1.P1.SP2: Podman 30GB Container Toolchains & Quota Enforcer)
+- **Rootless Container Toolchains**:
+  - `containers/Podmanfile.rust`: Minimal toolchain image with Rust 1.85, `wasm32-wasip1`, `cargo-nextest`, `cargo-llvm-cov`, and `sccache` (~1.15 GiB).
+  - `containers/Podmanfile.web`: Node 22 LTS + pnpm + Wrangler + TypeScript (~780 MiB).
+  - `containers/Podmanfile.flutter`: Flutter stable SDK + Linux desktop tools with stripped NDK symbols (~3.80 GiB).
+  - `compose.podman.yml`: Multi-service configuration with rootless UID mapping (`userns_mode: keep-id`) and bounded volumes (`umcf_cargo_cache`, `umcf_sccache`).
+- **Quota Enforcer & Auto-Prune**:
+  - Enhanced `scripts/podman-quota-check.sh` and `scripts/podman-quota-check.ps1` with Soft Warning at 25.0 GiB (`26,843,545,600` bytes) and Hard Abort + Auto-Prune at 29.0 GiB (`31,138,512,896` bytes).
+  - Standardized `--json` telemetry schema output matching the specification.
+- **Classified Test Harness**: Implemented `scripts/test-s1-p1-sp2.sh` and `scripts/test-s1-p1-sp2.ps1` testing threshold math (20G/26G/29.5G), container syntax, 30.1 GiB fault injection, and rootless permissions with 100% pass rate.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-01/S1_P1_SP2_evidence.json` and `artifacts/evidence/stage-01/podman_images_digests.txt`.
+

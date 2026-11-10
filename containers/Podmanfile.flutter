@@ -1,0 +1,16 @@
+# syntax=docker/dockerfile:1
+# Podmanfile.flutter — Reproducible Flutter Multi-Platform container for UMCF
+# Stripped symbols and caches to preserve the strict 30 GB Podman quota.
+
+FROM ghcr.io/cirruslabs/flutter:stable AS flutter-toolchain
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && flutter config --no-analytics --enable-linux-desktop \
+    && flutter precache --linux
+
+ENV UMCF_PODMAN_MAX_STORAGE_GB=30
+
+WORKDIR /workspace
+CMD ["flutter", "test"]

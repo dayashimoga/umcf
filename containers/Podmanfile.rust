@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+# Podmanfile.rust — Minimal reproducible Rust build & test container for UMCF
+# Target: <= 1.2 GB uncompressed to preserve the strict 30 GB Podman quota.
+
+FROM docker.io/library/rust:1.85-slim-bookworm AS toolchain
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config libssl-dev clang cmake git curl ca-certificates liblzma-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN rustup target add wasm32-wasip1 \
+    && rustup component add rustfmt clippy llvm-tools-preview
+
+ENV SCCACHE_VERSION=v0.8.2
+RUN curl -fsSL "https://github.com/mozilla/sccache/releases/download/${SCCACHE_VERSION}/sccache-${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz" | \
+    tar xz --strip-components=1 -C /usr/local/bin "sccache-${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache" \
+    && chmod +x /usr/local/bin/sccache
+
+ENV RUSTC_WRAPPER=/usr/local/bin/sccache
+ENV SCCACHE_DIR=/workspace/.podman-cache/sccache
+ENV UMCF_PODMAN_MAX_STORAGE_GB=30
+
+WORKDIR /workspace
+CMD ["cargo", "test", "--workspace"]
