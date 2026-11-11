@@ -757,6 +757,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s5-p2-sp3.sh` and `scripts/test-s5-p2-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
 - **Verification Evidence**: Archived `artifacts/stage-05/p2/sp3_kv_prefix_reuse_benchmark.json`, `artifacts/stage-05/p2/sp3_cancellation_latency_histogram.json`, and `artifacts/stage-05/p2/S5_P2_PHASE_SUMMARY.json`.
 
+### Added (S5.P3.SP1: Memory-Aware Layer Partitioning Across Heterogeneous Nodes)
+- **Constrained Layer Partitioning Engine (`crates/umcf-ai/src/partitioner.rs`)**:
+  - Implemented `DistributedLayerPartitioner` solving optimal contiguous transformer block partition assignment (`blk.0 .. blk.L-1`) across heterogeneous cluster nodes based on usable RAM/VRAM, per-layer compute latency, and inter-node network RTT/bandwidth matrices.
+  - Implemented single-node priority optimization: prioritizes local single-node execution whenever a node has sufficient VRAM/RAM to hold weights, KV cache, and scratch buffers, bypassing network serialization overhead.
+  - Implemented proportional heterogeneity: assigns >= 70% of layers to high-VRAM, fast compute nodes while scheduling overflow blocks onto secondary devices.
+  - Enforced strict memory ceilings: guarantees no assigned stage exceeds a node's usable memory (accounting for mobile LMK and OS safety margins).
+  - Enforced battery and thermal exclusion rules: excludes mobile nodes running on battery with < 20% remaining or in `ThermalState::Serious` / `ThermalState::Critical`.
+- **Dynamic Rebalance Detector (`RebalanceDetector`)**:
+  - Implemented continuous monitoring of cluster node telemetry, detecting node departures, battery threshold violations, or thermal throttling transitions and triggering hot-swap partition migration.
+- **Interactive Pipeline Topology Visualizers (Flutter & Svelte 5)**:
+  - Implemented `apps/mobile-desktop/lib/features/ai/widgets/distributed_layer_topology_widget.dart` and `ui/flutter_app/...` featuring stage cards, device icons, layer pills, VRAM gauges, and mTLS QUIC hop latency badges.
+  - Implemented `apps/web-dashboard/src/lib/components/ai/LayerPartitionVisualizer.svelte` and `ui/admin_web/...` built with pure Svelte 5 runes (`$props`, `$state`), responsive memory progress indicators, and rebalance action hooks.
+- **Architecture Documentation & Invariants**:
+  - Updated `docs/architecture/AI_INFERENCE_ENGINE.md` with Section 4 detailing constrained pipeline ring formulation, cost models, and failure recovery.
+- **Classified Test Harness**: Implemented `scripts/test-s5-p3-sp1.sh` and `scripts/test-s5-p3-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests (Monte Carlo 1,000 solves averaging 0.012 ms/solve).
+- **Verification Evidence**: Archived `artifacts/stage-05/p3/sp1_partition_solver_benchmarks.json` and `artifacts/stage-05/p3/sp1_heterogeneous_topology_plans.json`.
+
+
 
 
 

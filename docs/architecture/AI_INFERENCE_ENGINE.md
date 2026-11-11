@@ -166,4 +166,65 @@ Long-running conversations can be serialized to disk and restored across app res
 - Slot token state and KV metadata are serialized and encrypted using **ChaCha20-Poly1305** AEAD with a 256-bit device-backed session key.
 - Guarantees privacy of chat history and context state on mobile flash storage while enabling instant resumption.
 
+---
+
+## 4. Memory-Aware Layer Partitioning Across Heterogeneous Nodes
+
+Large language models (e.g., Llama-3-70B, Qwen-2.5-72B) frequently exceed the physical RAM or VRAM capacity of any single consumer workstation, laptop, or mobile phone. `DistributedLayerPartitioner` pools memory and compute across $N$ heterogeneous mesh nodes into an ordered pipeline parallelism ring.
+
+```
++-------------------------------------------------------------------------------------------------------+
+|                                    Distributed Pipeline Ring                                          |
+|                                                                                                       |
+|  +---------------------------+     mTLS QUIC Hop 1     +-----------------------+     Hop 2            |
+|  | Node 0: Desktop GPU       | ----------------------> | Node 1: Laptop CPU    | -----------------+   |
+|  | - Embeddings (token_embd) |   Activations (fp16)    | - Layers 20..27       |   Activations    |   |
+|  | - Layers 0..19 (20 blks)  |   RTT: 1.8 ms           | - KV Cache Shards     |   RTT: 3.2 ms    |   |
+|  | - 8.0 GB VRAM Allocated   |                         | - 3.2 GB RAM Allocated|                  |   |
+|  +---------------------------+                         +-----------------------+                  |   |
+|               ^                                                                                   v   |
+|               |                        Hop 3 (Return)                          +--------------------+ |
+|               +----------------------------------------------------------------| Node 2: Phone NPU  | |
+|                                                                                | - Layers 28..31    | |
+|                                                                                | - Output Head (lm) | |
+|                                                                                | - 1.8 GB Allocated | |
+|                                                                                +--------------------+ |
++-------------------------------------------------------------------------------------------------------+
+```
+
+### 4.1 Contrained Layer Assignment Formulation
+
+Given a model with $L$ transformer blocks (`blk.0` through `blk.L-1`), embedding weights $W_{\text{emb}}$, and output head weights $W_{\text{head}}$, the partitioner partitions the blocks into $k$ contiguous stages across candidate nodes:
+
+$$\text{Stage}_i = [l_i^{\text{start}}, l_i^{\text{end}}], \quad 0 \le i < k$$
+
+Subject to strict invariants:
+1. **Contiguous Full Coverage**:
+   $$l_0^{\text{start}} = 0, \quad l_{k-1}^{\text{end}} = L - 1, \quad \forall i < k - 1: l_{i+1}^{\text{start}} = l_i^{\text{end}} + 1$$
+2. **Memory Ceiling Guarantee**:
+   For every assigned stage $i$, total required stage bytes must not exceed the node's usable memory (after OS and mobile LMK safety margins):
+   $$M_{\text{stage}}(i) = W_i + KV_i + S_i \le M_{\text{usable}}(Node_i)$$
+   where:
+   $$W_i = \mathbf{1}_{i=0} W_{\text{emb}} + \sum_{l=l_i^{\text{start}}}^{l_i^{\text{end}}} W_{\text{block}}(l) + \mathbf{1}_{i=k-1} W_{\text{head}}$$
+3. **Health & Battery Exclusion**:
+   - Mobile nodes operating on battery with $\text{battery\_percent} < 20\%$ are excluded.
+   - Any node with thermal state in `ThermalState::Serious` or `ThermalState::Critical` is excluded.
+
+### 4.2 Single-Node Preference Optimization
+
+Multi-node pipeline execution incurs network serialization, mTLS framing, and link RTT delays. Therefore:
+- If any single eligible node satisfies $M_{\text{usable}}(Node_i) \ge M_{\text{total}}$, the solver **always prefers single-node local execution**.
+- Single-node execution eliminates network hops, achieving maximum tokens/sec throughput and zero inter-node failure exposure.
+
+### 4.3 Heterogeneous Proportional Assignment & Cost Model
+
+When multi-node partitioning is required, the solver minimizes per-token pipeline cycle time:
+
+$$T_{\text{cycle}} = \sum_{i=0}^{k-1} \left( (l_i^{\text{end}} - l_i^{\text{start}} + 1) \cdot t_{\text{layer}}(Node_i) + \text{RTT}(Node_i, Node_{i+1}) + \frac{\text{ActivationBytes}}{\text{BW}(Node_i, Node_{i+1})} \right)$$
+
+- **Proportional Heterogeneity**: Devices with higher VRAM headroom and faster forward pass compute times receive a larger share of blocks ($\ge 70\%$ of layers allocated to fast workstation GPUs).
+- **Standby Failover Mapping**: For each node in the active partition ring, the solver determines a standby node with spare memory headroom to ensure $< 1.5\text{ s}$ failover recovery.
+- **Dynamic Rebalance Triggers**: `RebalanceDetector` continuously checks telemetry and automatically initiates migration if any node drops below the health or battery threshold.
+
+
 

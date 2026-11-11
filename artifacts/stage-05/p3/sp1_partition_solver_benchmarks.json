@@ -1,0 +1,18 @@
+﻿{
+  "subphase": "S5.P3.SP1",
+  "name": "Dynamic Layer Partition Solver Latency & Determinism Benchmark",
+  "timestamp": "2026-11-11T07:25:20.7874922+05:30",
+  "monte_carlo_trials": 1000,
+  "layer_range_tested": [16, 128],
+  "node_counts_tested": [2, 12],
+  "solver_metrics": {
+    "min_solve_ms": 0.005,
+    "avg_solve_ms": 0.012,
+    "p95_solve_ms": 0.025,
+    "p99_solve_ms": 0.048,
+    "max_solve_ms": 0.115,
+    "sla_max_limit_ms": 2.0,
+    "determinism_match_rate": 1.0
+  },
+  "verdict": "PASS"
+}

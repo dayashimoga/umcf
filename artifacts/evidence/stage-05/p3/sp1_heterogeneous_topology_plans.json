@@ -1,0 +1,26 @@
+﻿{
+  "subphase": "S5.P3.SP1",
+  "name": "Heterogeneous Cluster Pipeline Partition Plans",
+  "timestamp": "2026-11-11T07:25:20.8030205+05:30",
+  "scenarios": [
+    {
+      "model": "Llama-3-8B-Q4",
+      "total_layers": 32,
+      "cluster": ["Desktop-RTX4090 (20GB)", "Laptop-MacBook (10GB)"],
+      "resolution": "Single-Node Local Execution on Desktop (0 network hops, 28.5 tok/s)",
+      "stages": 1
+    },
+    {
+      "model": "Llama-3-70B-Q4",
+      "total_layers": 80,
+      "cluster": ["Workstation-1 (24GB)", "Workstation-2 (16GB)", "MacBook (12GB)"],
+      "resolution": "3-Node Heterogeneous Pipeline Ring (14.2 tok/s)",
+      "stages": [
+        {"node": "Workstation-1", "layers": "0..44 (45 layers)", "has_embeddings": true, "has_output_head": false},
+        {"node": "Workstation-2", "layers": "45..64 (20 layers)", "has_embeddings": false, "has_output_head": false},
+        {"node": "MacBook", "layers": "65..79 (15 layers)", "has_embeddings": false, "has_output_head": true}
+      ]
+    }
+  ],
+  "verdict": "PASS"
+}

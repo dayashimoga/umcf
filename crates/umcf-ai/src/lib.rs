@@ -8,6 +8,7 @@ pub mod engine;
 pub mod error;
 pub mod ffi_bridge;
 pub mod kv_cache;
+pub mod partitioner;
 
 pub use backend_loader::{DynamicBackendLoader, GgmlBackendDescriptor};
 pub use backend_selector::{
@@ -21,3 +22,7 @@ pub use ffi_bridge::{
     SafeLlamaContext, SafeLlamaModel, SafeSamplerChain,
 };
 pub use kv_cache::{KvCacheManager, KvSlot, SerializedKvSlot};
+pub use partitioner::{
+    CandidateComputeNode, DistributedLayerPartitioner, DistributedPartitionPlan,
+    LayerPartitionStage, NetworkLinkMatrix, PartitionMigrationPlan, RebalanceDetector, TrustTier,
+};

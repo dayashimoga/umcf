@@ -42,6 +42,19 @@ pub enum EngineError {
     #[error("invalid inference input: {reason}")]
     InvalidInput { reason: String },
 
+    #[error("insufficient cluster-wide memory: required {required_bytes} bytes, available {available_bytes} bytes, deficit {deficit_bytes} bytes")]
+    InsufficientClusterMemory {
+        required_bytes: u64,
+        available_bytes: u64,
+        deficit_bytes: u64,
+    },
+
+    #[error("no eligible nodes available in cluster for partition: {reason}")]
+    NoEligibleNodes { reason: String },
+
+    #[error("invalid partition plan: {reason}")]
+    InvalidPartitionPlan { reason: String },
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }
