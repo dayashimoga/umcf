@@ -76,7 +76,7 @@ umcf-marketplace = { path = "crates/umcf-marketplace" }
 umcf-chaos = { path = "crates/umcf-chaos" }
 serde_yaml = "0.9.34"
 toml = "0.8.19"
-redb = "2.3.0"
+redb = "4.5.0"
 rayon = "1.12.0"
 smallvec = { version = "1.13.2", features = ["serde"] }
 proptest = "1.6.0"
