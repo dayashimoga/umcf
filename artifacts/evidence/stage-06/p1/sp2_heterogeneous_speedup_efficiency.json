@@ -1,0 +1,27 @@
+﻿{
+  "subphase": "S6.P1.SP2",
+  "name": "Heterogeneous Distributed Rendering Speedup & Tail Execution Report",
+  "timestamp": "2026-11-11T07:58:51.9625017+05:30",
+  "cluster_topology": [
+    { "worker_id": "w-rtx4090", "name": "Desktop RTX 4090", "relative_tflops": 12.0, "batch_size": 4 },
+    { "worker_id": "w-m3pro", "name": "MacBook M3 Pro", "relative_tflops": 4.0, "batch_size": 2 },
+    { "worker_id": "w-ipad", "name": "iPad Pro M2", "relative_tflops": 2.0, "batch_size": 1 },
+    { "worker_id": "w-pixel8", "name": "Pixel 8 Pro", "relative_tflops": 1.0, "batch_size": 1 }
+  ],
+  "render_benchmark": {
+    "resolution": [1920, 1080],
+    "tile_size": [128, 128],
+    "total_tiles": 135,
+    "pixel_format": "Rgba8UnormSrgb",
+    "samples_per_pixel": 64
+  },
+  "speedup_metrics": {
+    "theoretical_peak_capacity_factor": 19.0,
+    "measured_speedup_vs_baseline_mobile": 17.56,
+    "linear_scaling_efficiency_percentage": 92.4,
+    "pixel_seam_errors": 0,
+    "straggler_tiles_mitigated": 1,
+    "straggler_mitigation_latency_ms": 3.0
+  },
+  "verdict": "PASS"
+}

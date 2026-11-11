@@ -43,6 +43,21 @@ pub enum GpuError {
     #[error("invalid input: {reason}")]
     InvalidInput { reason: String },
 
+    #[error("tile out of bounds: tile {tile_id} at ({x}, {y}) exceeds frame resolution ({frame_w}, {frame_h})")]
+    TileOutOfBounds {
+        tile_id: u32,
+        x: u32,
+        y: u32,
+        frame_w: u32,
+        frame_h: u32,
+    },
+
+    #[error("pixel format mismatch: expected {expected}, actual {actual}")]
+    PixelFormatMismatch { expected: String, actual: String },
+
+    #[error("compositor error: {reason}")]
+    CompositorError { reason: String },
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

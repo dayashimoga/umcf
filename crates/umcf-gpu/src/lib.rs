@@ -7,15 +7,22 @@
 
 #![forbid(unsafe_code)]
 
+pub mod compositor;
 pub mod dispatcher;
 pub mod error;
+pub mod render_coordinator;
 pub mod shader_sandbox;
 
+pub use compositor::{CompletedTilePacket, FrameCompositor, ProgressiveFrameDelta};
 pub use dispatcher::{
     BoundedVramAllocator, BufferUsage, ComputeExecutionReceipt, DispatchWorkgroups,
     GpuBuffer, GpuComputeDispatcher, KernelBindings,
 };
 pub use error::GpuError;
+pub use render_coordinator::{
+    morton_2d, DistributedRenderCoordinator, RenderJobSpec, RenderPixelFormat, TileDescriptor,
+    TileState, WorkerThroughputTracker,
+};
 pub use shader_sandbox::{
     BoundsCheckPolicy, ShaderResourceLimits, ShaderSandbox, StorageBufferBinding,
     UniformBufferBinding, ValidatedShader,

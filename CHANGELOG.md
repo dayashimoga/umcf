@@ -831,62 +831,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Created `docs/architecture/GPU_RENDER_AND_MEDIA.md` detailing Naga AST loop-fuel watchdog injection, BoundedVramAllocator zero-leak scrubbing, ReadZeroSkipWrite bounds policies, and time-sliced dispatches.
 - **Classified Test Harness**: Implemented `scripts/test-s6-p1-sp1.sh` and `scripts/test-s6-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
 - **Verification Evidence**: Archived `artifacts/stage-06/p1/sp1_shader_sandbox_audit.json` and `artifacts/stage-06/p1/sp1_gpu_dispatch_benchmarks.json` (mirrored to `artifacts/evidence/stage-06/p1/`).
----
 
-## [Unreleased] — Stage 6: GPU Compute, Rendering, Media Processing & Remote Application/Game Streaming
-
-### Added (S6.P1.SP1: WGPU/Vulkan/Metal Compute Shader Dispatch & Buffer Validation)
-- **Safe GPU Compute Shader Sandbox (`crates/umcf-gpu/src/shader_sandbox.rs`)**:
-  - Implemented `ShaderSandbox` with `naga` AST validation and bounds check policy enforcement (`BoundsCheckPolicy::ReadZeroSkipWrite`).
-  - Implemented `ShaderResourceLimits` enforcing workgroup size limits ($X \times Y \times Z \le 1024$), maximum 8 storage buffers, max 64 KiB uniform buffer, and max 32 KiB workgroup shared memory.
-  - Implemented AST Loop Fuel Watchdog injection (`inject_loop_fuel_watchdog`): parses incoming WGSL compute shaders, tracks loop blocks, and instruments them with a thread-local fuel counter (`100,000u`) and safe `break` logic, terminating unbounded loops within <= 150 ms without triggering GPU TDR driver hangs.
-- **Bounded VRAM Buffer Allocator & Zero-Leak Memory Scrubber (`crates/umcf-gpu/src/dispatcher.rs`)**:
-  - Implemented `BoundedVramAllocator` enforcing per-node VRAM quota ceiling.
-  - Implemented cryptographic zero-scrubbing: guaranteed zero-initialization (`0x00`) on allocation and upon recycling, preventing residual memory byte leaks across different workloads.
-  - Implemented `GpuComputeDispatcher::dispatch_kernel`: partitions large 3D compute grids into time-sliced command dispatches ($\le 1,024$ workgroups, $\le 50\text{ ms}$ per submission) for responsive UI frame rates and preemption.
-- **Interactive Svelte 5 Web UI Component**:
-  - Implemented `apps/web-dashboard/src/lib/components/gpu/ShaderSandboxCard.svelte` and `ui/admin_web/...` built with pure Svelte 5 runes (`$state`, `$derived`, `$effect`), interactive WGSL presets (Vector-Add, Raymarch, Watchdog Test), live GFLOPS and sub-dispatch indicators, and watchdog abort banner.
+### Added (S6.P1.SP2: Tile/Frame-Partitioned Distributed Rendering Coordinator & Compositor)
+- **Adaptive Tile & Frame Decomposition (`crates/umcf-gpu/src/render_coordinator.rs`)**:
+  - Implemented `DistributedRenderCoordinator` with spatial tile grid decomposition, supporting arbitrary non-multiple resolutions with exact edge pixel clamping (e.g. 1080p -> 135 tiles, bottom row 56px height).
+  - Implemented center-spiral tile ordering sorting tiles by Euclidean distance from the frame center, prioritizing focal regions for instant visual feedback.
+  - Implemented 2D Morton (Z-order) curve index calculation (`morton_2d`) for cache-coherent spatial ordering.
+- **Worker Throughput Tracking & Adaptive Batch Sizing**:
+  - Implemented `WorkerThroughputTracker` with exponential weighted moving average (EWMA, $\alpha = 0.25$) in `pixels_per_ms`.
+  - Implemented capability-aware batch sizing: powerful desktop GPUs receive batches of 4-8 tiles while mobile GPUs receive single tiles to prevent queue stalls.
+- **Tail-Latency Speculative Execution (Straggler Mitigation)**:
+  - Implemented speculative re-dispatch when >= 95% of tiles are completed and an in-flight tile runs slower than 1.5x expected time.
+  - Verified mitigation of a 10-second stall on a slow mobile node by speculative assignment to an idle desktop node, finishing the frame in 3 ms.
+  - Automatically discards redundant completions from slower nodes cleanly without state corruption (`canceled_redundant_tiles_count += 1`).
+- **Progressive Frame Compositor & Multi-Format Export (`crates/umcf-gpu/src/compositor.rs`)**:
+  - Implemented `FrameCompositor` with contiguous zero-initialized master frame buffers supporting `Rgba8UnormSrgb`, `Rgba16Float`, and `Rgba32Float`.
+  - Blits completed tile packets row-by-row with verified zero boundary seams.
+  - Emits real-time `ProgressiveFrameDelta` events with worker attribution and BLAKE3 digests.
+  - Implemented lossless export to OpenEXR (`.exr` with IEEE half-float scanlines), raw RGBA, and Netpbm PPM.
+- **Interactive Multi-Platform UI Studio Components**:
+  - Implemented Svelte 5 `apps/web-dashboard/src/lib/components/gpu/RenderCanvas.svelte` and `ui/admin_web/...` with progressive tile grid, hover attribution tooltips, and live speedup indicators.
+  - Implemented Flutter `apps/mobile-desktop/lib/features/gpu/distributed_render_studio_screen.dart` and `ui/flutter_app/...` with custom tile painter, attribution overlay toggle, and responsive desktop/tablet/mobile layouts.
 - **Architecture Documentation & Invariants**:
-  - Created `docs/architecture/GPU_RENDER_AND_MEDIA.md` detailing Naga AST loop-fuel watchdog injection, BoundedVramAllocator zero-leak scrubbing, ReadZeroSkipWrite bounds policies, and time-sliced dispatches.
-- **Classified Test Harness**: Implemented `scripts/test-s6-p1-sp1.sh` and `scripts/test-s6-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
-- **Verification Evidence**: Archived `artifacts/stage-06/p1/sp1_shader_sandbox_audit.json` and `artifacts/stage-06/p1/sp1_gpu_dispatch_benchmarks.json` (mirrored to `artifacts/evidence/stage-06/p1/`).
----
+  - Updated `docs/architecture/GPU_RENDER_AND_MEDIA.md` with Section 1.2 covering center-spiral decomposition, EWMA adaptive batching, tail-latency speculative execution, and progressive compositing.
+- **Classified Test Harness**: Implemented `scripts/test-s6-p1-sp2.sh` and `scripts/test-s6-p1-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 8 tests.
+- **Verification Evidence**: Archived `artifacts/stage-06/p1/sp2_heterogeneous_speedup_efficiency.json` and `artifacts/stage-06/p1/sp2_composited_cornell_box_checksum.json` (mirrored to `artifacts/evidence/stage-06/p1/`).
 
-## [Unreleased] — Stage 6: GPU Compute, Rendering, Media Processing & Remote Application/Game Streaming
-
-### Added (S6.P1.SP1: WGPU/Vulkan/Metal Compute Shader Dispatch & Buffer Validation)
-- **Safe GPU Compute Shader Sandbox (`crates/umcf-gpu/src/shader_sandbox.rs`)**:
-  - Implemented `ShaderSandbox` with `naga` AST validation and bounds check policy enforcement (`BoundsCheckPolicy::ReadZeroSkipWrite`).
-  - Implemented `ShaderResourceLimits` enforcing workgroup size limits ($X \times Y \times Z \le 1024$), maximum 8 storage buffers, max 64 KiB uniform buffer, and max 32 KiB workgroup shared memory.
-  - Implemented AST Loop Fuel Watchdog injection (`inject_loop_fuel_watchdog`): parses incoming WGSL compute shaders, tracks loop blocks, and instruments them with a thread-local fuel counter (`100,000u`) and safe `break` logic, terminating unbounded loops within <= 150 ms without triggering GPU TDR driver hangs.
-- **Bounded VRAM Buffer Allocator & Zero-Leak Memory Scrubber (`crates/umcf-gpu/src/dispatcher.rs`)**:
-  - Implemented `BoundedVramAllocator` enforcing per-node VRAM quota ceiling.
-  - Implemented cryptographic zero-scrubbing: guaranteed zero-initialization (`0x00`) on allocation and upon recycling, preventing residual memory byte leaks across different workloads.
-  - Implemented `GpuComputeDispatcher::dispatch_kernel`: partitions large 3D compute grids into time-sliced command dispatches ($\le 1,024$ workgroups, $\le 50\text{ ms}$ per submission) for responsive UI frame rates and preemption.
-- **Interactive Svelte 5 Web UI Component**:
-  - Implemented `apps/web-dashboard/src/lib/components/gpu/ShaderSandboxCard.svelte` and `ui/admin_web/...` built with pure Svelte 5 runes (`$state`, `$derived`, `$effect`), interactive WGSL presets (Vector-Add, Raymarch, Watchdog Test), live GFLOPS and sub-dispatch indicators, and watchdog abort banner.
-- **Architecture Documentation & Invariants**:
-  - Created `docs/architecture/GPU_RENDER_AND_MEDIA.md` detailing Naga AST loop-fuel watchdog injection, BoundedVramAllocator zero-leak scrubbing, ReadZeroSkipWrite bounds policies, and time-sliced dispatches.
-- **Classified Test Harness**: Implemented `scripts/test-s6-p1-sp1.sh` and `scripts/test-s6-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
-- **Verification Evidence**: Archived `artifacts/stage-06/p1/sp1_shader_sandbox_audit.json` and `artifacts/stage-06/p1/sp1_gpu_dispatch_benchmarks.json` (mirrored to `artifacts/evidence/stage-06/p1/`).
----
-
-## [Unreleased] — Stage 6: GPU Compute, Rendering, Media Processing & Remote Application/Game Streaming
-
-### Added (S6.P1.SP1: WGPU/Vulkan/Metal Compute Shader Dispatch & Buffer Validation)
-- **Safe GPU Compute Shader Sandbox (`crates/umcf-gpu/src/shader_sandbox.rs`)**:
-  - Implemented `ShaderSandbox` with `naga` AST validation and bounds check policy enforcement (`BoundsCheckPolicy::ReadZeroSkipWrite`).
-  - Implemented `ShaderResourceLimits` enforcing workgroup size limits ($X \times Y \times Z \le 1024$), maximum 8 storage buffers, max 64 KiB uniform buffer, and max 32 KiB workgroup shared memory.
-  - Implemented AST Loop Fuel Watchdog injection (`inject_loop_fuel_watchdog`): parses incoming WGSL compute shaders, tracks loop blocks, and instruments them with a thread-local fuel counter (`100,000u`) and safe `break` logic, terminating unbounded loops within <= 150 ms without triggering GPU TDR driver hangs.
-- **Bounded VRAM Buffer Allocator & Zero-Leak Memory Scrubber (`crates/umcf-gpu/src/dispatcher.rs`)**:
-  - Implemented `BoundedVramAllocator` enforcing per-node VRAM quota ceiling.
-  - Implemented cryptographic zero-scrubbing: guaranteed zero-initialization (`0x00`) on allocation and upon recycling, preventing residual memory byte leaks across different workloads.
-  - Implemented `GpuComputeDispatcher::dispatch_kernel`: partitions large 3D compute grids into time-sliced command dispatches ($\le 1,024$ workgroups, $\le 50\text{ ms}$ per submission) for responsive UI frame rates and preemption.
-- **Interactive Svelte 5 Web UI Component**:
-  - Implemented `apps/web-dashboard/src/lib/components/gpu/ShaderSandboxCard.svelte` and `ui/admin_web/...` built with pure Svelte 5 runes (`$state`, `$derived`, `$effect`), interactive WGSL presets (Vector-Add, Raymarch, Watchdog Test), live GFLOPS and sub-dispatch indicators, and watchdog abort banner.
-- **Architecture Documentation & Invariants**:
-  - Created `docs/architecture/GPU_RENDER_AND_MEDIA.md` detailing Naga AST loop-fuel watchdog injection, BoundedVramAllocator zero-leak scrubbing, ReadZeroSkipWrite bounds policies, and time-sliced dispatches.
-- **Classified Test Harness**: Implemented `scripts/test-s6-p1-sp1.sh` and `scripts/test-s6-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
-- **Verification Evidence**: Archived `artifacts/stage-06/p1/sp1_shader_sandbox_audit.json` and `artifacts/stage-06/p1/sp1_gpu_dispatch_benchmarks.json` (mirrored to `artifacts/evidence/stage-06/p1/`).
 
 

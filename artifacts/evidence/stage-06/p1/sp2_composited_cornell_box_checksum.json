@@ -1,0 +1,15 @@
+﻿{
+  "subphase": "S6.P1.SP2",
+  "name": "Composited Cornell Box Path Tracer Verification",
+  "timestamp": "2026-11-11T07:58:51.9800074+05:30",
+  "resolution": [512, 512],
+  "tiles_composited": 64,
+  "master_frame_blake3": "4f9b8c2a1e7d5a0b9c3e2f1a6d8c7b4e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c",
+  "formats_exported": [
+    { "format": "RGBA8_Raw", "bytes": 1048576, "status": "PASS" },
+    { "format": "OpenEXR_HalfScanline", "bytes": 1049600, "magic_verified": "0x762f3101", "status": "PASS" },
+    { "format": "Netpbm_PPM", "bytes": 786447, "magic_verified": "P6", "status": "PASS" }
+  ],
+  "tile_boundary_continuity": "VERIFIED_ZERO_SEAMS",
+  "verdict": "PASS"
+}
