@@ -386,7 +386,10 @@ fn test_hardware_software_vs_gpu_rendered_distribution() {
     #[cfg(not(debug_assertions))]
     assert!(per_canary_us < 50.0, "canary check took {per_canary_us} µs");
     #[cfg(debug_assertions)]
-    assert!(per_canary_us < 250.0, "canary check took {per_canary_us} µs");
+    assert!(
+        per_canary_us < 250.0,
+        "canary check took {per_canary_us} µs"
+    );
 }
 
 // =========================================================================
