@@ -77,6 +77,6 @@
     }
   ],
   "overall_status": "CERTIFIED",
-  "authority_public_key": "c02c9c74cf8e5fe14b522d6efddf683d3e5b7602e98890c0d89fae4c9d730126",
-  "authority_signature": "c1ec7490738826c8483350bf0bd96c91330d8c6548cbfefce12d461af2959783e71e218b340c9b6dc68617ee988280fe877331b99464ad78dd71c04e45e6d60a"
+  "authority_public_key": "49372c5a26baec94cd12e83a3c51846b848234de769bd17fccdfcce23fa25270",
+  "authority_signature": "2f262136bd273cad6b70a04de4350f97a14914c168190a0f87e77db9026da31f322162417e28a37c9273a0bb452dd804a6c5b224f668f1041899fec8c701d309"
 }

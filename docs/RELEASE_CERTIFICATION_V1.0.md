@@ -117,7 +117,7 @@ UMCF has been evaluated and certified across physical, emulated, and simulated e
 
 | Deliverable Name | Target Platform | Format | SHA-256 Checksum Anchor |
 | :--- | :--- | :--- | :--- |
-| `umcf-v1.0.0-windows-x64.zip` | Windows 10/11 x86_64 | Portable Zip (`umcf.exe`, `umcfd.exe`, DLLs) | `7f4a...e12a` |
+| `umcf-v1.0.0-windows-x64.zip` | Windows 10/11 x86_64 | Portable Zip (`umcf.exe`, `umcfd.exe`, DLLs) | `f9a5...bc44` |
 | `umcf-v1.0.0-linux-x86_64.tar.zst` | Linux x86_64 (glibc 2.31+) | Compressed Archive + systemd service | `8b1c...99d4` |
 | `umcf-v1.0.0-linux-aarch64.tar.zst` | Linux ARM64 (Debian/Ubuntu/Fedora) | Compressed Archive + systemd service | `3e9a...77f1` |
 | `umcf-v1.0.0-macos-universal.dmg` | macOS 12+ (Intel & Apple Silicon) | Universal 2 App Bundle + launchd agent | `a2b4...cc88` |
