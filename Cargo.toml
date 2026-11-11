@@ -29,6 +29,7 @@ members = [
     "crates/umcf-daemon",
     "services/control-plane-cloudrun",
     "services/cloudrun_fallback",
+    "tests/e2e-cluster",
 ]
 
 [workspace.package]

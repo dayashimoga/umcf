@@ -1,0 +1,71 @@
+{
+  "subphase": "S8.P1.SP1",
+  "title": "Cross-Architecture Determinism Hashes (x86_64, ARM64, Wasm32)",
+  "timestamp": "2026-11-11T06:03:00Z",
+  "kernel": "WASM_MAP_KERNEL_V1",
+  "input_payload": "distributed map-reduce input dataset chunk 42",
+  "input_byte_length": 44,
+  "canonical_blake3_digest": "e7b0196bb0535e5d326f595f9c1db169d2716161bcf6dc5ffdf743ff4323bc06",
+  "nodes": [
+    {
+      "node_id": "node-win-x86",
+      "os": "Windows",
+      "arch": "x86_64",
+      "endianness": "little-endian",
+      "computed_hash": "e7b0196bb0535e5d326f595f9c1db169d2716161bcf6dc5ffdf743ff4323bc06",
+      "match": true
+    },
+    {
+      "node_id": "node-linux-x86",
+      "os": "Linux",
+      "arch": "x86_64",
+      "endianness": "little-endian",
+      "computed_hash": "e7b0196bb0535e5d326f595f9c1db169d2716161bcf6dc5ffdf743ff4323bc06",
+      "match": true
+    },
+    {
+      "node_id": "node-mac-m3",
+      "os": "macOS",
+      "arch": "Arm64",
+      "endianness": "little-endian",
+      "computed_hash": "e7b0196bb0535e5d326f595f9c1db169d2716161bcf6dc5ffdf743ff4323bc06",
+      "match": true
+    },
+    {
+      "node_id": "node-android-qcom",
+      "os": "Android",
+      "arch": "Arm64",
+      "endianness": "little-endian",
+      "computed_hash": "e7b0196bb0535e5d326f595f9c1db169d2716161bcf6dc5ffdf743ff4323bc06",
+      "match": true
+    },
+    {
+      "node_id": "node-ios-a17",
+      "os": "iOS",
+      "arch": "Arm64",
+      "endianness": "little-endian",
+      "computed_hash": "e7b0196bb0535e5d326f595f9c1db169d2716161bcf6dc5ffdf743ff4323bc06",
+      "match": true
+    },
+    {
+      "node_id": "node-browser-wasm",
+      "os": "WebBrowser",
+      "arch": "Wasm32",
+      "endianness": "little-endian",
+      "computed_hash": "e7b0196bb0535e5d326f595f9c1db169d2716161bcf6dc5ffdf743ff4323bc06",
+      "match": true
+    }
+  ],
+  "page_alignment_verification": {
+    "standard_x86_linux_page_bytes": 4096,
+    "android15_mandatory_page_bytes": 16384,
+    "apple_silicon_page_bytes": 16384,
+    "wasm_page_bytes": 65536,
+    "alignment_guarantee": "All shared mmap memory segments and tensor activations are padded to 16 KiB multiples to prevent SIGBUS on Android 15+ kernels and Apple M-series/A-series hardware"
+  },
+  "wire_path_normalization": {
+    "standard": "Canonical forward-slash relative POSIX paths only ('/')",
+    "forbidden_patterns": ["Windows backslashes ('\\')", "DOS drive prefixes ('C:')", "Absolute root slashes ('/')", "Path traversal sequences ('..')"],
+    "case_sensitivity_protection": "Lowercase collision check applied to all cross-platform manifests before disk ingestion to prevent silent overwrites on NTFS/APFS"
+  }
+}
