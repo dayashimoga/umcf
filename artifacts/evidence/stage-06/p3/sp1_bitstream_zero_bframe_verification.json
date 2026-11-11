@@ -1,0 +1,31 @@
+{
+    "subphase":  "S6.P3.SP1",
+    "title":  "Bitstream Zero-B-Frame \u0026 Single-Frame VBV Buffer Verification",
+    "timestamp":  "2026-11-11T03:13:21Z",
+    "bitstream_invariants":  {
+                                 "num_reorder_frames":  0,
+                                 "max_b_frames":  0,
+                                 "rc_lookahead":  0,
+                                 "buffering_lag_frames":  0,
+                                 "vbv_buffer_size_kb":  240,
+                                 "single_frame_vbv_compliance":  true
+                             },
+    "on_demand_idr_recovery":  {
+                                   "atomic_trigger_mechanism":  "force_idr_on_next_frame (AtomicBool)",
+                                   "instantaneous_keyframe_emitted":  true,
+                                   "in_band_parameter_sets":  [
+                                                                  "SPS",
+                                                                  "PPS",
+                                                                  "VPS"
+                                                              ],
+                                   "subsequent_frame_restores_p_slice":  true
+                               },
+    "audio_loopback":  {
+                           "codec":  "Opus Restricted Lowdelay",
+                           "packet_duration_ms":  5,
+                           "sample_rate_hz":  48000,
+                           "channels":  2,
+                           "fec_enabled":  true,
+                           "timestamp_continuity":  "Strictly monotonic, 5000 us increments"
+                       }
+}

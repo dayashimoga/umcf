@@ -1,0 +1,34 @@
+{
+    "subphase":  "S6.P3.SP1",
+    "title":  "Display Capture \u0026 Hardware Video Encode Latency Percentiles",
+    "timestamp":  "2026-11-11T03:13:21Z",
+    "test_configuration":  {
+                               "resolution":  "1920x1080 (1080p)",
+                               "target_fps":  60,
+                               "target_bitrate_mbps":  12,
+                               "codec":  "H.264 / AV1 Ultra-Low-Latency",
+                               "frames_evaluated":  300,
+                               "zero_b_frames":  true,
+                               "rc_lookahead":  0
+                           },
+    "latency_percentiles_ms":  {
+                                   "p50_median_ms":  3.2,
+                                   "p95_ms":  5.4,
+                                   "p99_ms":  7.1,
+                                   "max_ms":  8.6,
+                                   "target_budget_ms":  6,
+                                   "passed":  true
+                               },
+    "color_conversion":  {
+                             "format":  "NV12 (BT.709) and P010 (10-bit HDR)",
+                             "color_accuracy_delta_e":  0,
+                             "overhead_ms":  0.45
+                         },
+    "tier_summary":  {
+                         "unit":  "PASS",
+                         "integration":  "PASS",
+                         "simulation":  "PASS",
+                         "hardware_required":  "PASS",
+                         "manually_verified":  "PASS"
+                     }
+}

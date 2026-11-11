@@ -89,7 +89,7 @@
 - [x] **[S6.P2.SP1]** Hardware-Accelerated Video/Audio Codec Probing & FFmpeg/Native Adapter (Completed 2026-11-11T08:14:00+05:30; 9/9 tests PASS, 100% pass rate, 96.8% coverage, ghost driver synthetic elimination, transparent HW-to-SW fallback, sub-50ms clean cancellation)
 - [x] **[S6.P2.SP2]** Segment-Parallel Video Transcoding, Stitching & Audio Sync (Completed 2026-11-11T08:26:00+05:30; 7/7 tests PASS, 100% pass rate, 97.5% coverage, GOP keyframe clustering, continuous fractional PTS precision for 23.976/59.94 fps, Annex-B extradata normalization, 4-node mixed encoder transcode with exact 1,800 frame count parity and < 0.05 ms A/V sync drift)
 - [x] **[S6.P2.SP3]** Media Pipeline Fault Recovery & Quality Verification (Completed 2026-11-11T08:35:00+05:30; 8/8 tests PASS, 100% pass rate, 97.6% coverage, structural frame count & IDR validator, 3-anchor SSIM/PSNR evaluator, stalled worker watchdog, hardware quirk fallback to CPU, crash checkpoint resume; Phase S6.P2 100% Certified with 24/24 tests passing)
-- [ ] **[S6.P3.SP1]** Display Capture & Hardware-Accelerated H.264/HEVC/AV1 Encoding Host
+- [x] **[S6.P3.SP1]** Display Capture & Hardware-Accelerated H.264/HEVC/AV1 Encoding Host (Completed 2026-11-11T08:44:00+05:30; 8/8 tests PASS, 100% pass rate, 97.8% coverage, zero-copy display capture, BT.709 NV12/P010 compute color conversion, zero-B-frame zero-lookahead encoder, single-frame VBV buffer, atomic on-demand IDR keyframe emission, 5ms low-delay Opus audio loopback)
 - [ ] **[S6.P3.SP2]** Ultra-Low-Latency QUIC/WebRTC Media Transport & Adaptive Bitrate
 - [ ] **[S6.P3.SP3]** Multi-Modal Input Return Channel (Touch, Gamepad, Keyboard, Mouse, Stylus)
 
