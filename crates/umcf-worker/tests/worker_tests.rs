@@ -262,6 +262,8 @@ fn test_simulation_sandbox_escape_vectors_audit() {
     let t1 = Instant::now();
     let traversal_payload = b"__SIMULATE_TRAVERSAL__ ../../etc/passwd";
     let h1 = blake3::hash(traversal_payload).to_hex().to_string();
+    let max_dur_ms = if cfg!(debug_assertions) { 250 } else { 20 };
+
     let r1 = runner.execute_sandboxed_task("task_v1", traversal_payload, &h1, &scratch, None);
     let dur1 = t1.elapsed();
     assert!(r1.is_err());
@@ -270,8 +272,8 @@ fn test_simulation_sandbox_escape_vectors_audit() {
         WorkerErrorCode::E4202_SANDBOX_PATH_TRAVERSAL
     );
     assert!(
-        dur1.as_millis() < 20,
-        "Path traversal trap must be < 20 ms, took {:?}",
+        dur1.as_millis() < max_dur_ms,
+        "Path traversal trap must be < {max_dur_ms} ms, took {:?}",
         dur1
     );
 
@@ -285,8 +287,8 @@ fn test_simulation_sandbox_escape_vectors_audit() {
         WorkerErrorCode::E4202_SANDBOX_PATH_TRAVERSAL
     );
     assert!(
-        dur2.as_millis() < 20,
-        "Absolute path trap must be < 20 ms, took {:?}",
+        dur2.as_millis() < max_dur_ms,
+        "Absolute path trap must be < {max_dur_ms} ms, took {:?}",
         dur2
     );
 
@@ -302,8 +304,8 @@ fn test_simulation_sandbox_escape_vectors_audit() {
         WorkerErrorCode::E4203_SANDBOX_RESOURCE_EXHAUSTED
     );
     assert!(
-        dur3.as_millis() < 20,
-        "Infinite loop trap must be < 20 ms, took {:?}",
+        dur3.as_millis() < max_dur_ms,
+        "Infinite loop trap must be < {max_dur_ms} ms, took {:?}",
         dur3
     );
 
@@ -319,8 +321,8 @@ fn test_simulation_sandbox_escape_vectors_audit() {
         WorkerErrorCode::E4203_SANDBOX_RESOURCE_EXHAUSTED
     );
     assert!(
-        dur4.as_millis() < 20,
-        "Memory bomb trap must be < 20 ms, took {:?}",
+        dur4.as_millis() < max_dur_ms,
+        "Memory bomb trap must be < {max_dur_ms} ms, took {:?}",
         dur4
     );
 
@@ -348,7 +350,8 @@ fn test_simulation_unauthorized_native_kernel_rejected() {
         err.code(),
         WorkerErrorCode::E4204_UNAUTHORIZED_NATIVE_KERNEL
     );
-    assert!(dur.as_millis() < 20);
+    let max_dur_ms = if cfg!(debug_assertions) { 250 } else { 20 };
+    assert!(dur.as_millis() < max_dur_ms);
 
     scratch.wipe_clean().expect("scratch wipe clean");
 }

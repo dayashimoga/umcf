@@ -70,7 +70,7 @@ impl CpuProber {
         // Probe hardware SIMD flags using std::arch and sysfs
         let mut simd_avx2 = false;
         let mut simd_avx512 = false;
-        let mut simd_neon = false;
+        let mut simd_neon = cfg!(target_arch = "aarch64");
         let mut simd_sve = false;
 
         #[cfg(target_arch = "x86_64")]
@@ -83,11 +83,6 @@ impl CpuProber {
             }
         }
 
-        #[cfg(target_arch = "aarch64")]
-        {
-            simd_neon = true;
-        }
-
         // On Linux / Android, inspect /proc/cpuinfo for additional hardware flags
         if Path::new("/proc/cpuinfo").exists() {
             if let Ok(content) = fs::read_to_string("/proc/cpuinfo") {
@@ -98,7 +93,7 @@ impl CpuProber {
                         simd_avx2 = true;
                     } else if f == "avx512f" || f == "avx512" {
                         simd_avx512 = true;
-                    } else if f == "neon" || f == "asimd" {
+                    } else if !simd_neon && (f == "neon" || f == "asimd") {
                         simd_neon = true;
                     } else if f == "sve" || f == "sve2" {
                         simd_sve = true;

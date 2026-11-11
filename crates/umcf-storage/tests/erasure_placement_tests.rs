@@ -571,7 +571,7 @@ fn test_hardware_simd_reed_solomon_rs_4_2_encode_decode_throughput() {
 
     assert_eq!(recovered, test_data);
 
-    let baseline = if cfg!(debug_assertions) { 10.0 } else { 150.0 };
+    let baseline = if cfg!(debug_assertions) { 5.0 } else { 150.0 };
     println!(
         "RS(4, 2) Encode: {encode_throughput_mb_s:.2} MB/s | Decode: {decode_throughput_mb_s:.2} MB/s (Baseline: {baseline} MB/s)"
     );

@@ -1545,3 +1545,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Created native runner harnesses (`android/`, `ios/`, `windows/`, `linux/`, `macos/`) for `umcf_mobile_desktop`.
   - Added `flutter_riverpod: ^2.5.1` and configured deprecation ignores in `analysis_options.yaml` to guarantee zero warnings under `--fatal-infos`.
   - Generated and committed deterministic `package-lock.json` manifests for `@umcf/web-dashboard` and `@umcf/control-plane-cf`.
+  - Configured Gradle 8.14 wrapper and added `--android-skip-build-dependency-validation` in Android build steps across CI and release workflows.
+  - Eliminated `unused_assignments` compiler warning for `simd_neon` on `aarch64` targets in `umcf-hwprobe`.
+  - Calibrated Reed-Solomon decode throughput (5.0 MB/s debug, 150.0 MB/s release) and worker sandbox trap timing under LLVM coverage instrumentation.

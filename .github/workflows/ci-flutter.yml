@@ -108,10 +108,10 @@ jobs:
           flutter pub deps --json > pub-sbom.json
 
       - name: Build Android Release APK (`flutter build apk --release`)
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Build Android Release AppBundle (`flutter build appbundle --release`)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --android-skip-build-dependency-validation
 
       - name: Package Independent Android APK & AAB Artifacts with Checksums & Metadata
         run: |

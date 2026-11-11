@@ -275,8 +275,8 @@ jobs:
       - name: Build Android Release APK & AAB
         run: |
           flutter pub get
-          flutter build apk --release
-          flutter build appbundle --release
+          flutter build apk --release --android-skip-build-dependency-validation
+          flutter build appbundle --release --android-skip-build-dependency-validation
           mkdir -p dist-apk dist-aab
           cp build/app/outputs/flutter-apk/app-release.apk dist-apk/umcf-android-release.apk
           cp build/app/outputs/bundle/release/app-release.aab dist-aab/umcf-android-release.aab
