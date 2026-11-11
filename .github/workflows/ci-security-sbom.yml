@@ -54,7 +54,7 @@ jobs:
           fi
 
       - name: Upload Rust Security Audit Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-security-audit-rust
           path: security-reports/
@@ -101,7 +101,7 @@ jobs:
           fi
 
       - name: Upload NPM Security Audit Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-security-audit-npm
           path: security-reports/npm/
@@ -177,7 +177,7 @@ jobs:
           sha256sum rust-workspace-metadata.json security-certification-manifest.json > SHA256SUMS.txt
 
       - name: Upload Unified Security, Quota & SBOM Certification Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-workspace-security-and-sbom-bundle
           path: security-reports/
