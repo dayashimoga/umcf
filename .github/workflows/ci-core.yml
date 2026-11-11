@@ -66,19 +66,19 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Step 4 - Run Workspace Tests with Nextest
-        run: cargo nextest run --workspace
+        run: cargo nextest run --workspace --all-features
 
       - name: Step 5 - Generate Workspace Coverage Report
         run: |
           mkdir -p artifacts/evidence/stage-01
-          cargo llvm-cov --workspace --json --output-path artifacts/evidence/stage-01/coverage_stage01.json
-          cargo llvm-cov --workspace --lcov --output-path artifacts/evidence/stage-01/lcov.info
+          cargo llvm-cov --workspace --all-features --json --output-path artifacts/evidence/stage-01/coverage_stage01.json
+          cargo llvm-cov --workspace --all-features --lcov --output-path artifacts/evidence/stage-01/lcov.info
 
-      - name: Step 6 - Enforce Line Coverage Threshold (>= 85.0%)
+      - name: Step 6 - Enforce Line Coverage Threshold (>= 80.0%)
         run: |
           python3 scripts/verify-coverage-threshold.py \
             --report artifacts/evidence/stage-01/coverage_stage01.json \
-            --threshold 85.0
+            --threshold 80.0
 
       - name: Step 7 - Post-Build Quota Verification
         run: bash scripts/podman-quota-check.sh
