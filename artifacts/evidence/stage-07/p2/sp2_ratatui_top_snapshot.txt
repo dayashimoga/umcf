@@ -11,3 +11,4 @@ did:umcf:server_03       Worker       Ubuntu 24.04       8      A100-SXM4-40GB  
 did:umcf:macbook_04      Worker       macOS Sequoia      4      Apple M3 Pro     14200/18432  Standby 
 ================================================================================
 Press Ctrl+C or 'q' to exit live monitor.
+

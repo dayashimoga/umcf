@@ -56,3 +56,4 @@ pub fn render_qr_halfblock(text: &str) -> Result<String, String> {
 
     Ok(output)
 }
+

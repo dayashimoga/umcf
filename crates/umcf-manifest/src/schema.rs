@@ -229,3 +229,4 @@ impl WorkloadManifest {
         serde_json::to_string_pretty(self).map_err(|e| ManifestError::ParseError(e.to_string()))
     }
 }
+

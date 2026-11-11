@@ -25,3 +25,4 @@ echo "=== [5/5] [Manually-Verified] Template Gallery UI schema and DAG states ==
 cargo test -p umcf-manifest --test manifest_tests test_manual_template_gallery_and_dag_schema_conformance
 
 echo "All 5 tiers for S7.P2.SP3 PASSED successfully!"
+

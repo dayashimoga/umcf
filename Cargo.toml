@@ -24,6 +24,7 @@ members = [
     "crates/umcf-sdk",
     "crates/umcf-cli",
     "crates/umcf-manifest",
+    "crates/umcf-ledger",
     "crates/umcf-daemon",
     "services/control-plane-cloudrun",
     "services/cloudrun_fallback",
@@ -60,6 +61,7 @@ umcf-storage = { path = "crates/umcf-storage" }
 umcf-api-gateway = { path = "crates/umcf-api-gateway" }
 umcf-sdk = { path = "crates/umcf-sdk" }
 umcf-manifest = { path = "crates/umcf-manifest" }
+umcf-ledger = { path = "crates/umcf-ledger" }
 serde_yaml = "0.9.34"
 toml = "0.8.19"
 redb = "2.3.0"
@@ -99,4 +101,16 @@ unused_must_use = "deny"
 [workspace.lints.clippy]
 all = "deny"
 unwrap_used = "deny"
+
+[profile.dev.package.ed25519-dalek]
+opt-level = 3
+
+[profile.dev.package.curve25519-dalek]
+opt-level = 3
+
+[profile.test.package.ed25519-dalek]
+opt-level = 3
+
+[profile.test.package.curve25519-dalek]
+opt-level = 3
 

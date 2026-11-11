@@ -115,3 +115,4 @@ pub fn run_doctor_checks() -> DoctorReport {
         checks,
     }
 }
+

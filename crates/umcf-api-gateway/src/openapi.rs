@@ -589,3 +589,4 @@ pub fn serve_docs_html() -> String {
 </html>"#
     .to_string()
 }
+

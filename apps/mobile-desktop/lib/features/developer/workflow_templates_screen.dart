@@ -357,3 +357,4 @@ class _WorkflowTemplatesScreenState
     );
   }
 }
+

@@ -1,0 +1,75 @@
+{
+  "subphase": "S7.P3.SP1",
+  "title": "Signed Cryptographic Resource Metering Receipts Audit",
+  "timestamp_utc": "2026-11-11T05:35:00Z",
+  "git_commit": "HEAD",
+  "standards_compliance": {
+    "zero_floats": true,
+    "integer_units_only": true,
+    "canonical_104_byte_resource_vector": true,
+    "dual_ed25519_signatures": true,
+    "hash_chain_tamper_evident": true
+  },
+  "metered_resource_vector_spec": {
+    "total_fields": 13,
+    "encoding": "little-endian-binary",
+    "byte_size": 104,
+    "fields": [
+      { "name": "cpu_thread_time_us", "type": "u64", "unit": "microseconds", "offset": 0 },
+      { "name": "wasm_fuel_consumed", "type": "u64", "unit": "fuel_units", "offset": 8 },
+      { "name": "gpu_compute_time_us", "type": "u64", "unit": "microseconds", "offset": 16 },
+      { "name": "npu_compute_time_us", "type": "u64", "unit": "microseconds", "offset": 24 },
+      { "name": "vram_peak_byte_seconds", "type": "u64", "unit": "byte_seconds", "offset": 32 },
+      { "name": "ai_prompt_tokens", "type": "u64", "unit": "tokens", "offset": 40 },
+      { "name": "ai_generated_tokens", "type": "u64", "unit": "tokens", "offset": 48 },
+      { "name": "ai_layer_activations_transferred", "type": "u64", "unit": "activations", "offset": 56 },
+      { "name": "media_frames_encoded", "type": "u64", "unit": "frames", "offset": 64 },
+      { "name": "render_pixels_completed", "type": "u64", "unit": "pixels", "offset": 72 },
+      { "name": "network_egress_bytes", "type": "u64", "unit": "bytes", "offset": 80 },
+      { "name": "network_ingress_bytes", "type": "u64", "unit": "bytes", "offset": 88 },
+      { "name": "storage_byte_seconds", "type": "u64", "unit": "byte_seconds", "offset": 96 }
+    ]
+  },
+  "sanity_bounds_enforcement_audit": [
+    {
+      "scenario": "Inflated AI Tokens Claim",
+      "claimed_resources": { "ai_generated_tokens": 10000 },
+      "physical_bounds": { "max_ai_tokens": 128 },
+      "verdict": "REJECTED",
+      "error_code": "RESOURCE_OUT_OF_BOUNDS",
+      "detail": "Claimed 10000 generated tokens exceeds verified output bound of 128 tokens"
+    },
+    {
+      "scenario": "Inflated Render Pixels Claim",
+      "claimed_resources": { "render_pixels_completed": 100000000 },
+      "physical_bounds": { "max_render_pixels": 2073600 },
+      "verdict": "REJECTED",
+      "error_code": "RESOURCE_OUT_OF_BOUNDS",
+      "detail": "Claimed 100000000 render pixels exceeds full HD target 1920x1080 (2073600)"
+    },
+    {
+      "scenario": "Inflated CPU Thread Time Claim",
+      "claimed_resources": { "cpu_thread_time_us": 600000000 },
+      "physical_bounds": { "max_wall_time_us": 5000000, "core_count": 8 },
+      "verdict": "REJECTED",
+      "error_code": "RESOURCE_OUT_OF_BOUNDS",
+      "detail": "Claimed CPU time exceeds 8x parallel wall clock limit"
+    }
+  ],
+  "hash_chain_verification_audit": {
+    "total_receipts_verified": 4,
+    "chain_integrity": "VALID",
+    "sequence_progression": [1, 2, 3, 4],
+    "fork_replay_detection": {
+      "replayed_sequence_rejected": true,
+      "out_of_order_sequence_rejected": true,
+      "tampered_field_signature_failure": true
+    }
+  },
+  "streaming_checkpoints": {
+    "interval_seconds": 60,
+    "checkpoints_tested": 3,
+    "uncompensated_risk_window_seconds": 60,
+    "checkpoint_signature_status": "DUAL_COUNTERSIGNED"
+  }
+}

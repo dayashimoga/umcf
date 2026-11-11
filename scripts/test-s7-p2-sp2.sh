@@ -26,3 +26,4 @@ echo "=== [5/5] [Manually-Verified] QR schema, top text layout, and AI chat ==="
 cargo test -p umcf-cli --test cli_tests test_manual_cluster_pair_qr_ai_chat_and_top_cli_schema
 
 echo "All 5 tiers for S7.P2.SP2 PASSED successfully!"
+

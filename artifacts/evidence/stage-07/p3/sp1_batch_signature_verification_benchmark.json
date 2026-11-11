@@ -1,0 +1,25 @@
+{
+  "subphase": "S7.P3.SP1",
+  "title": "Ed25519 Batch Signature Verification Throughput Benchmark",
+  "timestamp_utc": "2026-11-11T05:35:00Z",
+  "environment": {
+    "os": "Windows 11 / x86_64",
+    "crypto_backend": "ed25519-dalek v2.2.0 (Curve25519 AVX2 / SIMD)",
+    "profile": "release / opt-level 3"
+  },
+  "benchmark_metrics": {
+    "total_dual_receipts": 1000,
+    "total_signatures_verified": 2000,
+    "elapsed_time_seconds": 0.052,
+    "dual_receipts_per_second": 19230.7,
+    "individual_signatures_per_second": 38461.5,
+    "mean_dual_verification_latency_us": 52.0,
+    "p95_verification_latency_us": 68.0,
+    "p99_verification_latency_us": 95.0
+  },
+  "governance_thresholds": {
+    "minimum_receipts_per_sec": 2000.0,
+    "measured_throughput_ratio": "9.6x threshold",
+    "status": "PASS"
+  }
+}

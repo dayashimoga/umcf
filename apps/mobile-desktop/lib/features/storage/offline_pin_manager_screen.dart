@@ -827,3 +827,4 @@ class OfflinePinManagerScreen extends ConsumerWidget {
     );
   }
 }
+

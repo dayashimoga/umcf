@@ -1193,3 +1193,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - **Phase S7.P2 (Developer Experience, SDKs, CLI & Declarative Workloads) 100% Certified** with **29/29 tests passing (100% pass rate)** across S7.P2.SP1 (10 tests), S7.P2.SP2 (10 tests), and S7.P2.SP3 (9 tests).
 - **Classified Test Harness**: Implemented `scripts/test-s7-p2-sp3.sh` and `scripts/test-s7-p2-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-07/p2/sp3_template_execution_receipts.json` and `artifacts/evidence/stage-07/p2/sp3_reproducible_lockfile_verification.json`.
+
+### Added (S7.P3.SP1: Signed Cryptographic Resource Metering Receipts)
+- **Scaffolded `umcf-ledger` Accounting Crate (`crates/umcf-ledger`)**:
+  - Initialized high-integrity accounting and ledger crate with zero unsafe code `#![forbid(unsafe_code)]`.
+- **Strictly Integer Multi-Dimensional Resource Metering (`crates/umcf-ledger/src/meter.rs`)**:
+  - Implemented `MeteredResourceVector` with 13 integer (`u64`) fields and zero floating-point values: CPU thread time, WASM fuel, GPU compute time, NPU compute time, VRAM peak byte-seconds, AI prompt tokens, AI generated tokens, AI layer activations transferred, Media frames encoded, Render pixels completed, Network egress bytes, Network ingress bytes, and Storage byte-seconds.
+  - Implemented canonical 104-byte little-endian binary serialization (`to_canonical_bytes`) ensuring bit-identical BLAKE3 hash representations across all target architectures.
+  - Implemented thread-safe `ResourceMeteringCollector` recording metrics during task execution and calculating output BLAKE3 digests.
+  - Implemented `SanityBoundsChecker` checking physical feasibility bounds: rejects inflated AI token claims (e.g., claiming 10,000 tokens on a 128-token output), render pixel claims exceeding display resolution limits, and CPU thread time exceeding parallel core limits.
+- **Dual-Signed Cryptographic Receipts & Hash-Chained Verification (`crates/umcf-ledger/src/receipts.rs`)**:
+  - Implemented `SignedResourceReceipt` with canonical `ReceiptBody`, unique `receipt_id` derived from BLAKE3, and sequential `sequence_number`.
+  - Implemented Two-Phase Countersigning Protocol: Worker signs `ReceiptBody` upon completion; Requester verifies output digest and sanity bounds before countersigning with its Ed25519 key.
+  - Implemented `ReceiptChainVerifier`: maintains per-peer-pair hash chains (`prev_receipt_id`), rejecting out-of-order sequence numbers, forks, sequence gaps, and replayed receipts.
+  - Implemented `CheckpointEmitter`: emits periodic micro-receipts at 60-second intervals for interactive streaming sessions, limiting uncompensated default risk to at most 60 seconds.
+- **Interactive Multiplatform Cryptographic Receipt Explorer UI (Svelte 5 & Flutter)**:
+  - Svelte 5 `apps/web-dashboard/src/lib/components/market/CryptographicReceiptExplorerCard.svelte` and `ui/admin_web/...`: Visual receipt card, multi-resource contribution gauges, green Dual-Signature Verified modal, and raw JSON export.
+  - Flutter `apps/mobile-desktop/lib/features/market/receipt_explorer_screen.dart` and `ui/flutter_app/...`: Riverpod screen displaying verified cryptographic receipts with dual Ed25519 signatures, physical sanity bounds checks, and interactive signature inspection modal.
+- **Architecture Documentation & Invariants**:
+  - Authored Section 1 of `docs/architecture/MARKETPLACE_AND_LEDGER.md` detailing the zero-float mandate, 104-byte canonical serialization, two-phase countersigning protocol, and sequential hash chaining.
+- **Classified Test Harness**: Implemented `scripts/test-s7-p3-sp1.sh` and `scripts/test-s7-p3-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 8 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-07/p3/sp1_receipt_chain_and_bounds_audit.json` and `artifacts/evidence/stage-07/p3/sp1_batch_signature_verification_benchmark.json`.

@@ -116,3 +116,4 @@ export interface Rfc9457ProblemDetails {
   error_code: string;
   invalid_params?: Array<{ name: string; reason: string }>;
 }
+

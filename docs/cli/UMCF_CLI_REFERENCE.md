@@ -111,3 +111,4 @@ Generates native shell completion scripts:
 - `umcf completions zsh`
 - `umcf completions fish`
 - `umcf completions powershell`
+

@@ -39,3 +39,4 @@ class RateLimitError(UmcfError):
     def __init__(self, message: str, retry_after_ms: int = 1000):
         super().__init__(429, message)
         self.retry_after_ms = retry_after_ms
+

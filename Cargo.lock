@@ -3151,6 +3151,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "umcf-ledger"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "ed25519-dalek",
+ "hex",
+ "rand_core 0.6.4",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "umcf-core",
+ "umcf-identity",
+ "umcf-proto",
+]
+
+[[package]]
 name = "umcf-llama-sys"
 version = "0.1.0"
 dependencies = [

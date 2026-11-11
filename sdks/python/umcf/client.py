@@ -260,3 +260,4 @@ class _MediaNamespace:
 
     def transcode(self, segments: int) -> Dict[str, Any]:
         return self._c._request("POST", "/api/v1/media/transcode", {"segments": segments})
+

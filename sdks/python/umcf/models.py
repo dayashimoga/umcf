@@ -69,3 +69,4 @@ class PinResponse:
     cid: str
     mode: str
     hydration_status: str
+
