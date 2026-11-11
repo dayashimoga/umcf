@@ -67,6 +67,15 @@ pub enum EngineError {
     #[error("pipeline failover timed out after {elapsed_ms} ms")]
     FailoverTimeout { elapsed_ms: u64 },
 
+    #[error("private enclave security violation: {reason}")]
+    EnclaveViolation { reason: String },
+
+    #[error("chat template rendering failed: {reason}")]
+    ChatTemplateError { reason: String },
+
+    #[error("HTTP error {status_code}: {message}")]
+    HttpError { status_code: u16, message: String },
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

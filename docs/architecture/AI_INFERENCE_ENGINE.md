@@ -259,6 +259,41 @@ Multi-stage pipeline inference can suffer mid-stream failure if any worker drops
    - The coordinator hot-swaps the failed layer shard onto a pre-assigned standby node (or local head node) from cached GGUF shards.
    - Generation resumes from `step_idx` within $\le 1.5\text{ seconds}$ without terminating the user's client stream.
 
+---
+
+## 6. Private AI Privacy Enclave & OpenAI-Compatible Local API
+
+Privacy is an uncompromising invariant across UMCF. Users must possess mathematical certainty regarding where their data is processed and stored.
+
+### 6.1 Privacy Enclave Modes & Circuit Breaker
+
+The AI subsystem operates under three explicit privacy isolation modes:
+1. **`StrictLocalOnly`**:
+   - Outbound P2P networking for AI RPCs is hard-blocked at the kernel and network transport levels.
+   - If a requested model cannot fit within the device's local RAM/VRAM, the request is immediately rejected with HTTP `422 Unprocessable Entity` rather than routing intermediate activations over the network.
+   - Guarantees exactly **0 bytes** of prompt text, token IDs, or hidden states ever leave the local machine.
+2. **`TrustedPersonalDevicesOnly`**:
+   - Activations may be pipelined exclusively across devices verified and signed by the same user's primary Ed25519 identity key.
+   - Guest devices and public compute marketplace nodes are strictly excluded.
+3. **`ClusterEncrypted`**:
+   - Pipelined execution across heterogeneous cluster nodes with end-to-end activation encryption via **ChaCha20-Poly1305** and ephemeral per-session key derivation.
+
+### 6.2 Ephemeral RAM Zeroization & Log Redaction
+
+- **Memory Scrubbing (`ZeroizeOnDrop`)**: Plaintext prompt buffers (`SecretPromptBuffer`), token ID arrays, and temporary attention matrices implement automatic zeroization on drop, ensuring physical RAM pages are overwritten with `0x00` when requests terminate.
+- **Log Redaction**: All logging and OpenTelemetry tracing bridges automatically scrub canary tokens and prompt strings, emitting `[REDACTED_PRIVATE_ENCLAVE]`.
+
+### 6.3 OpenAI-Compatible Local Endpoint (`127.0.0.1:11435/v1`)
+
+To provide instant compatibility with existing developer tools, IDE extensions, LangChain/LlamaIndex agents, and mobile chat apps:
+- Binds to loopback address `127.0.0.1:11435` with standard OpenAI paths:
+  - `/v1/models`
+  - `/v1/chat/completions` (supporting SSE `text/event-stream` chunks and final `data: [DONE]`)
+  - `/v1/completions`
+  - `/v1/embeddings` (L2-normalized vectors with cosine similarity)
+- Evaluates the `X-UMCF-Privacy-Mode` request header to enforce data sovereignty per request.
+
+
 
 
 

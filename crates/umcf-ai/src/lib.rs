@@ -10,6 +10,8 @@ pub mod ffi_bridge;
 pub mod kv_cache;
 pub mod partitioner;
 pub mod distributed_rpc;
+pub mod openai_api;
+pub mod private_enclave;
 
 pub use backend_loader::{DynamicBackendLoader, GgmlBackendDescriptor};
 pub use backend_selector::{
@@ -27,7 +29,15 @@ pub use ffi_bridge::{
     SafeLlamaContext, SafeLlamaModel, SafeSamplerChain,
 };
 pub use kv_cache::{KvCacheManager, KvSlot, SerializedKvSlot};
+pub use openai_api::{
+    cosine_similarity, l2_normalize, ChatChoice, ChatCompletionChunk, ChatCompletionRequest,
+    ChatCompletionResponse, ChatMessage, ChatTemplateRenderer, EmbeddingObject, EmbeddingRequest,
+    EmbeddingResponse, LocalOpenAiEngine, ModelListResponse, ModelObject, ResponseFormat, Usage,
+};
 pub use partitioner::{
     CandidateComputeNode, DistributedLayerPartitioner, DistributedPartitionPlan,
     LayerPartitionStage, NetworkLinkMatrix, PartitionMigrationPlan, RebalanceDetector, TrustTier,
+};
+pub use private_enclave::{
+    redact_enclave_text, EphemeralInferenceSession, PrivacyEnclaveMode, SecretPromptBuffer,
 };

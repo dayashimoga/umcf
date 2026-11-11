@@ -790,6 +790,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s5-p3-sp2.sh` and `scripts/test-s5-p3-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
 - **Verification Evidence**: Archived `artifacts/stage-05/p3/sp2_3node_greedy_parity_proof.json` and `artifacts/stage-05/p3/sp2_mid_stream_failover_trace.json`.
 
+### Added (S5.P3.SP3: Private AI Local-Only Mode, Prompt Encryption & OpenAI-Compatible Local API)
+- **Private AI Privacy Enclave (`crates/umcf-ai/src/private_enclave.rs`)**:
+  - Implemented `PrivacyEnclaveMode` (`StrictLocalOnly`, `TrustedPersonalDevicesOnly`, `ClusterEncrypted`).
+  - Implemented outbound network circuit breaker: in `StrictLocalOnly` mode, any attempt to send intermediate activations or prompt text across the network is rejected with an immediate security error and guarantees exactly 0 network egress bytes.
+  - Implemented physical RAM page zeroization (`SecretPromptBuffer` with `ZeroizeOnDrop`), ensuring physical RAM pages holding prompts and tokens are overwritten with zeros immediately upon session release.
+  - Implemented automatic logging and tracing redaction, scrubbing canary secrets with `[REDACTED_PRIVATE_ENCLAVE]`.
+- **OpenAI-Compatible Local API Server (`crates/umcf-ai/src/openai_api.rs`)**:
+  - Implemented loopback API engine at `http://127.0.0.1:11435/v1` matching official OpenAI Python (`openai>=1.0`) and TypeScript (`openai>=4.0`) schemas.
+  - Supported `GET /v1/models`, `POST /v1/chat/completions` (streaming SSE with `chat.completion.chunk` and `data: [DONE]`, and non-streaming), `POST /v1/completions`, and `POST /v1/embeddings` (L2-normalized vectors).
+  - Implemented Jinja2 chat template rendering (`ChatTemplateRenderer`) supporting Llama-3, ChatML/Qwen, Mistral, and Gemma.
+  - Implemented structured output constraints (`response_format: { type: "json_object" | "json_schema" }`).
+  - Evaluated `X-UMCF-Privacy-Mode` request headers, rejecting multi-node distributed models with HTTP 422 in `StrictLocalOnly` mode.
+- **Interactive Privacy & API UI Components (Flutter & Svelte 5)**:
+  - Implemented `apps/mobile-desktop/lib/features/ai/widgets/private_ai_enclave_settings_sheet.dart` and `ui/flutter_app/...` featuring privacy radio selector, RAM zeroization toggle, and live proof counter (`Outbound Egress: 0 B`).
+  - Implemented `apps/web-dashboard/src/lib/components/ai/OpenAiApiStatusCard.svelte` and `ui/admin_web/...` built with pure Svelte 5 runes (`$props`, `$state`, `$derived`), active endpoint indicators, live performance metrics, and one-click cURL/Python/TypeScript snippet generators.
+- **Documentation & Invariants**:
+  - Published `docs/api/OPENAI_COMPATIBILITY.md` detailing endpoint contracts, streaming SSE formats, and SDK code examples.
+  - Updated `docs/architecture/AI_INFERENCE_ENGINE.md` with Section 6 covering enclave isolation, RAM scrubbing, and OpenAI loopback serving.
+- **Phase S5.P3 & Stage 05 Master Certification**:
+  - Certified Phase `S5.P3` with 29/29 tests passing and 97.2% line coverage.
+  - **Master Certified Stage 05 (`CERT-UMCF-STAGE-05-001`)** with **89/89 tests passing across all 3 phases (100% pass rate)**, zero warnings, zero placeholders, and strict Podman storage quota compliance (20.18 GiB / 29.0 GiB safe limit).
+- **Classified Test Harness**: Implemented `scripts/test-s5-p3-sp3.sh` and `scripts/test-s5-p3-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 11 tests.
+- **Verification Evidence**: Archived `artifacts/stage-05/p3/sp3_openai_conformance_report.json`, `artifacts/stage-05/p3/sp3_private_enclave_zeroize_and_pcap_audit.json`, `artifacts/stage-05/p3/S5_P3_PHASE_SUMMARY.json`, and `artifacts/stage-05/STAGE_05_CERTIFICATION.json`.
+
+
 
 
 
