@@ -28,6 +28,26 @@ pub enum MediaError {
     #[error("invalid media argument or path: {reason}")]
     InvalidInput { reason: String },
 
+    #[error("segment {segment_index} frame count mismatch: expected {expected}, actual {actual}")]
+    SegmentFrameCountMismatch {
+        segment_index: u32,
+        expected: u64,
+        actual: u64,
+    },
+
+    #[error("PTS/DTS discontinuity at segment {segment_index}: previous PTS {prev_pts}, current PTS {curr_pts}")]
+    PtsDtsDiscontinuity {
+        segment_index: u32,
+        prev_pts: i64,
+        curr_pts: i64,
+    },
+
+    #[error("audio/video synchronization drift exceeded: measured {measured_ms:.2} ms, maximum allowed {max_allowed_ms:.2} ms")]
+    AvSyncDriftExceeded {
+        measured_ms: f64,
+        max_allowed_ms: f64,
+    },
+
     #[error("quality check failed: {metric} measured {measured:.4}, required {threshold:.4}")]
     QualityCheckFailed {
         metric: String,

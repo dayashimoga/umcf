@@ -10,6 +10,8 @@
 pub mod adapter;
 pub mod error;
 pub mod prober;
+pub mod segmenter;
+pub mod stitcher;
 
 pub use adapter::{
     translate_encoder_parameters, MediaCodecAdapter, NormalizedEncoderArgs, TranscodeProgress,
@@ -19,4 +21,12 @@ pub use error::MediaError;
 pub use prober::{
     AccelerationBackend, CandidateCodec, CodecCapabilityDescriptor, CodecDirection,
     HardwareCodecProber, MediaCodecId, PixelFormat,
+};
+pub use segmenter::{
+    GopSegmenter, KeyframeInfo, ParallelTranscodeCoordinator, SegmentAssignment,
+    UnifiedEncodingProfile, VideoSegmentDescriptor,
+};
+pub use stitcher::{
+    compute_fractional_pts, ExtradataNormalizer, MediaPacket, SampleAccurateStitcher,
+    StitchedMediaContainer, TranscodedSegmentOutput,
 };

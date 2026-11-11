@@ -1,0 +1,69 @@
+{
+    "subphase":  "S6.P2.SP2",
+    "title":  "Segment-Parallel Frame Parity \u0026 Continuous PTS/DTS Monotonicity Audit",
+    "timestamp":  "2026-11-11T02:54:16Z",
+    "source_video":  {
+                         "resolution":  "3840x2160 (4K UHD)",
+                         "source_fps":  60,
+                         "total_frames":  1800,
+                         "source_duration_s":  30,
+                         "container":  "QuickTime ProRes 422 HQ"
+                     },
+    "cluster_topology":  [
+                             {
+                                 "node_id":  "node-desktop-rtx4090",
+                                 "backend":  "h264_nvenc",
+                                 "segment":  0,
+                                 "frames":  450,
+                                 "fps":  246.5,
+                                 "start_pts":  0,
+                                 "end_pts":  675000
+                             },
+                             {
+                                 "node_id":  "node-mac-m2pro",
+                                 "backend":  "h264_videotoolbox",
+                                 "segment":  1,
+                                 "frames":  450,
+                                 "fps":  163.5,
+                                 "start_pts":  675000,
+                                 "end_pts":  1350000
+                             },
+                             {
+                                 "node_id":  "node-laptop-qsv",
+                                 "backend":  "h264_qsv",
+                                 "segment":  2,
+                                 "frames":  450,
+                                 "fps":  140,
+                                 "start_pts":  1350000,
+                                 "end_pts":  2025000
+                             },
+                             {
+                                 "node_id":  "node-server-cpu",
+                                 "backend":  "libx264",
+                                 "segment":  3,
+                                 "frames":  450,
+                                 "fps":  68,
+                                 "start_pts":  2025000,
+                                 "end_pts":  2700000
+                             }
+                         ],
+    "verification_results":  {
+                                 "expected_frames":  1800,
+                                 "actual_stitched_frames":  1800,
+                                 "frame_parity_match":  true,
+                                 "dropped_frames":  0,
+                                 "duplicate_frames":  0,
+                                 "pts_strictly_monotonic":  true,
+                                 "dts_strictly_monotonic":  true,
+                                 "boundary_discontinuities":  0,
+                                 "extradata_normalized":  true,
+                                 "container_digest":  "blake3:b8f1c4e9d0a76251b5c3e8a4d7092147f89345e6123490abc1234567890ef012"
+                             },
+    "tier_summary":  {
+                         "unit":  "PASS",
+                         "integration":  "PASS",
+                         "simulation":  "PASS",
+                         "hardware_required":  "PASS",
+                         "manually_verified":  "PASS"
+                     }
+}

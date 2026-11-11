@@ -119,5 +119,40 @@ Cluster nodes pool hardware video encoders/decoders (NVIDIA NVENC, Intel QSV, Ap
 #### 2.1.4 Sub-50 ms Cancellation Teardown
 - Asynchronous task cancellation instantly signals child processes and media contexts via atomic cancellation flags and OS process signals (`SIGTERM` / `TerminateProcess`), cleaning up intermediate scratch files in $< 50\text{ ms}$ with zero zombie processes.
 
+### 2.2 Segment-Parallel Video Transcoding, Stitching & Audio Sync (`S6.P2.SP2`)
+
+Parallelizing video transcoding across heterogeneous cluster nodes without introducing frame drops/duplications, codec extradata mismatches, or audio/video synchronization drift requires strict GOP-boundary partitioning, parameter normalization, and sample-accurate PTS/DTS re-basing.
+
+#### 2.2.1 GOP Keyframe Scanner & Lossless Splitter (`GopSegmenter`)
+- **Keyframe Boundary Partitioning**:
+  - The source container is scanned at packet index level (`av_read_frame` packet headers) without decoding video frames to locate all IDR keyframes (`pkt.flags & AV_PKT_FLAG_KEY`), stream `time_base`, and exact frame counts per GOP.
+  - Consecutive GOPs are clustered into `VideoSegmentDescriptor` units targeting $4.0..10.0$ seconds per segment adapted to cluster node capacity and total duration.
+  - Invariant: Every video segment begins on an IDR keyframe, and the sum of `expected_frame_count` across all segments equals the source container frame count exactly.
+- **Dedicated Continuous Audio Pipeline**:
+  - Splitting and encoding lossy audio (AAC/Opus) per segment produces audible clicks, pops, and discontinuities at segment boundaries due to overlapping MDCT window boundary artifacts.
+  - UMCF demuxes and encodes the audio stream as a continuous, unified pipeline alongside video segmentation, or passes uninterrupted audio through to the muxing stage.
+
+#### 2.2.2 Heterogeneous Parallel Transcode Coordinator (`ParallelTranscodeCoordinator`)
+- **Unified Encoding Profile Normalization**:
+  - Across mixed hardware and software encoders (e.g., Node A using `h264_nvenc`, Node B using `h264_videotoolbox`, Node C using `h264_qsv`, and Node D using `libx264`), the coordinator enforces a uniform target profile:
+    - Identical profile (`high` / `main10`), level, pixel format (`Nv12`, `P010le`), color primaries, matrix, and transfer characteristics.
+    - Closed GOP (`-flags +cgop`) with fixed output timebase (`1/90000`).
+    - Canonical 4-byte Annex-B start codes (`[0x00, 0x00, 0x00, 0x01]`) and deduplicated parameter sets via `ExtradataNormalizer`.
+- **Capacity-Weighted Dispatch**:
+  - Segments are dispatched proportionally to node capacity based on `benchmark_fps_1080p`, assigning larger segments to high-throughput discrete GPU encoders and lighter segments to mobile/laptop encoders.
+
+#### 2.2.3 Sample-Accurate Stitcher & Fractional Framerate PTS Rebaser (`SampleAccurateStitcher`)
+- **Exact Frame Parity Verification**:
+  - Upon receiving completed segments from cluster workers, the stitcher verifies `actual_frame_count == expected_frame_count` and validates that each segment begins with an IDR keyframe.
+- **Fractional Framerate PTS/DTS Precision**:
+  - Fractional framerates ($23.976\text{ fps} = \frac{24000}{1001}$, $59.94\text{ fps} = \frac{60000}{1001}$) introduce cumulative floating-point rounding drift if timestamps are calculated naively.
+  - `compute_fractional_pts` performs exact integer arithmetic in the stream timebase ($90{,}000\text{ Hz}$):
+    $$\text{PTS}(n) = \left\lfloor \frac{n \times \text{timebase\_den} \times \text{fps\_den} + \frac{\text{fps\_num}}{2}}{\text{fps\_num}} \right\rfloor$$
+  - Eliminates timestamp drift ($< 0.01\text{ ms}$ cumulative drift over $100{,}000$ frames).
+- **Sub-Millisecond A/V Synchronization**:
+  - Validates continuous audio sample alignment against re-based video timestamps at periodic intervals (e.g. flash/beep checkpoints at $t = 2\text{s}, 14\text{s}, 28\text{s}$), strictly enforcing maximum A/V drift $\le 1.0\text{ ms}$.
+  - Monotonicity checks guarantee $DTS_i > DTS_{i-1}$ and $PTS_i > PTS_{i-1}$ with zero gaps or overlaps across segment seams.
+
+
 
 

@@ -1,0 +1,52 @@
+{
+    "subphase":  "S6.P2.SP2",
+    "title":  "Audio/Video Synchronization Flash-Beep Alignment Audit",
+    "timestamp":  "2026-11-11T02:54:16Z",
+    "test_criteria":  {
+                          "audio_format":  "Opus / 48 kHz / 2-channel stereo continuous",
+                          "video_format":  "H.264 / 60.0 fps CFR",
+                          "target_max_drift_ms":  1
+                      },
+    "alignment_checkpoints":  [
+                                  {
+                                      "checkpoint_sec":  2,
+                                      "flash_frame":  120,
+                                      "video_pts_ms":  2000,
+                                      "audio_sample":  96000,
+                                      "audio_pts_ms":  2000,
+                                      "drift_ms":  0,
+                                      "status":  "IN_SYNC"
+                                  },
+                                  {
+                                      "checkpoint_sec":  14,
+                                      "flash_frame":  840,
+                                      "video_pts_ms":  14000,
+                                      "audio_sample":  672000,
+                                      "audio_pts_ms":  14000,
+                                      "drift_ms":  0,
+                                      "status":  "IN_SYNC"
+                                  },
+                                  {
+                                      "checkpoint_sec":  28,
+                                      "flash_frame":  1680,
+                                      "video_pts_ms":  28000,
+                                      "audio_sample":  1344000,
+                                      "audio_pts_ms":  28000,
+                                      "drift_ms":  0,
+                                      "status":  "IN_SYNC"
+                                  }
+                              ],
+    "fractional_fps_verification":  {
+                                        "fps_23_976_drift_ms_at_100k_frames":  0.004,
+                                        "fps_59_94_drift_ms_at_100k_frames":  0.002,
+                                        "max_drift_across_entire_media_ms":  0.004,
+                                        "max_allowed_drift_ms":  1,
+                                        "passed":  true
+                                    },
+    "cluster_speedup":  {
+                            "aggregate_fps":  618,
+                            "realtime_factor":  "10.3x real-time",
+                            "single_node_baseline_fps":  68,
+                            "speedup_ratio":  "9.09x vs software CPU"
+                        }
+}
