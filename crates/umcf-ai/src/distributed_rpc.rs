@@ -58,7 +58,7 @@ impl ActivationCodec {
     #[must_use]
     pub fn encode_f32_to_q8_0(data: &[f32]) -> Vec<u8> {
         const BLOCK_SIZE: usize = 32;
-        let num_blocks = (data.len() + BLOCK_SIZE - 1) / BLOCK_SIZE;
+        let num_blocks = data.len().div_ceil(BLOCK_SIZE);
         // Each block = 2 bytes scale + 32 bytes quantized values = 34 bytes
         let mut out = Vec::with_capacity(num_blocks * 34);
 
@@ -83,8 +83,8 @@ impl ActivationCodec {
             }
 
             // Pad remainder of block if chunk is smaller than 32
-            for _ in chunk.len()..BLOCK_SIZE {
-                out.push(0);
+            if chunk.len() < BLOCK_SIZE {
+                out.resize(out.len() + (BLOCK_SIZE - chunk.len()), 0);
             }
         }
 
@@ -152,7 +152,7 @@ fn half_from_f32(val: f32) -> u16 {
     let fbits = val.to_bits();
     let sign = ((fbits >> 31) & 1) as u16;
     let exp = ((fbits >> 23) & 0xFF) as i32;
-    let mant = (fbits & 0x7FFFFF) as u32;
+    let mant = fbits & 0x7FFFFF;
 
     if exp == 0 {
         return sign << 15;

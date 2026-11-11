@@ -451,8 +451,8 @@ impl DistributedLayerPartitioner {
 
         // 7. Compute Standby Failover Map
         let mut failover = HashMap::new();
-        for i in 0..stages.len() {
-            let current_node = &stages[i].node_id;
+        for stage in &stages {
+            let current_node = &stage.node_id;
             // Find another node with maximum free memory
             for candidate in &sorted_nodes {
                 if candidate.node_id != *current_node {

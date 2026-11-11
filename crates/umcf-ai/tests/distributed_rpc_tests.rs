@@ -180,11 +180,11 @@ fn test_integration_3_node_pipeline_greedy_token_parity_with_single_node() {
     // Run 32 steps of greedy generation
     for step in 0..32 {
         let single_logits = single_coord
-            .forward_token_step(&current_input, step as i32, ActivationDtype::F32)
+            .forward_token_step(&current_input, step, ActivationDtype::F32)
             .expect("single step forward");
 
         let dist_logits = dist_coord
-            .forward_token_step(&current_input, step as i32, ActivationDtype::F32)
+            .forward_token_step(&current_input, step, ActivationDtype::F32)
             .expect("dist step forward");
 
         // Greedy argmax token selection

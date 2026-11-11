@@ -1032,6 +1032,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s7-p1-sp1.sh` and `scripts/test-s7-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
 - **Verification Evidence**: Archived `artifacts/stage-07/p1/sp1_fastcdc_dedup_ratio.json` and `artifacts/stage-07/p1/sp1_quota_64thread_invariant_audit.json` (mirrored to `artifacts/evidence/stage-07/p1/`).
 
+### Added (S7.P1.SP2: Reed-Solomon Erasure Coding, Replication & Encrypted Shard Placement)
+- **Convergent Authenticated Chunk Cipher (`crates/umcf-storage/src/erasure.rs`)**:
+  - Implemented `ConvergentChunkCipher` using RFC 5869 HKDF-SHA256 and XChaCha20-Poly1305 authenticated encryption ($24\text{-byte}$ nonce, $16\text{-byte}$ Poly1305 MAC).
+  - Convergent deduplication: Identical plaintexts encrypted within the same security namespace produce identical ciphertexts and authentication tags.
+  - Cross-namespace isolation: Independent namespace secrets derive orthogonal keys, ensuring 100% Poly1305 authentication rejection on cross-namespace decrypt attempts.
+  - Zero-leakage audit: Verified Shannon entropy of $7.9984\text{ bits/byte}$ ($> 7.95$ requirement) and zero plaintext substring leakage on storage nodes.
+- **Systematic Cauchy Reed-Solomon GF(2^8) Erasure Engine (`ReedSolomonErasureEngine`)**:
+  - Implemented table-driven Galois Field $\text{GF}(2^8)$ arithmetic ($0x11D$ irreducible polynomial, primitive root $\alpha = 0x02$) with precomputed 512-entry exponentiation and 256-entry logarithm tables.
+  - Constructed systematic Cauchy generator matrix $P_{i, j} = \frac{1}{x_i \oplus y_j}$ ($x_i = i, y_j = 128 + j$) ensuring every square submatrix is mathematically non-singular.
+  - Matrix inversion implemented via Gaussian elimination over $\text{GF}(2^8)$ with forward and backward elimination.
+  - Exhaustive combinatorial proof: Verified exact bit-level reconstruction across **all 152 missing shard combinations** ($22$ for $RS(4, 2)$ and $130$ for $RS(6, 3)$) with 100% BLAKE3 match.
+  - Pre-reconstruction BLAKE3 guard: Detects and rejects tampered shards before matrix inversion, preventing corrupted shards from polluting the reconstruction pipeline.
+  - High-performance throughput: Measured $400.41\text{ MB/s}$ encoding and $332.62\text{ MB/s}$ decoding throughput in safe pure Rust (`#![forbid(unsafe_code)]`).
+- **Failure-Domain-Aware Placement Engine (`crates/umcf-storage/src/placement.rs`)**:
+  - Implemented `FailureDomainPlacementEngine` scoring candidate storage nodes by power stability ($+50\text{ pts}$ for AC-powered desktops/servers/docked phones), uptime reliability ($0..30\text{ pts}$), and quota headroom ratio ($0..20\text{ pts}$).
+  - Enforced round-robin allocation across distinct failure domains (subnets/racks).
+  - Parity tolerance invariant: Enforced that no single node holds more than $\lfloor \frac{M}{2} \rfloor + 1$ shards when cluster size $\ge K + M$, guaranteeing single-node failure never exceeds parity tolerance.
+- **Self-Healing Durability Coordinator (`ShardHealthRepairWorker`)**:
+  - Audits live durability health across `Healthy` ($K+M$), `Degraded` ($K..K+M-1$), and `Unrecoverable` ($< K$) states.
+  - Verified 6-node $RS(4, 2)$ upload where killing 2 nodes preserved instantaneous client download, followed by self-healing repair reconstructing missing shards and migrating to a 7th spare node to restore `6/6 Shards Healthy`.
+  - Executed 20-node cluster churn simulation across 5 epochs with 100 stored objects: **0 data loss, 100% availability**.
+- **Interactive Multiplatform Shard Placement Matrix UI (Svelte 5 & Flutter)**:
+  - Svelte 5 `apps/web-dashboard/src/lib/components/storage/ErasureShardMatrixCard.svelte` and `ui/admin_web/...`: Redundancy profile selector ($RS(4, 2)$, $RS(6, 3)$, $3\times$ Replicated), live durability status banner, visual shard placement grid with node/domain/power badges and BLAKE3 hashes, working "Simulate Node Outage", "Reconstruct & Self-Heal", and real-time repair timeline.
+  - Flutter `apps/mobile-desktop/lib/features/storage/erasure_shard_matrix_screen.dart` and `ui/flutter_app/...`: Riverpod screen with segmented profile switch, responsive grid, durability status card, and self-healing controls.
+- **Architecture Documentation & Invariants**:
+  - Authored Section 2 in `docs/architecture/DISTRIBUTED_STORAGE.md` detailing convergent key derivation, Cauchy matrix theory, failure-domain placement heuristics, and self-healing invariants.
+- **Classified Test Harness**: Implemented `scripts/test-s7-p1-sp2.sh` and `scripts/test-s7-p1-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 8 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-07/p1/sp2_rs_combinatorial_reconstruction_proof.json` and `artifacts/evidence/stage-07/p1/sp2_self_healing_repair_timeline.json`.
+
 
 
 

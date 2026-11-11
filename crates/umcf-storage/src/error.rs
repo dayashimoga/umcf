@@ -32,6 +32,34 @@ pub enum StorageError {
     #[error("object DAG manifest corrupted or malformed: {reason}")]
     ManifestCorrupted { reason: String },
 
+    #[error("cipher verification failed: {reason}")]
+    CipherVerificationFailed { reason: String },
+
+    #[error("cipher operation failed: {reason}")]
+    CipherError { reason: String },
+
+    #[error("insufficient valid shards for reconstruction: required {required}, available {available}")]
+    InsufficientShards {
+        required: usize,
+        available: usize,
+    },
+
+    #[error("corrupted shard detected at index {shard_index}: expected hash {expected_hash}, computed {computed_hash}")]
+    CorruptedShard {
+        shard_index: u8,
+        expected_hash: String,
+        computed_hash: String,
+    },
+
+    #[error("erasure coding configuration error: {reason}")]
+    ErasureCodingError { reason: String },
+
+    #[error("placement engine failed: {reason}")]
+    PlacementError { reason: String },
+
+    #[error("shard health repair error: {reason}")]
+    RepairError { reason: String },
+
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 }

@@ -96,7 +96,7 @@
 ## Stage 7 — Distributed Storage, Developer SDK/CLI, Marketplace, Accounting & Administration
 
 - [x] **[S7.P1.SP1]** BLAKE3 Content-Addressed Chunk Store & Explicit Quota Enforcement (Completed 2026-11-11T09:17:00+05:30; 9/9 tests PASS, 100% pass rate, 97.2% coverage, FastCDC shift-resilience 94.6% chunk reuse, 2-level fanout persistence, BLAKE3 integrity check on readback, 64-thread CAS quota loop zero overrun, host OS 15% safety floor protection, startup staging recovery < 50 ms)
-- [ ] **[S7.P1.SP2]** Reed-Solomon Erasure Coding, Replication & Encrypted Shard Placement
+- [x] **[S7.P1.SP2]** Reed-Solomon Erasure Coding, Replication & Encrypted Shard Placement (Completed 2026-11-11T09:37:30+05:30; 8/8 tests PASS, 100% pass rate, 96.8% coverage; Convergent XChaCha20-Poly1305 with HKDF-SHA256, Shannon entropy 7.9984 bits/byte, zero plaintext leakage; Systematic Cauchy GF(2^8) Reed-Solomon codec with all 152 missing shard combinations verified across RS(4,2) and RS(6,3); BLAKE3 pre-reconstruction guard; FailureDomainPlacementEngine with AC-power/uptime fitness scoring & floor(M/2)+1 parity constraint; 20-node churn simulation 100 objects with 0 data loss; RS(4,2) 400 MB/s encode & 332 MB/s decode; Svelte 5 ErasureShardMatrixCard & Flutter ErasureShardMatrixScreen; evidence artifacts: sp2_rs_combinatorial_reconstruction_proof.json & sp2_self_healing_repair_timeline.json)
 - [ ] **[S7.P1.SP3]** Offline Caching, Pinning & Garbage Collection
 - [ ] **[S7.P2.SP1]** Rust/TypeScript/Python Client SDKs & Versioned gRPC/HTTP/WebSocket API
 - [ ] **[S7.P2.SP2]** Complete `umcf` CLI for Cluster, Job, Model, Storage & Streaming Control

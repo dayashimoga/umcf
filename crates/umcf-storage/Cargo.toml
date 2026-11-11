@@ -18,6 +18,9 @@ tokio = { workspace = true, features = ["sync", "time", "rt", "macros", "fs", "i
 blake3 = { workspace = true }
 bytes = { workspace = true }
 hex = "0.4.3"
+chacha20poly1305 = { workspace = true, features = ["std"] }
+sha2 = "0.10"
+rand_core = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

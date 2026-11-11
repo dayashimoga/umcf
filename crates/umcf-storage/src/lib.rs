@@ -10,12 +10,22 @@
 #![forbid(unsafe_code)]
 
 pub mod chunk_store;
+pub mod erasure;
 pub mod error;
+pub mod placement;
 pub mod quota;
 
 pub use chunk_store::{
     ChunkId, ChunkMetadata, ChunkRef, ContentAddressedChunkStore, FastCdcConfig, IngestOptions,
     ObjectCid, ObjectDagManifest,
 };
+pub use erasure::{
+    shannon_entropy, ConvergentChunkCipher, EncryptedShard, RedundancyProfile,
+    ReedSolomonErasureEngine, Gf256,
+};
 pub use error::StorageError;
+pub use placement::{
+    DurabilityState, FailureDomainPlacementEngine, ObjectPlacementRecord, RepairEvent,
+    ShardHealthReport, ShardHealthRepairWorker, StorageNodeDescriptor,
+};
 pub use quota::{QuotaReservationPermit, StrictQuotaEnforcer};
