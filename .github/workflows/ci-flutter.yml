@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
 
 env:
-  FLUTTER_VERSION: "3.24.0"
+  FLUTTER_VERSION: "stable"
 
 jobs:
   # ============================================================================
@@ -39,7 +39,6 @@ jobs:
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
           cache: true
 
@@ -100,7 +99,6 @@ jobs:
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
           cache: true
 
@@ -187,7 +185,6 @@ jobs:
       - name: Setup Flutter SDK (Windows)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
           cache: true
 
@@ -252,7 +249,6 @@ jobs:
       - name: Setup Flutter SDK (Linux)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
           cache: true
 
@@ -312,7 +308,6 @@ jobs:
       - name: Setup Flutter SDK (macOS)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
           cache: true
 
@@ -371,7 +366,6 @@ jobs:
       - name: Setup Flutter SDK (iOS)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
           cache: true
 

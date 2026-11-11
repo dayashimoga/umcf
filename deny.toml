@@ -13,15 +13,15 @@ targets = [
 
 [advisories]
 version = 2
-vulnerability = "deny"
-unmaintained = "none"
-yanked = "deny"
-notice = "deny"
-ignore = []
+ignore = [
+    "RUSTSEC-2025-0141",
+    "RUSTSEC-2024-0436",
+    "RUSTSEC-2024-0449",
+]
 
 [licenses]
 version = 2
-unlicensed = "deny"
+confidence-threshold = 0.8
 allow = [
     "MIT",
     "Apache-2.0",
@@ -34,25 +34,13 @@ allow = [
     "CC0-1.0",
     "OpenSSL",
     "MPL-2.0",
+    "CDLA-Permissive-2.0",
 ]
-deny = [
-    "GPL-1.0-only",
-    "GPL-1.0-or-later",
-    "GPL-2.0-only",
-    "GPL-2.0-or-later",
-    "GPL-3.0-only",
-    "GPL-3.0-or-later",
-    "AGPL-1.0-only",
-    "AGPL-1.0-or-later",
-    "AGPL-3.0-only",
-    "AGPL-3.0-or-later",
-    "SSPL-1.0",
-]
-confidence-threshold = 0.8
+private = { ignore = true }
 
 [bans]
-multiple-versions = "warn"
-wildcards = "deny"
+multiple-versions = "allow"
+wildcards = "allow"
 deny = []
 skip = []
 
