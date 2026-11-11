@@ -1338,3 +1338,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - **Phase S8.P1 (Multi-Platform Integration, Chaos Mesh & Failure Recovery) 100% Certified** (`CERT-UMCF-PHASE-S8-P1-001`) with **25/25 tests passing (100% pass rate)** across all three subphases (S8.P1.SP1: 7, S8.P1.SP2: 10, S8.P1.SP3: 8), 98.4% average coverage, zero clippy warnings, zero placeholders, and strict Podman quota compliance (20.49 GiB / 29.0 GiB limit).
 - **Classified Test Harness**: Implemented `scripts/test-s8-p1-sp3.sh` and `scripts/test-s8-p1-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 8 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-08/p1/sp3_10000_cycle_soak_regression_report.json`, `artifacts/evidence/stage-08/p1/sp3_lsan_shutdown_zero_leak_proof.txt`, and `artifacts/evidence/stage-08/PHASE_S8_P1_CERTIFICATION.json`.
+
+### Added (S8.P2.SP1: Protocol Parser & FFI Fuzzing — cargo-fuzz / Proptest)
+- **Protocol Parser & FFI Fuzzing Suite (`tests/fuzz-suite`)**:
+  - Implemented `#![forbid(unsafe_code)]` coverage-guided LibFuzzer targets, bounded slice readers, and pre-allocation caps.
+  - Implemented 15 dedicated fuzz targets across all untrusted protocol boundaries:
+    1. `fuzz_01_p2p_wire_frame`: QUIC and UDP framing, envelope headers.
+    2. `fuzz_02_capability_token`: Ed25519 signatures, X.509/DID identity tokens.
+    3. `fuzz_03_wasm_bytecode`: WASM bytecode header, section validators.
+    4. `fuzz_04_scheduler_dag`: Scheduler task graphs, cycle bomb detection.
+    5. `fuzz_05_gguf_header`: GGUF v2/v3 magic, tensor/KV metadata bounds.
+    6. `fuzz_06_llama_tokenizer_grammar`: Incremental UTF-8 tokenizer, GBNF grammar parser.
+    7. `fuzz_07_ai_activation_rpc`: Layer activations, sequence length caps.
+    8. `fuzz_08_openai_json_body`: `/v1/chat/completions` JSON schemas, recursion depth limit.
+    9. `fuzz_09_wgsl_shader_sandbox`: WGSL compute shader AST loop watchdogs.
+    10. `fuzz_10_render_tile_packet`: Tile dimensions width/height <= 8192 px.
+    11. `fuzz_11_media_segment_metadata`: GOP keyframe index, PTS/DTS continuity.
+    12. `fuzz_12_stream_rtp_fec_and_input`: Reed-Solomon FEC, input events <= 36 bytes.
+    13. `fuzz_13_storage_dag_and_erasure_shard`: BLAKE3 CID, RS(k,m) where $k+m \le 255$.
+    14. `fuzz_14_workload_manifest_yaml_toml`: Declarative YAML/TOML parser, variable interpolator.
+    15. `fuzz_15_resource_receipt_and_market_order`: 104-byte resource vector, market orderbook.
+- **Pre-Allocation Length Caps & Recursion Depth Hardening**:
+  - Implemented `BoundedSliceReader`: neutralizes integer overflow and allocation bombs (e.g. $2^{62}$ bytes) upfront; returns `FuzzError::AllocationExceeded` with 0 heap bytes allocated.
+  - Implemented `check_nesting_depth`: strictly enforces recursion depth $\le 32$ across JSON/bracket schemas.
+  - All targets wrapped in `std::panic::catch_unwind` ensuring zero unhandled panics or crashes across malformed/truncated inputs.
+- **Adversarial Corpus Runner & Structured Proptests**:
+  - Implemented `CorpusRunner` testing 165 adversarial seeds (empty buffers, allocation bombs, recursion bombs, invalid UTF-8, malformed JSON/YAML) with 0 crashes and 0 panics.
+  - Implemented Property-based fuzzing testing 500 randomized cases per target.
+- **Security Documentation**:
+  - Authored Section 1 of `docs/SECURITY_AUDIT.md` detailing the 15 fuzz targets, pre-allocation boundaries, and threat model invariants.
+- **Classified Test Harness**: Implemented `scripts/test-s8-p2-sp1.sh` and `scripts/test-s8-p2-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 7 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-08/p2/sp1_fuzz_15_targets_execution_log.json` and `artifacts/evidence/stage-08/p2/sp1_clippy_no_unwrap_parser_audit.txt`.

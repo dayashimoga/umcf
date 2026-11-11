@@ -176,3 +176,4 @@ fn test_manual_resource_and_leak_diagnostics_ui_schema() {
     assert_eq!(json_val["zero_leak_verified"], true);
     assert!(json_val["regressions"].as_array().unwrap().len() >= 5);
 }
+

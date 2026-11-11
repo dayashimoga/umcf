@@ -819,6 +819,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "fuzz-suite"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "hex",
+ "proptest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 1.0.69",
+ "tokio",
+ "toml",
+ "tracing",
+ "umcf-ai",
+ "umcf-core",
+ "umcf-gguf",
+ "umcf-gpu",
+ "umcf-guard",
+ "umcf-hwprobe",
+ "umcf-identity",
+ "umcf-ledger",
+ "umcf-manifest",
+ "umcf-marketplace",
+ "umcf-media",
+ "umcf-proto",
+ "umcf-scheduler",
+ "umcf-storage",
+ "umcf-stream",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"

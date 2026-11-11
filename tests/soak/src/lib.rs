@@ -12,3 +12,4 @@ pub mod soak_runner;
 pub use error::SoakError;
 pub use leak_profiler::{LeakProfiler, QuiescenceBarrier, RegressionResult, ResourceSnapshot};
 pub use soak_runner::{SoakReport, SoakTestCoordinator};
+

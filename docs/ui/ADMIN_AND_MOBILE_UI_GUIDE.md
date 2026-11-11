@@ -77,3 +77,4 @@ This document provides architectural guidance, screen organization, state manage
 - `Escape`: Instantly dismiss modals, bottom sheets, or close active remote streaming sessions.
 - `:focus-visible`: High-contrast 2px focus ring across all components for keyboard operators.
 - `prefers-reduced-motion`: Disables non-essential pulse animations on status pills and telemetry gauges.
+

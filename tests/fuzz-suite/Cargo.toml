@@ -1,0 +1,36 @@
+[package]
+name = "fuzz-suite"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+umcf-core = { workspace = true }
+umcf-proto = { workspace = true }
+umcf-identity = { workspace = true }
+umcf-scheduler = { workspace = true }
+umcf-gguf = { workspace = true }
+umcf-ai = { workspace = true }
+umcf-gpu = { workspace = true }
+umcf-media = { workspace = true }
+umcf-stream = { workspace = true }
+umcf-storage = { workspace = true }
+umcf-manifest = { workspace = true }
+umcf-ledger = { workspace = true }
+umcf-marketplace = { workspace = true }
+umcf-guard = { workspace = true }
+umcf-hwprobe = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = { workspace = true }
+toml = { workspace = true }
+thiserror = "1.0"
+blake3 = "1.5"
+hex = "0.4"
+tokio = { version = "1.38", features = ["full"] }
+tracing = "0.1"
+proptest = { workspace = true }
+

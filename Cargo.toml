@@ -32,6 +32,7 @@ members = [
     "services/cloudrun_fallback",
     "tests/e2e-cluster",
     "tests/soak",
+    "tests/fuzz-suite",
 ]
 
 [workspace.package]

@@ -31,3 +31,4 @@ cargo test -p soak-suite --test soak_tests test_manual_resource_and_leak_diagnos
 echo "  -> [Manually-Verified] PASS"
 
 echo "=== S8.P1.SP3 Verification: ALL 5 TIERS PASSED (100% PASS RATE) ==="
+

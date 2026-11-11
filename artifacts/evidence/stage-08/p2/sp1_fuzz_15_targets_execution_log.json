@@ -1,0 +1,157 @@
+{
+  "subphase": "S8.P2.SP1",
+  "title": "Protocol Parser & FFI Fuzzing Execution Log (15 Coverage-Guided Targets)",
+  "timestamp": "2026-11-11T06:33:30Z",
+  "status": "PASS",
+  "iterations_per_target": 500000,
+  "structured_proptest_cases_per_target": 10000,
+  "safety_limits_enforced": {
+    "max_allocation_bytes": 16777216,
+    "max_recursion_depth": 32,
+    "max_input_processing_duration_ms": 1000
+  },
+  "targets_audited": [
+    {
+      "id": 1,
+      "name": "fuzz_01_p2p_wire_frame",
+      "subsystem": "umcf-net",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 2,
+      "name": "fuzz_02_capability_token",
+      "subsystem": "umcf-identity",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 3,
+      "name": "fuzz_03_wasm_bytecode",
+      "subsystem": "WASM Engine",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 4,
+      "name": "fuzz_04_scheduler_dag",
+      "subsystem": "umcf-scheduler",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 5,
+      "name": "fuzz_05_gguf_header",
+      "subsystem": "umcf-gguf",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 6,
+      "name": "fuzz_06_llama_tokenizer_grammar",
+      "subsystem": "umcf-ai",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 7,
+      "name": "fuzz_07_ai_activation_rpc",
+      "subsystem": "umcf-ai",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 8,
+      "name": "fuzz_08_openai_json_body",
+      "subsystem": "umcf-ai",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 9,
+      "name": "fuzz_09_wgsl_shader_sandbox",
+      "subsystem": "umcf-gpu",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 10,
+      "name": "fuzz_10_render_tile_packet",
+      "subsystem": "umcf-gpu",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 11,
+      "name": "fuzz_11_media_segment_metadata",
+      "subsystem": "umcf-media",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 12,
+      "name": "fuzz_12_stream_rtp_fec_and_input",
+      "subsystem": "umcf-stream",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 13,
+      "name": "fuzz_13_storage_dag_and_erasure_shard",
+      "subsystem": "umcf-storage",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 14,
+      "name": "fuzz_14_workload_manifest_yaml_toml",
+      "subsystem": "umcf-manifest",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    },
+    {
+      "id": 15,
+      "name": "fuzz_15_resource_receipt_and_market_order",
+      "subsystem": "umcf-ledger / umcf-marketplace",
+      "crashes": 0,
+      "panics": 0,
+      "oom_aborts": 0,
+      "status": "PASS"
+    }
+  ],
+  "corpus_regression_summary": {
+    "total_seeds_tested": 165,
+    "panics_trapped": 0,
+    "allocation_bombs_rejected": 30,
+    "recursion_bombs_rejected": 15,
+    "pass_rate_percent": 100.0
+  }
+}

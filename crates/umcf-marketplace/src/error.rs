@@ -41,3 +41,4 @@ pub enum MarketError {
     #[error("Underlying ledger error: {0}")]
     Ledger(#[from] LedgerError),
 }
+

@@ -244,3 +244,4 @@ impl QuiescenceBarrier {
         }
     }
 }
+

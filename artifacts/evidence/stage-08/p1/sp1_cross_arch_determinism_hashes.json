@@ -69,3 +69,4 @@
     "case_sensitivity_protection": "Lowercase collision check applied to all cross-platform manifests before disk ingestion to prevent silent overwrites on NTFS/APFS"
   }
 }
+

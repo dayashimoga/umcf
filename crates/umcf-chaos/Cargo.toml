@@ -28,3 +28,4 @@ rand_core = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
+

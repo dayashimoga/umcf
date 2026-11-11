@@ -92,3 +92,4 @@ Before any manifest is ingested or extracted to disk on any platform, `CaseColli
 1. **Little-Endian Standard**: All wire protocols, binary serialization formats (bincode, CBOR, Protobuf), and cryptographic hashers (BLAKE3, SHA-256) enforce little-endian integer byte encoding (`to_le_bytes()`, `from_le_bytes()`).
 2. **Fixed-Point Arithmetic**: Financial accounting and credit balances (`MicroCredits`) use 128-bit integer fixed-point values ($10^{-6}$ credit precision) with zero floating-point math, guaranteeing identical calculation across x86_64, ARM64, and Wasm32.
 3. **Greedy Token Parity**: LLM sampling in distributed pipeline inference enforces greedy $argmax$ token selection, yielding 100% bit-exact token sequences across desktop GPUs, Apple Silicon Metal, and mobile NPUs.
+
