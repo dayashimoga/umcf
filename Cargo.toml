@@ -33,6 +33,7 @@ members = [
     "tests/e2e-cluster",
     "tests/soak",
     "tests/fuzz-suite",
+    "tests/security-redteam",
 ]
 
 [workspace.package]

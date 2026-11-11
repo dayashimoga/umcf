@@ -2228,6 +2228,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "security-redteam"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "hex",
+ "serde",
+ "serde_json",
+ "subtle",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "umcf-ai",
+ "umcf-core",
+ "umcf-gguf",
+ "umcf-gpu",
+ "umcf-guard",
+ "umcf-hwprobe",
+ "umcf-identity",
+ "umcf-ledger",
+ "umcf-marketplace",
+ "umcf-proto",
+ "umcf-storage",
+ "umcf-stream",
+]
+
+[[package]]
 name = "semver"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"

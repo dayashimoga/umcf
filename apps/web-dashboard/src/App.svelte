@@ -15,11 +15,12 @@
   import TranscodePipelineView from "./lib/components/media/TranscodePipelineView.svelte";
   import ChaosDrawerCard from "./lib/components/cluster/ChaosDrawerCard.svelte";
   import ResourceLeakDiagnosticsCard from "./lib/components/cluster/ResourceLeakDiagnosticsCard.svelte";
+  import SecurityRedteamCard from "./lib/components/cluster/SecurityRedteamCard.svelte";
 
   const dashboard = createClusterDashboardState("umcf-edge-mesh");
 
   // Navigation state
-  type NavRoute = 'overview' | 'workflows' | 'ai' | 'gpu' | 'media' | 'stream' | 'storage' | 'market' | 'keys' | 'chaos';
+  type NavRoute = 'overview' | 'workflows' | 'ai' | 'gpu' | 'media' | 'stream' | 'storage' | 'market' | 'keys' | 'chaos' | 'security';
   let currentRoute = $state<NavRoute>('overview');
 
   // Connection & Node Governance state
@@ -168,6 +169,13 @@
       class="px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap {currentRoute === 'chaos' ? 'border-red-500 text-red-400 bg-gray-850/50' : 'border-transparent text-gray-400 hover:text-gray-200'}"
     >
       Chaos & Nemesis
+    </button>
+
+    <button
+      onclick={() => { currentRoute = 'security'; }}
+      class="px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap {currentRoute === 'security' ? 'border-rose-500 text-rose-400 bg-gray-850/50' : 'border-transparent text-gray-400 hover:text-gray-200'}"
+    >
+      Security & Red-Team
     </button>
   </nav>
 
@@ -451,6 +459,11 @@
         <ChaosDrawerCard />
         <ResourceLeakDiagnosticsCard />
       </div>
+    {/if}
+
+    <!-- View 11: Security Self-Audit & Red-Team Verification -->
+    {#if currentRoute === 'security'}
+      <SecurityRedteamCard />
     {/if}
   </main>
 </div>

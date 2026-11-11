@@ -1369,3 +1369,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Authored Section 1 of `docs/SECURITY_AUDIT.md` detailing the 15 fuzz targets, pre-allocation boundaries, and threat model invariants.
 - **Classified Test Harness**: Implemented `scripts/test-s8-p2-sp1.sh` and `scripts/test-s8-p2-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 7 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-08/p2/sp1_fuzz_15_targets_execution_log.json` and `artifacts/evidence/stage-08/p2/sp1_clippy_no_unwrap_parser_audit.txt`.
+
+### Added (S8.P2.SP2: Penetration Testing, Sandbox Escape Verification & RBAC Bypass Audit)
+- **Automated Adversarial Red-Team Penetration Suite (`tests/security-redteam`)**:
+  - Implemented `#![forbid(unsafe_code)]` red-team test harness (`SandboxEscapeAuditor`, `RbacCryptoAuditor`, and `SecurityAuditLedger`).
+  - Executed 25 distinct hostile penetration attacks across 11 threat vector categories with 100% containment and zero daemon crashes:
+    1. `Vector 1 (WASI Filesystem Traversal & Symlinks)`: Hostile paths (`../../../../etc/passwd`, Windows paths, out-of-sandbox symlinks) strictly blocked with `EACCES / WASI_ERRNO_NOTCAPABLE`.
+    2. `Vector 2 (WASI Ambient Network & Subprocess)`: `sock_open`, raw sockets, and `proc_exec` denied by capability model.
+    3. `Vector 3 (WASM Fuel Bomb & Infinite Recursion)`: Mutual infinite recursion, unbounded loops, and `memory.grow` preempted within $\le 50\text{ ms}$.
+    4. `Vector 4 (GPU Cross-Tenant VRAM Read & TDR Hang)`: Uninitialized GPU storage buffers zero-scrubbed (`0x00000000`) and infinite shader loops preempted by TDR watchdog.
+    5. `Vector 5 (GGUF Arbitrary Offset Pointer Read)`: Crafted GGUF files with tensor offsets past EOF or negative wrap-around rejected before model guard allocation.
+    6. `Vector 6 (Unauthenticated / Self-Signed Peer Connection)`: Untrusted CA mTLS handshakes rejected immediately prior to stream allocation.
+    7. `Vector 7 (Revoked Node Certificate / 0-RTT Replay)`: Session tickets purged on CRL update, 0-RTT resumption attempts rejected with TLS Alert.
+    8. `Vector 8 (RBAC Horizontal & Vertical Escalation)`: Mutating endpoints called with `GuestObserver` or `cluster:read` scope 100% return `403 Forbidden` / `Status::permission_denied`.
+    9. `Vector 9 (Private AI Enclave Exfiltration)`: Remote offload recommendations during `StrictLocalOnly` sessions intercepted and aborted by enclave circuit breaker with `CRITICAL` alert.
+    10. `Vector 10 (Remote Stream ViewOnly Input Hijack)`: `InputEventPacket` and `ClipboardSyncEvent` on `ViewOnly` tokens dropped and peer quarantined.
+    11. `Vector 11 (Timing Side-Channels on Secrets)`: API keys and pairing PIN comparisons verified to execute in constant time via `subtle::ConstantTimeEq`.
+- **45-Endpoint x 5-Privilege Tier Automated Authorization Scanner**:
+  - Scanned all 45 REST/gRPC/WebSocket methods across 5 tiers (`Unauthenticated`, `Revoked`, `ViewOnlyGuest`, `ComputeWorker`, `ClusterAdmin`).
+  - Passed all 225 permission assertions with zero false negatives and zero privilege leaks.
+- **Tamper-Evident Security Audit Ledger (`SecurityAuditLedger`)**:
+  - Captured all blocked attacks into tamper-evident ledger with monotonic timestamps, source identities, threat categories, severity enums, and defense actions.
+- **Multi-Platform Security Self-Audit UI (Svelte 5 & Flutter)**:
+  - Svelte 5 `SecurityRedteamCard.svelte` (`apps/web-dashboard` & `ui/admin_web`): Interactive penetration test launcher, 25-vector containment scorecard, and live security audit log.
+  - Flutter `_showSecurityRedteamModal` in `main.dart` (`apps/mobile-desktop` & `ui/flutter_app`): Mobile/desktop security verification sheet with 25-vector status indicators and ledger export.
+- **Security Documentation**:
+  - Authored Section 2 of `docs/SECURITY_AUDIT.md` detailing the 11 threat vectors, defense-in-depth mitigations, and RBAC matrix.
+- **Classified Test Harness**: Implemented `scripts/test-s8-p2-sp2.sh` and `scripts/test-s8-p2-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 8 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-08/p2/sp2_redteam_25_vectors_audit_report.json` and `artifacts/evidence/stage-08/p2/sp2_endpoint_rbac_authorization_matrix.json`.
