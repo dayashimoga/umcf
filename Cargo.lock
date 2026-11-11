@@ -2931,6 +2931,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "umcf-media"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "bytes",
+ "proptest",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "umcf-core",
+ "umcf-telemetry",
+]
+
+[[package]]
 name = "umcf-net"
 version = "0.1.0"
 dependencies = [

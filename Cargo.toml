@@ -17,6 +17,7 @@ members = [
     "crates/umcf-llama-sys",
     "crates/umcf-ai",
     "crates/umcf-gpu",
+    "crates/umcf-media",
     "crates/umcf-cli",
     "crates/umcf-daemon",
     "services/control-plane-cloudrun",
@@ -48,6 +49,7 @@ umcf-gguf = { path = "crates/umcf-gguf" }
 umcf-llama-sys = { path = "crates/umcf-llama-sys" }
 umcf-ai = { path = "crates/umcf-ai" }
 umcf-gpu = { path = "crates/umcf-gpu" }
+umcf-media = { path = "crates/umcf-media" }
 redb = "2.3.0"
 rayon = "1.12.0"
 smallvec = { version = "1.13.2", features = ["serde"] }

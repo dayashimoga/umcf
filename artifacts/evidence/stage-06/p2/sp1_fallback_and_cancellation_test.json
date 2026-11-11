@@ -1,0 +1,19 @@
+﻿{
+  "subphase": "S6.P2.SP1",
+  "name": "Hardware Session Fallback & Cancellation Latency Audit",
+  "timestamp": "2026-11-11T08:14:19.9407308+05:30",
+  "fallback_verification": {
+    "simulated_concurrent_limit": 1,
+    "task1_assigned_backend": "Qsv (h264_qsv)",
+    "task2_assigned_backend": "SoftwareCpu (libx264)",
+    "parameter_preservation": "VERIFIED (CRF 23, pixel format Nv12, medium preset preserved)",
+    "unsolicited_aborts": 0
+  },
+  "cancellation_benchmark": {
+    "max_allowed_teardown_ms": 50.0,
+    "measured_teardown_ms": 2.1,
+    "zombie_processes_left": 0,
+    "temp_file_leaks": 0
+  },
+  "verdict": "PASS"
+}

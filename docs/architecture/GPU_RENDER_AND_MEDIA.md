@@ -90,4 +90,34 @@ In a heterogeneous multi-device compute mesh, integer compute tasks require bit-
 3. **Stage 3: Byzantine Quarantine, Slashing Evidence & Automatic Re-Render**:
    - If a worker fails either Stage 1 or Stage 2, the coordinator immediately records signed `VerificationFailureEvidence` (digest, metric discrepancy, timestamps), quarantines and bans the offending worker from the job (`quarantined_workers`), and re-queues all invalidated tiles onto trusted honest nodes.
 
+---
+
+## 2. Distributed Media Transcoding & Processing Pipeline
+
+### 2.1 Hardware Codec Probing & Codec Adapter (`S6.P2.SP1`)
+
+Cluster nodes pool hardware video encoders/decoders (NVIDIA NVENC, Intel QSV, Apple VideoToolbox, Android MediaCodec, AMD AMF, Linux VAAPI, and CPU fallbacks) to process parallel media workloads.
+
+#### 2.1.1 Fast Synthetic Verification (< 40 ms) & Ghost Driver Elimination
+- **The Ghost Driver Problem**: Systems frequently list compiled-in encoder flags (e.g. `h264_nvenc` or `hevc_amf`) even when the physical discrete graphics card is absent or disabled (e.g., headless Linux instances, virtual machines, or Intel-only laptops).
+- **Mitigation**:
+  - `HardwareCodecProber` runs a 5-frame $640 \times 360$ synthetic encode in memory (< 40 ms) before advertising any hardware encoder to the mesh.
+  - Candidates that fail driver initialization are discarded as ghost drivers, leaving only operational, verified hardware encoders.
+  - Results are cached by OS, driver version, and binary digest.
+
+#### 2.1.2 Structured Argument Sandboxing
+- Shell strings (`sh -c` or `cmd /c`) are strictly forbidden across media adapters.
+- Arguments are passed as structured arrays with validated paths, rejecting null bytes (`\0`) and path traversal sequences (`..`).
+
+#### 2.1.3 Automatic Hardware-to-Software Parameter Translation
+- When hardware session limits are saturated (e.g., NVENC 3-stream consumer limit reached or MediaCodec resource busy), `MediaCodecAdapter` transparently translates hardware rate control parameters to deterministic software equivalents:
+  - NVENC/QSV: `-rc vbr -cq <Q> -preset <P>` $\rightarrow$ libx264: `-crf <Q> -preset medium`
+  - HEVC QSV: `-global_quality <Q>` $\rightarrow$ libx265: `-crf <Q> -preset medium`
+  - AV1 QSV: `-cq <Q>` $\rightarrow$ libsvtav1: `-crf <Q> -preset 6`
+- Preserves target resolution, pixel format (e.g., `Nv12`, `P010le`), and color metadata without causing transcode job aborts.
+
+#### 2.1.4 Sub-50 ms Cancellation Teardown
+- Asynchronous task cancellation instantly signals child processes and media contexts via atomic cancellation flags and OS process signals (`SIGTERM` / `TerminateProcess`), cleaning up intermediate scratch files in $< 50\text{ ms}$ with zero zombie processes.
+
+
 

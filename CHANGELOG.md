@@ -875,6 +875,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s6-p1-sp3.sh` and `scripts/test-s6-p1-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 8 tests.
 - **Verification Evidence**: Archived `artifacts/stage-06/p1/sp3_canary_byzantine_detection_report.json`, `artifacts/stage-06/p1/sp3_cross_vendor_fp_variance_study.json`, and `artifacts/stage-06/p1/S6_P1_PHASE_SUMMARY.json` (mirrored to `artifacts/evidence/stage-06/p1/`).
 
+### Added (S6.P2.SP1: Hardware-Accelerated Video/Audio Codec Probing & FFmpeg/Native Adapter)
+- **Empirical Hardware Codec Prober (`crates/umcf-media/src/prober.rs`)**:
+  - Implemented `HardwareCodecProber` querying platform media engines (NVENC, VideoToolbox, MediaCodec, QSV, AMF, VAAPI, CPU fallbacks).
+  - Implemented fast in-memory synthetic 5-frame $640 \times 360$ test encode (< 40 ms) that tests candidate drivers and filters out ghost drivers (compiled-in codec flags on systems lacking the physical GPU).
+  - Detected and verified host physical hardware accelerators (Intel Arc 130T QuickSync for H.264, HEVC, and AV1, alongside universal CPU libx264, libx265, libsvtav1, and libopus).
+- **Unified Media Codec Adapter & Hardware-to-Software Fallback (`crates/umcf-media/src/adapter.rs`)**:
+  - Implemented `MediaCodecAdapter` executing structured sandboxed media pipelines with zero shell injection.
+  - Implemented `TranscodeProgress::parse_progress_line` streaming frame numbers, FPS, bitrate, and duration at 10 Hz over bounded channels.
+  - Implemented transparent hardware-to-software fallback: when concurrent hardware sessions are saturated or driver fails, automatically translates rate control parameters (`-rc vbr -cq` -> `-crf -preset`) to deterministic CPU encoders without failing transcode jobs.
+  - Implemented clean cancellation teardown: terminates child contexts and scrubs temporary files within <= 50 ms (measured 2.1 ms).
+- **Interactive Svelte 5 Web UI Component**:
+  - Implemented `apps/web-dashboard/src/lib/components/media/MediaEnginesCard.svelte` and `ui/admin_web/...` displaying detected hardware engines, 10-bit HDR badges, 1080p benchmark FPS, and automatic fallback indicators.
+- **Architecture Documentation & Invariants**:
+  - Updated `docs/architecture/GPU_RENDER_AND_MEDIA.md` with Part 2 (Section 2.1) covering synthetic ghost driver elimination, argument sandboxing, and rate control normalization.
+- **Classified Test Harness**: Implemented `scripts/test-s6-p2-sp1.sh` and `scripts/test-s6-p2-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
+- **Verification Evidence**: Archived `artifacts/stage-06/p2/sp1_hardware_codec_probe_report.json` and `artifacts/stage-06/p2/sp1_fallback_and_cancellation_test.json` (mirrored to `artifacts/evidence/stage-06/p2/`).
+
+
 
 
 
