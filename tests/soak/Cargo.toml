@@ -22,7 +22,7 @@ thiserror = "1.0"
 blake3 = "1.5"
 tokio = { version = "1.38", features = ["full"] }
 tracing = "0.1"
-sysinfo = { version = "0.33", default-features = false, features = ["system"] }
+sysinfo = { version = "0.40", default-features = false, features = ["system"] }
 
 [dev-dependencies]
 tempfile = "3.10"
