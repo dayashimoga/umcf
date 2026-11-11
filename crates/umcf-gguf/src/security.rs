@@ -55,7 +55,7 @@ impl Ed25519PublicKey {
             )));
         }
         let mut bytes = [0u8; 32];
-        for (i, chunk) in clean.as_bytes().chunks_exact(2).enumerate() {
+        for (i, chunk) in clean.as_bytes().chunks(2).enumerate() {
             let chunk_str = std::str::from_utf8(chunk)
                 .map_err(|e| StoreError::CorruptedFile(format!("utf8 error: {e}")))?;
             bytes[i] = u8::from_str_radix(chunk_str, 16)

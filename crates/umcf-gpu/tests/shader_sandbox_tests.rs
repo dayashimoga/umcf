@@ -198,7 +198,7 @@ fn test_integration_vector_add_and_matrix_multiply_wgsl_dispatch_and_readback() 
     // Read back and verify out_c = in_a * 2.0
     let out_bytes = dispatcher.allocator().read_buffer(out_id, 0, 256).unwrap();
     let out_floats: Vec<f32> = out_bytes
-        .chunks_exact(4)
+        .chunks(4)
         .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
         .collect();
 

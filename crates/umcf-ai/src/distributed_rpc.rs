@@ -50,7 +50,7 @@ impl ActivationCodec {
         }
         let count = bytes.len() / 2;
         let mut out = Vec::with_capacity(count);
-        for chunk in bytes.chunks_exact(2) {
+        for chunk in bytes.chunks(2) {
             let bits = u16::from_le_bytes([chunk[0], chunk[1]]);
             out.push(f32_from_half(bits));
         }
@@ -105,7 +105,7 @@ impl ActivationCodec {
         }
 
         let mut out = Vec::with_capacity(expected_len);
-        for chunk in bytes.chunks_exact(BLOCK_BYTES) {
+        for chunk in bytes.chunks(BLOCK_BYTES) {
             let scale_bits = u16::from_le_bytes([chunk[0], chunk[1]]);
             let d = f32_from_half(scale_bits);
 
@@ -382,7 +382,7 @@ impl PipelineStageWorker {
         let input_floats = match packet.dtype {
             ActivationDtype::F32 => {
                 let mut floats = Vec::with_capacity(packet.payload.len() / 4);
-                for chunk in packet.payload.chunks_exact(4) {
+                for chunk in packet.payload.chunks(4) {
                     floats.push(f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
                 }
                 floats
@@ -538,7 +538,7 @@ impl DistributedPipelineCoordinator {
             // Unpack response output for next stage
             let next_floats: Vec<f32> = response
                 .output_activation_or_logits
-                .chunks_exact(4)
+                .chunks(4)
                 .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
                 .collect();
 

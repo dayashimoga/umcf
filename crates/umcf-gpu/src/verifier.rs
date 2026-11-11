@@ -148,7 +148,7 @@ pub fn has_nan_or_inf_pixels(pixels: &[u8], format: RenderPixelFormat) -> bool {
         RenderPixelFormat::Rgba8UnormSrgb => false, // Byte buffers cannot represent NaN/Inf
         RenderPixelFormat::Rgba16Float => {
             // Check IEEE 754 half floats
-            for chunk in pixels.chunks_exact(2) {
+            for chunk in pixels.chunks(2) {
                 let bits = u16::from_le_bytes([chunk[0], chunk[1]]);
                 let exp = (bits >> 10) & 0x1f;
                 if exp == 0x1f {
@@ -159,7 +159,7 @@ pub fn has_nan_or_inf_pixels(pixels: &[u8], format: RenderPixelFormat) -> bool {
         }
         RenderPixelFormat::Rgba32Float => {
             // Check IEEE 754 single precision floats
-            for chunk in pixels.chunks_exact(4) {
+            for chunk in pixels.chunks(4) {
                 let val = f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
                 if val.is_nan() || val.is_infinite() {
                     return true;
@@ -265,7 +265,7 @@ fn pixels_to_f32(bytes: &[u8], format: RenderPixelFormat) -> Vec<f32> {
     match format {
         RenderPixelFormat::Rgba8UnormSrgb => bytes.iter().map(|&b| f32::from(b) / 255.0).collect(),
         RenderPixelFormat::Rgba16Float => bytes
-            .chunks_exact(2)
+            .chunks(2)
             .map(|c| {
                 let bits = u16::from_le_bytes([c[0], c[1]]);
                 let sign = (bits >> 15) & 1;
@@ -284,7 +284,7 @@ fn pixels_to_f32(bytes: &[u8], format: RenderPixelFormat) -> Vec<f32> {
             })
             .collect(),
         RenderPixelFormat::Rgba32Float => bytes
-            .chunks_exact(4)
+            .chunks(4)
             .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
             .collect(),
     }

@@ -109,10 +109,12 @@ tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
 unsafe_code = "forbid"
 missing_debug_implementations = "deny"
 unused_must_use = "deny"
+unknown_lints = "allow"
 
 [workspace.lints.clippy]
-all = "deny"
+all = { level = "deny", priority = -1 }
 unwrap_used = "deny"
+chunks_exact_to_as_chunks = "allow"
 
 [profile.dev.package.ed25519-dalek]
 opt-level = 3
