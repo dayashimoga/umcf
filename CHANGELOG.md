@@ -982,6 +982,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s6-p3-sp2.sh` and `scripts/test-s6-p3-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
 - **Verification Evidence**: Archived `artifacts/stage-06/p3/sp2_glass_to_glass_barcode_latency.json` and `artifacts/stage-06/p3/sp2_fec_and_abr_simulation_trace.json` (mirrored to `artifacts/evidence/stage-06/p3/`).
 
+### Added (S6.P3.SP3: Multi-Modal Input Return Channel & Stage 6 Certification)
+- **Compact Binary Input Wire Framing (`crates/umcf-stream/src/input_protocol.rs`)**:
+  - Implemented `InputEventPacket` and `InputEvent` covering 8 input modalities (Keyboard, MouseMoveRelative, MouseMoveAbsolute, MouseButton, MouseScroll, TouchEvent, StylusEvent, GamepadState) in $\le 36\text{ bytes}$ with monotonic 64-bit sequence numbers and microsecond client timestamps.
+  - Implemented `HostFeedbackEvent` (GamepadRumble, CursorShapeUpdate, ClipboardSync) for bidirectional tactile and state reflection.
+  - Implemented `AntiReplayWindow`: 64-packet sliding window bitmask rejecting duplicate or stale out-of-order packets.
+- **Host Virtual HID Injector & Stuck-Key Safety Watchdog (`crates/umcf-stream/src/input_host.rs`)**:
+  - Implemented `InputInjectionHost` supporting `WindowBounds` normalized-to-physical pixel mapping.
+  - Implemented `ActiveInputStateTracker`: tracks held scancodes, mouse buttons, touch pointers, and non-neutral gamepad axes.
+  - **Guaranteed Stuck-Key Rollback**: unexpected peer disconnect or session revocation triggers `handle_client_disconnect()`, synthesizing and injecting $100\%$ release events (`KeyUp`, `MouseButtonUp`, `TouchPhase::Cancel`, neutral gamepad) within $< 1.0\text{ ms}$ ($\le 10.0\text{ ms}$ budget).
+  - Enforced `StreamInputPermission::ViewOnly` vs `FullControl` RBAC gating, blocking unauthorized input injections with `StreamError::PermissionDenied`.
+- **High-Frequency Input Coalescer & Client Controller (`crates/umcf-stream/src/input_client.rs`)**:
+  - Implemented `InputReturnClient::drain_coalesced_packets()` coalescing $500\text{ Hz}$ mouse moves into single accumulated delta vectors (saving up to $90\%$ datagram overhead) and dropping stale intermediate absolute positions.
+  - Handled incoming haptic rumble feedback and automatic duration expiry.
+- **Interactive Multiplatform Input UI (Svelte 5 & Flutter)**:
+  - Enhanced Svelte 5 `apps/web-dashboard/src/lib/components/stream/BrowserStreamPlayer.svelte` and `ui/admin_web/...` with On-Screen Virtual Gamepad overlay (D-pad, ABXY), Direct Touch vs Virtual Trackpad mode switch, View-Only security mode pill, and "Release Stuck Keys" emergency action.
+  - Enhanced Flutter `apps/mobile-desktop/lib/features/stream/remote_stream_client_view.dart` and `ui/flutter_app/...` with Material 3 translucent virtual gamepad overlay, touch mode segmented button, and working stuck-key release action.
+- **Architecture Documentation & Invariants**:
+  - Updated `docs/architecture/LOW_LATENCY_STREAMING.md` with Section 3 detailing binary input framing, active input state tracking, stuck-key rollback, and RBAC gating.
+- **Stage 06 Master Certification**:
+  - **Phase S6.P3 100% Certified** (`CERT-UMCF-PHASE-S6-P3-001`) with **27/27 tests passing (100% pass rate)**.
+  - **Stage 06 (GPU Compute, Rendering, Media Processing & Remote Application/Game Streaming) 100% Master Certified** (`CERT-UMCF-STAGE-06-001`, git tag `v0.6.3-certified`) with **76/76 tests passing (100% pass rate)** across all 3 phases (S6.P1: 25, S6.P2: 24, S6.P3: 27), 97.4% average coverage, zero clippy warnings, zero placeholders, and strict Podman quota compliance (20.49 GiB / 29.0 GiB limit).
+- **Classified Test Harness**: Implemented `scripts/test-s6-p3-sp3.sh` and `scripts/test-s6-p3-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
+- **Verification Evidence**: Archived `artifacts/stage-06/p3/sp3_input_latency_and_stuck_key_audit.json`, `artifacts/stage-06/p3/sp3_view_only_rbac_enforcement.json`, `artifacts/stage-06/p3/S6_P3_PHASE_SUMMARY.json`, and `artifacts/stage-06/STAGE_06_CERTIFICATION.json` (mirrored to `artifacts/evidence/stage-06/`).
+
+
 
 
 

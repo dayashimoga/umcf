@@ -25,6 +25,12 @@ pub enum StreamError {
     #[error("target resolution {width}x{height} not supported by encoder")]
     UnsupportedResolution { width: u32, height: u32 },
 
+    #[error("transport protocol error: {0}")]
+    TransportError(String),
+
+    #[error("permission denied: {0}")]
+    PermissionDenied(String),
+
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 }

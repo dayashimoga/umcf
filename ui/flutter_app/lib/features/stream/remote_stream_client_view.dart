@@ -61,15 +61,17 @@ class RemoteStreamTelemetry {
   }
 }
 
-/// Remote Application & Game Streaming Client View (UMCF S6.P3.SP2).
-/// Displays live video viewport with adaptive HUD overlay and latency telemetry.
+/// Remote Application & Game Streaming Client View with Multi-Modal Input Return (UMCF S6.P3.SP3).
+/// Displays live video viewport with adaptive HUD overlay, touch modes, and on-screen gamepad.
 class RemoteStreamClientView extends StatefulWidget {
   final int streamId;
   final String hostNodeName;
   final String videoCodec;
   final double initialBitrateMbps;
+  final bool initialViewOnly;
   final void Function(int streamId)? onKeyframeRequested;
   final void Function(double capMbps)? onBitrateCapChanged;
+  final void Function()? onEmergencyReleaseInputs;
 
   const RemoteStreamClientView({
     super.key,
@@ -77,8 +79,10 @@ class RemoteStreamClientView extends StatefulWidget {
     this.hostNodeName = 'Gaming-Host-Desktop',
     this.videoCodec = 'H.264 Baseline/High (Zero-B)',
     this.initialBitrateMbps = 25.0,
+    this.initialViewOnly = false,
     this.onKeyframeRequested,
     this.onBitrateCapChanged,
+    this.onEmergencyReleaseInputs,
   });
 
   @override
@@ -91,11 +95,15 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
   bool _isCompactHud = false;
   late double _selectedBitrateCap;
   bool _autoAbrEnabled = true;
+  late bool _isViewOnly;
+  String _touchMode = 'Direct'; // 'Direct' or 'Trackpad'
+  bool _showGamepadOverlay = false;
   Timer? _telemetryTicker;
 
   @override
   void initState() {
     super.initState();
+    _isViewOnly = widget.initialViewOnly;
     _selectedBitrateCap = widget.initialBitrateMbps;
     _telemetry = RemoteStreamTelemetry.initial(widget.streamId, widget.initialBitrateMbps);
 
@@ -187,9 +195,19 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
     );
   }
 
+  void _triggerEmergencyRelease() {
+    widget.onEmergencyReleaseInputs?.call();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Color(0xFF10B981),
+        content: Text('🛡️ Released all held inputs on host OS (Stuck-Key Watchdog)'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
@@ -216,19 +234,49 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
                 style: const TextStyle(fontSize: 11, color: Color(0xFF38BDF8)),
               ),
             ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _isViewOnly
+                    ? const Color(0xFFB45309).withAlpha(80)
+                    : const Color(0xFF065F46).withAlpha(80),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isViewOnly ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                ),
+              ),
+              child: Text(
+                _isViewOnly ? '🔒 View-Only' : '🎮 Interactive',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: _isViewOnly ? const Color(0xFFFDE68A) : const Color(0xFF34D399),
+                ),
+              ),
+            ),
           ],
         ),
         backgroundColor: const Color(0xFF0F172A),
         actions: [
           IconButton(
+            icon: Icon(_isViewOnly ? Icons.lock : Icons.lock_open, color: const Color(0xFFFBBF24)),
+            tooltip: _isViewOnly ? 'Switch to Interactive' : 'Switch to View-Only',
+            onPressed: () => setState(() => _isViewOnly = !_isViewOnly),
+          ),
+          IconButton(
+            icon: Icon(_showGamepadOverlay ? Icons.sports_esports : Icons.sports_esports_outlined),
+            tooltip: 'Toggle Virtual Gamepad Overlay',
+            onPressed: () => setState(() => _showGamepadOverlay = !_showGamepadOverlay),
+          ),
+          IconButton(
+            icon: const Icon(Icons.shield_outlined, color: Color(0xFFFCA5A5)),
+            tooltip: 'Release Stuck Keys on Host OS',
+            onPressed: _triggerEmergencyRelease,
+          ),
+          IconButton(
             icon: Icon(_isHudVisible ? Icons.analytics : Icons.analytics_outlined),
             tooltip: _isHudVisible ? 'Hide Telemetry HUD' : 'Show Telemetry HUD',
             onPressed: () => setState(() => _isHudVisible = !_isHudVisible),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFFFCA5A5)),
-            tooltip: 'Request Keyframe (PLI)',
-            onPressed: _requestPliKeyframe,
           ),
         ],
       ),
@@ -296,7 +344,7 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Active Low-Latency Session (${widget.videoCodec})',
+                            'Active Low-Latency Session (${widget.videoCodec}) · Mode: $_touchMode',
                             style: TextStyle(
                               color: Colors.white.withAlpha(120),
                               fontSize: 13,
@@ -306,6 +354,12 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
                         ],
                       ),
                     ),
+
+                    // On-Screen Virtual Gamepad Overlay
+                    if (_showGamepadOverlay && !_isViewOnly)
+                      Positioned.fill(
+                        child: _buildVirtualGamepadOverlay(),
+                      ),
                   ],
                 ),
               ),
@@ -328,6 +382,105 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
             child: _buildBottomToolbar(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVirtualGamepadOverlay() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Left D-Pad cluster
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withAlpha(150),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withAlpha(30)),
+            ),
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_drop_up, color: Colors.white70),
+                    onPressed: () {},
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
+                    onPressed: () {},
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_left, color: Colors.white70),
+                    onPressed: () {},
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_right, color: Colors.white70),
+                    onPressed: () {},
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Right Face Buttons cluster (A, B, X, Y)
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withAlpha(150),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withAlpha(30)),
+            ),
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: _gamepadFaceBtn('Y', const Color(0xFFF59E0B)),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _gamepadFaceBtn('A', const Color(0xFF10B981)),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _gamepadFaceBtn('X', const Color(0xFF38BDF8)),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _gamepadFaceBtn('B', const Color(0xFFEF4444)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _gamepadFaceBtn(String label, Color color) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: CircleAvatar(
+        radius: 18,
+        backgroundColor: color.withAlpha(60),
+        child: Text(
+          label,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+        ),
       ),
     );
   }
@@ -509,12 +662,25 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
               OutlinedButton.icon(
                 icon: const Icon(Icons.refresh, size: 16, color: Color(0xFFFCA5A5)),
                 label: const Text(
-                  'Request Keyframe',
+                  'Keyframe',
                   style: TextStyle(fontSize: 12, color: Color(0xFFFCA5A5)),
                 ),
                 onPressed: _requestPliKeyframe,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFEF4444)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.shield_outlined, size: 16, color: Color(0xFF10B981)),
+                label: const Text(
+                  'Release Keys',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF10B981)),
+                ),
+                onPressed: _triggerEmergencyRelease,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF10B981)),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 ),
               ),
@@ -538,6 +704,19 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
           ),
           Row(
             children: [
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'Direct', label: Text('Direct', style: TextStyle(fontSize: 10))),
+                  ButtonSegment(value: 'Trackpad', label: Text('Trackpad', style: TextStyle(fontSize: 10))),
+                ],
+                selected: {_touchMode},
+                onSelectionChanged: (val) => setState(() => _touchMode = val.first),
+                style: const ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+              const SizedBox(width: 12),
               Text(
                 'Cap: ${_selectedBitrateCap.toInt()} Mbps',
                 style: const TextStyle(
@@ -547,7 +726,7 @@ class _RemoteStreamClientViewState extends State<RemoteStreamClientView> {
                 ),
               ),
               SizedBox(
-                width: 120,
+                width: 100,
                 child: Slider(
                   value: _selectedBitrateCap,
                   min: 2.0,

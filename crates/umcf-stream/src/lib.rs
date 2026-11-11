@@ -13,6 +13,9 @@ pub mod abr;
 pub mod audio_loopback;
 pub mod capture;
 pub mod error;
+pub mod input_client;
+pub mod input_host;
+pub mod input_protocol;
 pub mod low_latency_encoder;
 pub mod transport;
 
@@ -23,6 +26,15 @@ pub use capture::{
     HeadlessSyntheticCapturer,
 };
 pub use error::StreamError;
+pub use input_client::{ActiveControllerRumble, InputReturnClient};
+pub use input_host::{
+    ActiveInputStateTracker, InputInjectionHost, InputSink, MockInputSink, StreamInputPermission,
+    WindowBounds,
+};
+pub use input_protocol::{
+    AntiReplayWindow, CursorShapeType, HostFeedbackEvent, InputEvent, InputEventPacket,
+    StylusPhase, TouchPhase,
+};
 pub use low_latency_encoder::{
     EncodedFrameMetadata, LowLatencyEncoderConfig, ZeroLatencyVideoEncoder,
 };

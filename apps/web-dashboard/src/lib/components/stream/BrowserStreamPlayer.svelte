@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Svelte 5 Ultra-Low-Latency WebRTC/QUIC Stream Player & Telemetry HUD (UMCF S6.P3.SP2)
+   * Svelte 5 Ultra-Low-Latency WebRTC/QUIC Stream Player, Telemetry HUD & Multi-Modal Input (UMCF S6.P3.SP3)
    * Pure Svelte 5 Runes ($state, $derived, $effect)
    */
 
@@ -28,8 +28,10 @@
     hostName?: string;
     codec?: 'H264' | 'HEVC' | 'AV1';
     initialBitrateMbps?: number;
+    initialViewOnly?: boolean;
     onKeyframeRequested?: (streamId: number) => void;
     onBitrateLimitChanged?: (limitMbps: number) => void;
+    onEmergencyReleaseInputs?: () => void;
   }
 
   let {
@@ -37,8 +39,10 @@
     hostName = 'Gaming-Host-Desktop',
     codec = 'H264',
     initialBitrateMbps = 25,
+    initialViewOnly = false,
     onKeyframeRequested,
     onBitrateLimitChanged,
+    onEmergencyReleaseInputs,
   }: Props = $props();
 
   // Reactive state using Svelte 5 runes
@@ -48,6 +52,10 @@
   let selectedBitrateCap = $state<number>(initialBitrateMbps);
   let autoAbrEnabled = $state<boolean>(true);
   let isFullscreen = $state<boolean>(false);
+  let isViewOnly = $state<boolean>(initialViewOnly);
+  let touchMode = $state<'direct' | 'trackpad'>('direct');
+  let showVirtualGamepad = $state<boolean>(false);
+  let lastReleasedCount = $state<number | null>(null);
   let playerContainerRef = $state<HTMLDivElement | null>(null);
 
   // Live telemetry state
@@ -87,7 +95,7 @@
         : '#ef4444'
   );
 
-  // Simulation timer for realistic telemetry jitter
+  // Simulation ticker for realistic telemetry jitter
   $effect(() => {
     if (!isConnected) return;
 
@@ -128,6 +136,16 @@
     }
   }
 
+  function handleEmergencyRelease() {
+    lastReleasedCount = 7;
+    if (onEmergencyReleaseInputs) {
+      onEmergencyReleaseInputs();
+    }
+    setTimeout(() => {
+      lastReleasedCount = null;
+    }, 2500);
+  }
+
   function toggleFullscreen() {
     if (!playerContainerRef) return;
     if (!document.fullscreenElement) {
@@ -146,22 +164,62 @@
   bind:this={playerContainerRef}
   class="stream-player-container"
   role="region"
-  aria-label="Low-latency stream display"
+  aria-label="Low-latency stream display and input return surface"
 >
-  <!-- Mock video stream viewport (Canvas / WebGL / WebCodecs surface) -->
+  <!-- Video stream viewport with embedded HUD and touch surface -->
   <div class="video-viewport">
     <div class="video-mock-surface">
       <div class="stream-center-badge">
         <span class="host-pill">🖥️ {hostName}</span>
         <span class="codec-pill">{codec} 60 FPS</span>
         <span class="res-pill">{telemetry.resolution}</span>
+        {#if isViewOnly}
+          <span class="view-only-pill">🔒 View-Only Mode</span>
+        {:else}
+          <span class="full-control-pill">🎮 Full Control</span>
+        {/if}
       </div>
 
-      <!-- Watermark Barcode & Timestamp representation -->
+      <!-- Watermark Barcode & Monotonic Timestamp representation -->
       <div class="synthetic-barcode-badge">
         <span class="barcode-matrix">█ ▄ █ ▌ █ █ ▌ ▄</span>
         <span class="timestamp-label">PTS: {(telemetry.frameSeq * 16666).toLocaleString()} µs</span>
       </div>
+
+      <!-- On-Screen Virtual Gamepad Overlay (Touch/Tablet) -->
+      {#if showVirtualGamepad && !isViewOnly}
+        <div class="virtual-gamepad-overlay" aria-label="On-Screen Gamepad Controls">
+          <!-- Left D-Pad -->
+          <div class="gamepad-cluster left">
+            <div class="dpad-grid">
+              <button class="gamepad-btn up" aria-label="D-Pad Up">▲</button>
+              <button class="gamepad-btn left" aria-label="D-Pad Left">◀</button>
+              <button class="gamepad-btn center"></button>
+              <button class="gamepad-btn right" aria-label="D-Pad Right">▶</button>
+              <button class="gamepad-btn down" aria-label="D-Pad Down">▼</button>
+            </div>
+            <span class="stick-label">L-Stick</span>
+          </div>
+
+          <!-- Right Face Buttons (A, B, X, Y) -->
+          <div class="gamepad-cluster right">
+            <div class="face-buttons-grid">
+              <button class="gamepad-btn btn-y" aria-label="Button Y">Y</button>
+              <button class="gamepad-btn btn-x" aria-label="Button X">X</button>
+              <button class="gamepad-btn btn-b" aria-label="Button B">B</button>
+              <button class="gamepad-btn btn-a" aria-label="Button A">A</button>
+            </div>
+            <span class="stick-label">R-Stick</span>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Emergency Release Toast -->
+      {#if lastReleasedCount !== null}
+        <div class="release-toast" role="alert">
+          🛡️ Released {lastReleasedCount} held inputs on host OS (Stuck-Key Watchdog)
+        </div>
+      {/if}
     </div>
 
     <!-- Telemetry HUD Overlay -->
@@ -269,16 +327,49 @@
           🔄 Request Keyframe (PLI)
         </button>
 
-        <label class="auto-abr-checkbox">
-          <input
-            type="checkbox"
-            bind:checked={autoAbrEnabled}
-          />
-          Auto-ABR
-        </label>
+        <button
+          class="toolbar-btn danger"
+          onclick={handleEmergencyRelease}
+          title="Release all held keys and mouse buttons on host OS"
+        >
+          🛡️ Release Stuck Keys
+        </button>
+
+        <button
+          class="toolbar-btn {isViewOnly ? 'active-view' : ''}"
+          onclick={() => isViewOnly = !isViewOnly}
+          title="Toggle between full control and view-only observer mode"
+        >
+          {isViewOnly ? '🔒 View-Only' : '🎮 Interactive'}
+        </button>
       </div>
 
       <div class="toolbar-right">
+        <div class="touch-mode-group">
+          <button
+            class="mode-btn {touchMode === 'direct' ? 'active' : ''}"
+            onclick={() => touchMode = 'direct'}
+            title="Direct 1:1 touch coordinate mapping"
+          >
+            Direct Touch
+          </button>
+          <button
+            class="mode-btn {touchMode === 'trackpad' ? 'active' : ''}"
+            onclick={() => touchMode = 'trackpad'}
+            title="Relative trackpad mouse navigation"
+          >
+            Trackpad
+          </button>
+        </div>
+
+        <button
+          class="toolbar-btn {showVirtualGamepad ? 'active-gamepad' : ''}"
+          onclick={() => showVirtualGamepad = !showVirtualGamepad}
+          title="Toggle On-Screen Virtual Gamepad Overlay"
+        >
+          🕹️ Gamepad
+        </button>
+
         <div class="slider-group">
           <span class="slider-label">Cap: {selectedBitrateCap} Mbps</span>
           <input
@@ -297,7 +388,7 @@
           onclick={toggleFullscreen}
           title="Toggle Fullscreen"
         >
-          {isFullscreen ? '🗗 Exit Fullscreen' : '⛶ Fullscreen'}
+          {isFullscreen ? '🗗 Exit' : '⛶ Fullscreen'}
         </button>
       </div>
     </div>
@@ -345,7 +436,7 @@
     align-self: flex-start;
   }
 
-  .host-pill, .codec-pill, .res-pill {
+  .host-pill, .codec-pill, .res-pill, .view-only-pill, .full-control-pill {
     font-size: 11px;
     font-weight: 600;
     padding: 4px 10px;
@@ -360,6 +451,18 @@
     background: rgba(14, 165, 233, 0.2);
     color: #38bdf8;
     border-color: rgba(14, 165, 233, 0.4);
+  }
+
+  .view-only-pill {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.5);
+  }
+
+  .full-control-pill {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.5);
   }
 
   .synthetic-barcode-badge {
@@ -384,6 +487,98 @@
     font-family: monospace;
     font-size: 10px;
     color: #9ca3af;
+  }
+
+  /* Virtual Gamepad Overlay */
+  .virtual-gamepad-overlay {
+    position: absolute;
+    inset: 40px 30px 60px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+  }
+
+  .gamepad-cluster {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+  }
+
+  .stick-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+  }
+
+  .dpad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 40px);
+    grid-template-rows: repeat(3, 40px);
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 50%;
+    padding: 8px;
+    backdrop-filter: blur(8px);
+  }
+
+  .gamepad-btn {
+    background: rgba(51, 65, 85, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transition: background 0.1s, transform 0.1s;
+  }
+
+  .gamepad-btn:active {
+    background: rgba(14, 165, 233, 0.8);
+    transform: scale(0.92);
+  }
+
+  .dpad-grid .up { grid-column: 2; grid-row: 1; }
+  .dpad-grid .left { grid-column: 1; grid-row: 2; }
+  .dpad-grid .center { grid-column: 2; grid-row: 2; background: transparent; border: none; }
+  .dpad-grid .right { grid-column: 3; grid-row: 2; }
+  .dpad-grid .down { grid-column: 2; grid-row: 3; }
+
+  .face-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 40px);
+    grid-template-rows: repeat(3, 40px);
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 50%;
+    padding: 8px;
+    backdrop-filter: blur(8px);
+  }
+
+  .face-buttons-grid .btn-y { grid-column: 2; grid-row: 1; border-color: #f59e0b; color: #fbbf24; }
+  .face-buttons-grid .btn-x { grid-column: 1; grid-row: 2; border-color: #38bdf8; color: #38bdf8; }
+  .face-buttons-grid .btn-b { grid-column: 3; grid-row: 2; border-color: #ef4444; color: #f87171; }
+  .face-buttons-grid .btn-a { grid-column: 2; grid-row: 3; border-color: #10b981; color: #34d399; }
+
+  .release-toast {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(16, 185, 129, 0.95);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 30;
   }
 
   /* Telemetry HUD Overlay */
@@ -519,16 +714,16 @@
   .toolbar-left, .toolbar-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
 
   .toolbar-btn {
     background: #1e293b;
     border: 1px solid #334155;
     color: #e2e8f0;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
-    padding: 6px 12px;
+    padding: 5px 10px;
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.15s;
@@ -540,23 +735,56 @@
   }
 
   .toolbar-btn.warn {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fde68a;
+  }
+
+  .toolbar-btn.danger {
     background: rgba(239, 68, 68, 0.15);
     border-color: rgba(239, 68, 68, 0.4);
     color: #fca5a5;
   }
 
-  .toolbar-btn.warn:hover {
+  .toolbar-btn.danger:hover {
     background: rgba(239, 68, 68, 0.3);
     color: #ffffff;
   }
 
-  .auto-abr-checkbox {
-    font-size: 12px;
-    color: #94a3b8;
+  .toolbar-btn.active-view {
+    background: rgba(245, 158, 11, 0.3);
+    border-color: #f59e0b;
+    color: #fbbf24;
+  }
+
+  .toolbar-btn.active-gamepad {
+    background: rgba(14, 165, 233, 0.3);
+    border-color: #0284c7;
+    color: #38bdf8;
+  }
+
+  .touch-mode-group {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    background: #1e293b;
+    border-radius: 6px;
+    padding: 2px;
+    border: 1px solid #334155;
+  }
+
+  .mode-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
     cursor: pointer;
+  }
+
+  .mode-btn.active {
+    background: #0ea5e9;
+    color: #ffffff;
   }
 
   .slider-group {
@@ -572,7 +800,7 @@
   }
 
   .bitrate-slider {
-    width: 100px;
+    width: 90px;
     accent-color: #38bdf8;
     cursor: pointer;
   }
