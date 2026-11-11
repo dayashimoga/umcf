@@ -56,3 +56,4 @@ impl SecurityAuditLedger {
         self.events.iter().filter(|e| e.severity == severity).count()
     }
 }
+

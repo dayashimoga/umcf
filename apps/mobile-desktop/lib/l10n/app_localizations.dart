@@ -294,3 +294,4 @@ class AppLocalizations {
     return calculateContrastRatio(foreground, background) >= 3.0;
   }
 }
+

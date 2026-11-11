@@ -151,3 +151,4 @@ impl RbacAndCryptoAuditor {
         a.ct_eq(b).into()
     }
 }
+

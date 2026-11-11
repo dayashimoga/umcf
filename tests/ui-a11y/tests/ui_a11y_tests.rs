@@ -252,3 +252,4 @@ fn test_manual_rtl_arabic_and_german_compound_word_schema() {
     assert_eq!(schema["axe_core_violations_count"], 0);
     assert_eq!(schema["zero_overflow_verified"], true);
 }
+

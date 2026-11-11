@@ -231,3 +231,4 @@ fn test_manual_executive_sign_off_receipt_schema() {
     assert_eq!(signoff_schema["test_pass_rate_percent"], 100.0);
     assert_eq!(signoff_schema["executive_sign_off"], "APPROVED FOR PRODUCTION");
 }
+

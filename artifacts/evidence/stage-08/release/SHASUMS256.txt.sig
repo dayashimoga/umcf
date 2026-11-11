@@ -5,3 +5,4 @@ Signature: 88367f22edd59b14d63c94d6f864ff45edd0f303103b53cae7f8da827069cbd7f386b
 Target: SHASUMS256.txt
 Release: v1.0.0
 -----END UMCF ED25519 SIGNATURE-----
+

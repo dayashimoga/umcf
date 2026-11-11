@@ -30,3 +30,4 @@
     { "endpoint": "POST /api/v1/admin/revoke-node", "method": "POST", "unauthenticated": "DENY_401", "revoked": "DENY_403", "guest": "DENY_403", "worker": "DENY_403", "admin": "ALLOW_200" }
   ]
 }
+

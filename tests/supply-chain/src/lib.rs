@@ -27,3 +27,4 @@ pub fn validate_sbom_uniqueness(sbom: &CycloneDxSbom) -> bool {
     }
     true
 }
+

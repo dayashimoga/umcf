@@ -214,3 +214,4 @@ fn test_manual_security_self_audit_schema_and_telemetry() {
     assert_eq!(json_val[0]["vector_id"], 1);
     assert_eq!(json_val[0]["severity"], "High");
 }
+

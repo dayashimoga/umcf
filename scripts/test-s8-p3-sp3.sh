@@ -39,3 +39,4 @@ cargo test -p release-cert --test release_cert_tests test_manual_executive_sign_
 echo "  -> [Manually-Verified] PASS"
 
 echo "=== S8.P3.SP3 All 5 Tiers PASSED (100% Pass Rate) ==="
+

@@ -92,3 +92,4 @@ class I18nManager {
 }
 
 export const i18n = new I18nManager();
+

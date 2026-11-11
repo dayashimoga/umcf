@@ -40,3 +40,4 @@ cargo test -p ui-a11y --test ui_a11y_tests test_manual_rtl_arabic_and_german_com
 echo "  -> [Manually-Verified] PASS"
 
 echo "=== S8.P3.SP2 All 5 Tiers PASSED (100% Pass Rate) ==="
+

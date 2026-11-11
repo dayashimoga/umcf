@@ -38,3 +38,4 @@ Unbounded recursion depths:                0 occurrences (all capped <= 32)
 =================================================================
 VERDICT: PASS (ZERO UNWRAP / ZERO UNSAFE / 100% BOUNDED ENFORCEMENT)
 =================================================================
+
