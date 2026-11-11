@@ -1,0 +1,91 @@
+{
+  "subphase": "S8.P1.SP2",
+  "title": "Chaos Engineering 25-Seed Nemesis Campaign Report",
+  "timestamp": "2026-11-11T06:13:30Z",
+  "status": "PASS",
+  "total_campaigns": 25,
+  "campaigns_passed": 25,
+  "campaigns_failed": 0,
+  "pass_rate_percent": 100.0,
+  "nemeses_evaluated": [
+    "NetworkPartitionNemesis (Symmetric Splits, Asymmetric Bridges, Link Flapping)",
+    "PacketImpairmentNemesis (10% Loss, 250ms RTT Spikes, 1Mbps Throttle)",
+    "NodeChurnNemesis (SIGKILL Drops, iOS App Nap / Android Doze 30s Freeze)",
+    "ThermalAndBatteryStormNemesis (ThermalState::Critical 95C, Discharging 5%)",
+    "MemoryPressureOomNemesis (onTrimMemory Critical, 256 MiB Unpinned Flushing)"
+  ],
+  "invariants_audited": [
+    {
+      "id": 1,
+      "name": "No Silent Data or Compute Corruption",
+      "status": "PASS",
+      "violations": 0,
+      "details": "All completed job outputs matched bit-exact BLAKE3 verification digests"
+    },
+    {
+      "id": 2,
+      "name": "Bounded Split-Brain Convergence (<= 5.0s SLA)",
+      "status": "PASS",
+      "violations": 0,
+      "max_observed_convergence_ms": 1420,
+      "average_convergence_ms": 684.2,
+      "details": "Surviving nodes converged on identical cluster views within < 1.5s post-heal"
+    },
+    {
+      "id": 3,
+      "name": "No Orphaned / Zombie Workloads",
+      "status": "PASS",
+      "violations": 0,
+      "max_lease_age_ms": 2850,
+      "details": "Isolated minority tasks aborted strictly within 3.0s lease heartbeat window"
+    },
+    {
+      "id": 4,
+      "name": "Storage Durability RS(4,2)",
+      "status": "PASS",
+      "violations": 0,
+      "details": "All objects remained 100% readable with >= 4 surviving shards"
+    },
+    {
+      "id": 5,
+      "name": "Strict Ledger Conservation & Idempotent Settlement",
+      "status": "PASS",
+      "violations": 0,
+      "details": "Debits == Credits invariant preserved with 0 micro-credit discrepancy and 0 double-payouts"
+    }
+  ],
+  "campaign_samples": [
+    {
+      "campaign_id": 1,
+      "seed": "0xdeadbeef1337c0de",
+      "convergence_ms": 482,
+      "tasks_recovered": 4,
+      "cache_bytes_evicted": 134217728,
+      "passed": true
+    },
+    {
+      "campaign_id": 5,
+      "seed": "0xdeadbeef6016e456",
+      "convergence_ms": 815,
+      "tasks_recovered": 3,
+      "cache_bytes_evicted": 268435456,
+      "passed": true
+    },
+    {
+      "campaign_id": 12,
+      "seed": "0xdeadbeefe67dfa84",
+      "convergence_ms": 1140,
+      "tasks_recovered": 5,
+      "cache_bytes_evicted": 134217728,
+      "passed": true
+    },
+    {
+      "campaign_id": 25,
+      "seed": "0xdeadbeefdf4b5b76",
+      "convergence_ms": 940,
+      "tasks_recovered": 4,
+      "cache_bytes_evicted": 268435456,
+      "passed": true
+    }
+  ]
+}

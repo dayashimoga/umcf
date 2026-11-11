@@ -2967,6 +2967,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "umcf-chaos"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "ed25519-dalek",
+ "hex",
+ "proptest",
+ "rand_core 0.6.4",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "umcf-core",
+ "umcf-guard",
+ "umcf-hwprobe",
+ "umcf-ledger",
+ "umcf-marketplace",
+ "umcf-proto",
+ "umcf-scheduler",
+]
+
+[[package]]
 name = "umcf-cli"
 version = "0.1.0"
 dependencies = [

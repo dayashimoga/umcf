@@ -27,6 +27,7 @@ members = [
     "crates/umcf-ledger",
     "crates/umcf-marketplace",
     "crates/umcf-daemon",
+    "crates/umcf-chaos",
     "services/control-plane-cloudrun",
     "services/cloudrun_fallback",
     "tests/e2e-cluster",
@@ -65,6 +66,7 @@ umcf-sdk = { path = "crates/umcf-sdk" }
 umcf-manifest = { path = "crates/umcf-manifest" }
 umcf-ledger = { path = "crates/umcf-ledger" }
 umcf-marketplace = { path = "crates/umcf-marketplace" }
+umcf-chaos = { path = "crates/umcf-chaos" }
 serde_yaml = "0.9.34"
 toml = "0.8.19"
 redb = "2.3.0"

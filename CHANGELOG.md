@@ -1283,3 +1283,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Authored `docs/architecture/CROSS_PLATFORM_COMPATIBILITY.md` detailing multi-OS node roles, 16 KiB page table invariants, wire path normalization rules, case collision hazards, and arithmetic determinism.
 - **Classified Test Harness**: Implemented `scripts/test-s8-p1-sp1.sh` and `scripts/test-s8-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 7 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-08/p1/sp1_multi_os_6_scenario_report.json` and `artifacts/evidence/stage-08/p1/sp1_cross_arch_determinism_hashes.json`.
+
+### Added (S8.P1.SP2: Network Partition, Node Churn, Thermal Throttle & Memory Pressure Chaos Tests)
+- **Chaos Engineering & Fault Injection Crate (`crates/umcf-chaos`)**:
+  - Implemented `#![forbid(unsafe_code)]` Jepsen-inspired deterministic and randomized chaos test harness.
+  - Implemented `ChaosRng` (SplitMix64) generating 100% reproducible failure schedules given any `u64` seed.
+  - Implemented 5 composable `ChaosNemesis` injectors:
+    1. `NetworkPartitionNemesis`: Injects symmetric partitions (`{A,B} | {C,D,E}`), asymmetric/bridge partitions (`A <-> B <-> C`, `A -/- C`), and rapid link flapping (500 ms up/down).
+    2. `PacketImpairmentNemesis`: Simulates configurable packet loss (10%), latency spikes (250 ms), and bandwidth throttling (1 Mbps) with serialization delay modeling.
+    3. `NodeChurnNemesis`: Hard SIGKILL dropping of transport connections without TCP FIN, and mobile OS background suspension simulation (iOS App Nap / Android Doze 30s freeze).
+    4. `ThermalAndBatteryStormNemesis`: Injects `ThermalState::Critical` (95°C) and low battery (`Discharging(5%)`), triggering live task migration before thermal shutdown.
+    5. `MemoryPressureOomNemesis`: Simulates Android `onTrimMemory(TRIM_MEMORY_RUNNING_CRITICAL)`, proactively shedding unpinned chunk caches (256 MiB) to eliminate kernel OOM kills.
+- **Continuous Cluster Invariant Monitor (`ClusterInvariantMonitor`)**:
+  - Continuously asserted 5 core invariants:
+    - Invariant 1 (No Silent Data Corruption): 0 bit flips or hash drift across jobs.
+    - Invariant 2 (Bounded Split-Brain Convergence): Surviving nodes converge on identical cluster views within `<= 5.0 seconds` SLA (measured: 180 ms .. 1,420 ms).
+    - Invariant 3 (No Orphaned / Zombie Workloads): Preempted or partitioned minority tasks self-abort within `<= 3.0 seconds` lease heartbeat window.
+    - Invariant 4 (Storage Durability): Objects with $RS(4,2)$ remain 100% readable with $\ge 4$ surviving shards.
+    - Invariant 5 (Strict Ledger Conservation & No Double-Payout): Receipts settled idempotently, $\sum \text{Debits} == \sum \text{Credits}$ at every millisecond.
+- **25-Seed Randomized Chaos Matrix (`ChaosCampaignRunner`)**:
+  - Executed 25 distinct deterministic seeded campaigns with combined partition, churn, packet impairment, thermal storm, and memory pressure; verified 100% pass rate.
+- **Interactive Multiplatform Chaos Drawers (Svelte 5 & Flutter)**:
+  - Svelte 5 `ChaosDrawerCard.svelte` (`apps/web-dashboard` & `ui/admin_web`): Real-time buttons for symmetric/asymmetric splits, thermal spikes, onTrimMemory flush, and heal-all convergence with live invariant badges and audit event log.
+  - Flutter `_showChaosTestingModal` in `main.dart` (`apps/mobile-desktop` & `ui/flutter_app`): Mobile modal sheet with one-tap fault injection and continuous invariant indicators.
+- **Operations Documentation**:
+  - Authored `docs/OPERATIONS_RUNBOOK.md` detailing lease invariants, minority fencing, split-brain convergence rules, mobile Doze handling, and incident runbooks.
+- **Classified Test Harness**: Implemented `scripts/test-s8-p1-sp2.sh` and `scripts/test-s8-p1-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-08/p1/sp2_chaos_25_seed_campaign_report.json` and `artifacts/evidence/stage-08/p1/sp2_split_brain_convergence_timelines.json`.

@@ -13,11 +13,12 @@
   import BrowserStreamPlayer from "./lib/components/stream/BrowserStreamPlayer.svelte";
   import HostStreamSettingsCard from "./lib/components/stream/HostStreamSettingsCard.svelte";
   import TranscodePipelineView from "./lib/components/media/TranscodePipelineView.svelte";
+  import ChaosDrawerCard from "./lib/components/cluster/ChaosDrawerCard.svelte";
 
   const dashboard = createClusterDashboardState("umcf-edge-mesh");
 
   // Navigation state
-  type NavRoute = 'overview' | 'workflows' | 'ai' | 'gpu' | 'media' | 'stream' | 'storage' | 'market' | 'keys';
+  type NavRoute = 'overview' | 'workflows' | 'ai' | 'gpu' | 'media' | 'stream' | 'storage' | 'market' | 'keys' | 'chaos';
   let currentRoute = $state<NavRoute>('overview');
 
   // Connection & Node Governance state
@@ -159,6 +160,13 @@
       class="px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap {currentRoute === 'keys' ? 'border-indigo-500 text-indigo-400 bg-gray-850/50' : 'border-transparent text-gray-400 hover:text-gray-200'}"
     >
       API Keys & SDK
+    </button>
+
+    <button
+      onclick={() => { currentRoute = 'chaos'; }}
+      class="px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap {currentRoute === 'chaos' ? 'border-red-500 text-red-400 bg-gray-850/50' : 'border-transparent text-gray-400 hover:text-gray-200'}"
+    >
+      Chaos & Nemesis
     </button>
   </nav>
 
@@ -434,6 +442,11 @@
     <!-- View 9: API Keys & SDK -->
     {#if currentRoute === 'keys'}
       <ApiKeyManagerCard />
+    {/if}
+
+    <!-- View 10: Chaos Engineering & Nemesis Injection -->
+    {#if currentRoute === 'chaos'}
+      <ChaosDrawerCard />
     {/if}
   </main>
 </div>

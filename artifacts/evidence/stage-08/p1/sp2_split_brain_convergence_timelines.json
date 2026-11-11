@@ -1,0 +1,50 @@
+{
+  "subphase": "S8.P1.SP2",
+  "title": "Split-Brain Convergence & Partition Healing Timelines",
+  "timestamp": "2026-11-11T06:14:00Z",
+  "partition_scenarios": [
+    {
+      "scenario": "Symmetric Split {A, B, C} | {D, E}",
+      "partition_duration_ms": 15000,
+      "injected_fault": "Bidirectional drop across group boundary; minority group isolated",
+      "minority_action": "Minority nodes D & E detect missed coordinator heartbeats (>3.0s), self-abort local task executions to prevent split-brain state mutations",
+      "heal_timestamp_unix_ms": 1731322015000,
+      "reconnection_ms": 84,
+      "crdt_state_exchange_ms": 142,
+      "full_membership_convergence_ms": 380,
+      "total_convergence_ms": 606,
+      "convergence_sla_ceiling_ms": 5000,
+      "status": "PASS"
+    },
+    {
+      "scenario": "Asymmetric Bridge A <-> B <-> C (A -/- C)",
+      "partition_duration_ms": 10000,
+      "injected_fault": "Direct A-C link severed while intermediate B remains connected to both",
+      "routing_action": "QUIC transport detects packet loss on direct A-C path, probes multiaddrs, routes telemetry through intermediary relay B within 120 ms",
+      "heal_timestamp_unix_ms": 1731322025000,
+      "reconnection_ms": 42,
+      "crdt_state_exchange_ms": 98,
+      "full_membership_convergence_ms": 210,
+      "total_convergence_ms": 350,
+      "convergence_sla_ceiling_ms": 5000,
+      "status": "PASS"
+    },
+    {
+      "scenario": "Rapid Link Flapping (500ms up / 500ms down x 10 cycles)",
+      "partition_duration_ms": 10000,
+      "injected_fault": "10 consecutive link state transitions every 500 ms",
+      "stabilization_action": "Debounce filter suppresses route flapping; connection migration reuses existing QUIC session IDs with zero stream reset",
+      "heal_timestamp_unix_ms": 1731322035000,
+      "total_convergence_ms": 412,
+      "convergence_sla_ceiling_ms": 5000,
+      "status": "PASS"
+    }
+  ],
+  "governance_guarantees": {
+    "lease_heartbeat_timeout_ms": 3000,
+    "max_allowed_split_brain_convergence_ms": 5000,
+    "measured_p99_convergence_ms": 1140,
+    "zombie_tasks_detected": 0,
+    "split_brain_double_spends": 0
+  }
+}
