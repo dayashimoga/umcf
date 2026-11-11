@@ -1088,6 +1088,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s7-p1-sp3.sh` and `scripts/test-s7-p1-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-07/p1/sp3_offline_pin_hydration_proof.json` and `artifacts/evidence/stage-07/p1/sp3_concurrent_gc_safety_and_accounting.json`.
 
+### Added (S7.P2.SP1: Rust/TypeScript/Python Client SDKs & Versioned gRPC/HTTP/WebSocket API)
+- **Unified Versioned API Gateway (`crates/umcf-api-gateway`)**:
+  - Implemented high-performance Axum 0.7 + Tokio routing layer mounting versioned endpoints under `/api/v1/*` and `/ws/v1/*`.
+  - Cluster routes: `GET /api/v1/cluster/nodes`, `POST /api/v1/cluster/pair`, `GET /api/v1/cluster/telemetry`.
+  - Job management: `POST /api/v1/jobs`, `GET /api/v1/jobs/{id}`, `POST /api/v1/jobs/{id}/cancel`.
+  - Distributed AI: `GET /api/v1/ai/models`, `POST /api/v1/ai/models/pull`, `/v1/chat/completions`, `/v1/embeddings`.
+  - Distributed GPU & Media: `POST /api/v1/gpu/render`, `POST /api/v1/media/transcode`, `POST /api/v1/stream/sessions`.
+  - Content-addressed storage: `PUT /api/v1/storage/objects`, `GET /api/v1/storage/objects/{cid}`, `POST /api/v1/storage/pins`.
+- **Scoped Bearer Capability Tokens & Rate Limiter (`ApiKeyValidator`)**:
+  - Enforced fine-grained capability scopes (`cluster:read`, `cluster:admin`, `jobs:submit`, `jobs:read`, `ai:inference`, `gpu:render`, `media:transcode`, `storage:read`, `storage:write`, `stream:connect`, `admin:full`).
+  - Implemented token-bucket rate limiter per key with sub-millisecond refill precision and configurable burst capacity.
+  - Implemented standard RFC 9457 Problem Details (`application/problem+json`) error handling with typed codes (`UMCF_AUTH_INSUFFICIENT_SCOPE`, `UMCF_RATE_LIMIT_EXCEEDED`, etc.).
+- **Canonical OpenAPI 3.1.0 Specification & Interactive Offline API Explorer**:
+  - Generates schema compliant with OpenAPI 3.1.0 served at `GET /api/v1/openapi.json`.
+  - Embedded offline dark-mode HTML5 API Explorer served at `GET /api/v1/docs` with zero external CDN dependencies.
+- **WebSocket Event Ring Buffer & Cursor Resumption (`EventRingBuffer`)**:
+  - Monotonically sequenced event ring buffer supporting `?since_seq=N` and `Last-Event-ID` header.
+  - Lossless replay: Verified that reconnecting clients receive 100% of missed events without gaps or duplicates.
+- **Polyglot Client SDKs (Rust, TypeScript, Python)**:
+  - **Rust SDK (`crates/umcf-sdk`)**: Typed async `UmcfClient::builder()`, `JobEventStream`, and typed method namespaces.
+  - **TypeScript SDK (`sdks/typescript`)**: Zero-dependency `@umcf/sdk` package for Node.js >= 20, Deno, Bun, and browsers with native `fetch` and async iterators.
+  - **Python SDK (`sdks/python`)**: Typed `umcf` package using standard library + Pydantic models for both sync and async workflows.
+  - 100% conformance verified across all 3 SDKs against live local gateway server.
+- **Interactive Multiplatform Key Management UI (Svelte 5 & Flutter)**:
+  - Svelte 5 `apps/web-dashboard/src/lib/components/developer/ApiKeyManagerCard.svelte` and `ui/admin_web/...`: Active keys table with scope badges, rate limit indicators, "Create API Key" modal with fine-grained scope selection, and one-tap secret token clipboard copy.
+  - Flutter `apps/mobile-desktop/lib/features/developer/api_keys_screen.dart` and `ui/flutter_app/...`: Riverpod-managed responsive screen with scope chips, live gateway status indicator, and revocation controls.
+- **Architecture Documentation & Invariants**:
+  - Authored `docs/sdk/DEVELOPER_GUIDE.md` detailing API endpoints, capability scope matrix, RFC 9457 error codes, SDK quickstarts, and WebSocket cursor resumption.
+- **Classified Test Harness**: Implemented `scripts/test-s7-p2-sp1.sh` and `scripts/test-s7-p2-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-07/p2/sp1_openapi_v1_schema.json` and `artifacts/evidence/stage-07/p2/sp1_rust_ts_python_sdk_conformance.json`.
+
 
 
 

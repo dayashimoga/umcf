@@ -1,0 +1,26 @@
+{
+  "name": "@umcf/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Official TypeScript & JavaScript Client SDK for the Universal Mobile Compute Fabric",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "umcf",
+    "compute-fabric",
+    "distributed-ai",
+    "wasm",
+    "edge-computing",
+    "p2p"
+  ],
+  "author": "UMCF Platform Engineering",
+  "license": "Apache-2.0 OR MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
