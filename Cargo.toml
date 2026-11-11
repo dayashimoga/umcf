@@ -37,6 +37,7 @@ members = [
     "tests/supply-chain",
     "tests/data-plane",
     "tests/ui-a11y",
+    "tests/release-cert",
 ]
 
 [workspace.package]

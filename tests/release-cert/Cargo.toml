@@ -1,0 +1,32 @@
+[package]
+name = "release-cert"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+name = "release_cert"
+path = "src/lib.rs"
+
+[[bin]]
+name = "umcf-certify-v1"
+path = "../../scripts/release/certify_v1.rs"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+blake3 = { workspace = true }
+ed25519-dalek = { workspace = true }
+rand_core = { workspace = true }
+hex = "0.4"
+umcf-core = { workspace = true }
+umcf-proto = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

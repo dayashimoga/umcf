@@ -1,0 +1,7 @@
+-----BEGIN UMCF ED25519 SIGNATURE-----
+Type: ReleaseChecksumAttestation
+AuthorityKey: fd7c5e69a3ae695443bf9a8d92cca22a241331d2d2df94d415ba4a2f61e568a6
+Signature: 88367f22edd59b14d63c94d6f864ff45edd0f303103b53cae7f8da827069cbd7f386b0848375fec74c83480790f465cb78c9ee36e5c28f586efb648fb0add90a
+Target: SHASUMS256.txt
+Release: v1.0.0
+-----END UMCF ED25519 SIGNATURE-----
