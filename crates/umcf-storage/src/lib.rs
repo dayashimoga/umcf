@@ -12,6 +12,8 @@
 pub mod chunk_store;
 pub mod erasure;
 pub mod error;
+pub mod gc;
+pub mod pinning;
 pub mod placement;
 pub mod quota;
 
@@ -24,6 +26,10 @@ pub use erasure::{
     ReedSolomonErasureEngine, Gf256,
 };
 pub use error::StorageError;
+pub use gc::{ConcurrentGarbageCollector, ExternalGcRoots, GcConfig, GcSummaryReport};
+pub use pinning::{
+    CountMinSketch, HydrationState, PinManager, PinMode, PinRecord, WTinyLfuChunkCache,
+};
 pub use placement::{
     DurabilityState, FailureDomainPlacementEngine, ObjectPlacementRecord, RepairEvent,
     ShardHealthReport, ShardHealthRepairWorker, StorageNodeDescriptor,

@@ -161,6 +161,17 @@ impl StrictQuotaEnforcer {
         self.configured_max_bytes.store(new_max_bytes, Ordering::SeqCst);
     }
 
+    /// Returns the currently committed used bytes on disk.
+    #[must_use]
+    pub fn used_bytes(&self) -> u64 {
+        self.used_bytes.load(Ordering::SeqCst)
+    }
+
+    /// Alias for release_used_bytes when sweeping chunks during garbage collection.
+    pub fn release_swept_bytes(&self, bytes: u64) {
+        self.release_used_bytes(bytes);
+    }
+
     /// Returns the sum of used and currently in-flight reserved bytes.
     #[must_use]
     pub fn total_allocated_bytes(&self) -> u64 {
@@ -169,3 +180,4 @@ impl StrictQuotaEnforcer {
             .saturating_add(self.reserved_in_flight_bytes.load(Ordering::SeqCst))
     }
 }
+

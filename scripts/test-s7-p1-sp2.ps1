@@ -160,3 +160,4 @@ if ($allPass) {
   Write-Host "`nSubphase S7.P1.SP2 Verification Status: FAILED" -ForegroundColor Red
   exit 1
 }
+

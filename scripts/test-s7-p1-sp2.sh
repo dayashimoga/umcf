@@ -25,3 +25,4 @@ echo "[5/5] Running [Manually-Verified] tests..."
 cargo test -p umcf-storage --test erasure_placement_tests test_manual_shard_health_matrix_
 
 echo "=== Subphase S7.P1.SP2: 100% PASS Across All 5 Tiers ==="
+

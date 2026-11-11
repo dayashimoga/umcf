@@ -48,6 +48,11 @@ impl ChunkId {
         hex::encode(self.0)
     }
 
+    #[must_use]
+    pub fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+
     pub fn from_hex(s: &str) -> Result<Self, StorageError> {
         let bytes = hex::decode(s).map_err(|e| {
             StorageError::ManifestCorrupted {
@@ -254,6 +259,7 @@ pub struct ChunkMetadata {
     pub ref_count: u32,
     pub pinned: bool,
     pub last_access_us: u64,
+    pub created_at_us: u64,
 }
 
 /// Options for object ingestion into the content-addressed chunk store.
@@ -377,6 +383,7 @@ impl ContentAddressedChunkStore {
                     ref_count: 1,
                     pinned,
                     last_access_us: now_us,
+                    created_at_us: now_us,
                 },
             );
             permit.commit(0);
@@ -411,6 +418,7 @@ impl ContentAddressedChunkStore {
                 ref_count: 1,
                 pinned,
                 last_access_us: now_us,
+                created_at_us: now_us,
             },
         );
 
@@ -595,6 +603,7 @@ impl ContentAddressedChunkStore {
                                         ref_count: 1,
                                         pinned: false,
                                         last_access_us: 0,
+                                        created_at_us: 0,
                                     });
                                 }
                             }
@@ -637,5 +646,68 @@ impl ContentAddressedChunkStore {
         }
 
         Ok(freed_bytes)
+    }
+
+    /// Returns a snapshot of metadata for all chunks currently tracked in the index.
+    #[must_use]
+    pub fn list_all_chunks(&self) -> Vec<ChunkMetadata> {
+        let index = match self.index.lock() {
+            Ok(idx) => idx,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        index.values().cloned().collect()
+    }
+
+    /// Purges a chunk from the index and deletes its on-disk .chk file.
+    /// Returns the number of bytes reclaimed.
+    pub fn purge_chunk(&self, chunk_id: &ChunkId) -> Result<u64, StorageError> {
+        let mut index = match self.index.lock() {
+            Ok(idx) => idx,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+
+        if let Some(meta) = index.remove(chunk_id) {
+            let path = self.chunk_path(chunk_id);
+            if path.exists() {
+                let _ = fs::remove_file(path);
+            }
+            Ok(meta.size_bytes)
+        } else {
+            Ok(0)
+        }
+    }
+
+    /// Restores a corrupted chunk by writing verified healthy bytes directly to its on-disk path.
+    pub fn restore_corrupted_chunk(&self, chunk_id: &ChunkId, data: &[u8]) -> Result<(), StorageError> {
+        let path = self.chunk_path(chunk_id);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let mut file = File::create(&path)?;
+        file.write_all(data)?;
+        file.sync_all()?;
+
+        let mut index = match self.index.lock() {
+            Ok(idx) => idx,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let now_us = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_micros() as u64;
+
+        index.insert(
+            *chunk_id,
+            ChunkMetadata {
+                chunk_id: *chunk_id,
+                size_bytes: data.len() as u64,
+                ref_count: 1,
+                pinned: false,
+                last_access_us: now_us,
+                created_at_us: now_us,
+            },
+        );
+
+        Ok(())
     }
 }
