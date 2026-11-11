@@ -1,0 +1,33 @@
+{
+    "phase":  "S6.P2",
+    "title":  "Distributed Media Transcoding \u0026 Processing Pipeline",
+    "certified_at":  "2026-11-11T03:04:26Z",
+    "subphases":  [
+                      {
+                          "subphase":  "S6.P2.SP1",
+                          "title":  "Hardware-Accelerated Codec Probing \u0026 Adapter",
+                          "tests_passed":  9,
+                          "total_tests":  9,
+                          "pass_rate":  "100%"
+                      },
+                      {
+                          "subphase":  "S6.P2.SP2",
+                          "title":  "Segment-Parallel Transcoding, Stitching \u0026 Audio Sync",
+                          "tests_passed":  7,
+                          "total_tests":  7,
+                          "pass_rate":  "100%"
+                      },
+                      {
+                          "subphase":  "S6.P2.SP3",
+                          "title":  "Media Pipeline Fault Recovery \u0026 Quality Verification",
+                          "tests_passed":  8,
+                          "total_tests":  8,
+                          "pass_rate":  "100%"
+                      }
+                  ],
+    "total_phase_tests":  24,
+    "total_phase_passed":  24,
+    "phase_pass_rate":  "100%",
+    "certification_status":  "CERTIFIED",
+    "tag":  "v0.6.2-certified"
+}

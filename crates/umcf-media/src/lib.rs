@@ -9,7 +9,9 @@
 
 pub mod adapter;
 pub mod error;
+pub mod fault_recovery;
 pub mod prober;
+pub mod quality_auditor;
 pub mod segmenter;
 pub mod stitcher;
 
@@ -18,9 +20,16 @@ pub use adapter::{
     TranscodeRequest,
 };
 pub use error::MediaError;
+pub use fault_recovery::{
+    JobCheckpoint, SegmentFaultRecoveryManager, SegmentLifecycleStatus,
+};
 pub use prober::{
     AccelerationBackend, CandidateCodec, CodecCapabilityDescriptor, CodecDirection,
     HardwareCodecProber, MediaCodecId, PixelFormat,
+};
+pub use quality_auditor::{
+    AnchorFrameEvaluation, AnchorFrameType, MediaQualityAuditor, QualityPolicy,
+    SegmentQualityReport,
 };
 pub use segmenter::{
     GopSegmenter, KeyframeInfo, ParallelTranscodeCoordinator, SegmentAssignment,

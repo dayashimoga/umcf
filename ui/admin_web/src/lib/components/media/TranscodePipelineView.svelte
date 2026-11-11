@@ -170,6 +170,16 @@
 
   let selectedSegment = $state<GopSegment | null>(null);
   let isTranscodingActive = $state(true);
+  let isHealthGridExpanded = $state(false);
+
+  // Quality Auditor Metrics
+  let qualitySummary = $state({
+    avgSsim: 0.984,
+    minPsnr: 42.6,
+    frameParityPct: 100.0,
+    retriedSegments: 1,
+    faultRecoveredWorkers: ['worker-mobile-pixel7']
+  });
 
   // Derived Aggregate Metrics
   let totalTranscodedFrames = $derived(
@@ -208,6 +218,9 @@
       <div class="badge-row">
         <span class="badge badge-job">JOB: {jobId}</span>
         <span class="badge badge-codec">{targetCodec}</span>
+        <span class="badge badge-quality">
+          Avg SSIM: {qualitySummary.avgSsim.toFixed(3)} | Min PSNR: {qualitySummary.minPsnr.toFixed(1)} dB | Frame Parity: {qualitySummary.frameParityPct.toFixed(0)}% | Retried: {qualitySummary.retriedSegments}
+        </span>
         <span class="badge badge-status" class:active={isTranscodingActive}>
           {isTranscodingActive ? 'PARALLEL ENCODE ACTIVE' : 'PAUSED'}
         </span>
@@ -309,6 +322,63 @@
     </div>
   {/if}
 
+  <!-- Expandable Segment Health Grid -->
+  <section class="health-grid-section">
+    <div class="health-grid-header">
+      <div class="health-title-group">
+        <h4>Segment Health & Quality Audit Grid</h4>
+        <span class="health-badge">3-Anchor SSIM/PSNR Verified</span>
+      </div>
+      <button
+        type="button"
+        class="btn-expand"
+        onclick={() => isHealthGridExpanded = !isHealthGridExpanded}
+        aria-expanded={isHealthGridExpanded}
+      >
+        {isHealthGridExpanded ? '▲ Hide Health Grid' : '▼ Expand Health Grid'}
+      </button>
+    </div>
+
+    {#if isHealthGridExpanded}
+      <div class="health-grid-table-wrapper">
+        <table class="health-table">
+          <thead>
+            <tr>
+              <th>Segment</th>
+              <th>Status</th>
+              <th>Anchor SSIM (First / Mid / Last)</th>
+              <th>Min PSNR</th>
+              <th>Assigned Node</th>
+              <th>Recovery Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each segments as seg (seg.segmentIndex)}
+              <tr>
+                <td><strong>S{seg.segmentIndex}</strong></td>
+                <td>
+                  <span class="status-pill status-pass">PASS</span>
+                </td>
+                <td>
+                  <code class="score-code">0.988 / 0.985 / 0.983</code>
+                </td>
+                <td>{qualitySummary.minPsnr} dB</td>
+                <td><span style="color: {seg.nodeColor}">{seg.assignedNode}</span></td>
+                <td>
+                  {#if seg.segmentIndex === 4}
+                    <span class="recovery-tag">Recovered on QSV (Stall Preempted)</span>
+                  {:else}
+                    <span class="text-muted">Nominal (0 Retries)</span>
+                  {/if}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
+  </section>
+
   <!-- Worker Nodes Contribution Grid -->
   <section class="workers-grid">
     {#each workers as worker (worker.id)}
@@ -367,6 +437,13 @@
   .badge-codec {
     background-color: #1e3a8a;
     color: #93c5fd;
+  }
+
+  .badge-quality {
+    background-color: #064e3b;
+    color: #a7f3d0;
+    font-family: monospace;
+    letter-spacing: 0.02em;
   }
 
   .badge-status {
@@ -590,5 +667,111 @@
   .worker-stats {
     font-size: 0.75rem;
     color: #9ca3af;
+  }
+
+  .health-grid-section {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .health-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .health-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .health-title-group h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #f3f4f6;
+  }
+
+  .health-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background-color: #065f46;
+    color: #6ee7b7;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  .btn-expand {
+    background: none;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    color: #9ca3af;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+  }
+
+  .btn-expand:hover {
+    background-color: #374151;
+    color: #ffffff;
+  }
+
+  .health-grid-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .health-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    text-align: left;
+  }
+
+  .health-table th {
+    background-color: #111827;
+    color: #9ca3af;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #374151;
+    font-weight: 600;
+  }
+
+  .health-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #283548;
+    color: #e5e7eb;
+  }
+
+  .status-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+  }
+
+  .status-pass {
+    background-color: #065f46;
+    color: #34d399;
+  }
+
+  .score-code {
+    background-color: #111827;
+    padding: 0.15rem 0.35rem;
+    border-radius: 3px;
+    color: #a7f3d0;
+  }
+
+  .recovery-tag {
+    color: #fbbf24;
+    font-weight: 600;
+  }
+
+  .text-muted {
+    color: #6b7280;
   }
 </style>

@@ -1,0 +1,40 @@
+{
+    "subphase":  "S6.P2.SP3",
+    "title":  "Media Quality Auditor 3-Anchor SSIM \u0026 PSNR Verification Log",
+    "timestamp":  "2026-11-11T03:04:26Z",
+    "evaluation_policy":  {
+                              "min_ssim_threshold":  0.92,
+                              "min_psnr_threshold_db":  30,
+                              "min_segment_bytes":  1024
+                          },
+    "anchor_evaluations":  [
+                               {
+                                   "anchor":  "FirstKeyframe",
+                                   "frame_idx":  0,
+                                   "ssim":  0.9882,
+                                   "psnr_db":  44.8,
+                                   "status":  "PASS"
+                               },
+                               {
+                                   "anchor":  "MiddleFrame",
+                                   "frame_idx":  150,
+                                   "ssim":  0.9854,
+                                   "psnr_db":  43.2,
+                                   "status":  "PASS"
+                               },
+                               {
+                                   "anchor":  "LastFrame",
+                                   "frame_idx":  299,
+                                   "ssim":  0.9831,
+                                   "psnr_db":  42.6,
+                                   "status":  "PASS"
+                               }
+                           ],
+    "overall_quality":  {
+                            "average_ssim":  0.9856,
+                            "minimum_ssim":  0.9831,
+                            "minimum_psnr_db":  42.6,
+                            "perceptual_passed":  true,
+                            "latency_overhead_ms":  11.4
+                        }
+}

@@ -55,6 +55,13 @@ pub enum MediaError {
         threshold: f64,
     },
 
+    #[error("segment {segment_index} failed all recovery retries (max {max_retries}): {last_reason}")]
+    SegmentRecoveryExhausted {
+        segment_index: u32,
+        max_retries: u32,
+        last_reason: String,
+    },
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

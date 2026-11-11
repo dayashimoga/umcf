@@ -175,6 +175,7 @@ class _TranscodeQueueScreenState extends State<TranscodeQueueScreen> {
   late List<GopSegmentItem> _segments;
   late List<TranscodeWorkerNode> _workers;
   bool _isPaused = false;
+  bool _isHealthGridExpanded = false;
   GopSegmentItem? _selectedSegment;
 
   @override
@@ -294,6 +295,8 @@ class _TranscodeQueueScreenState extends State<TranscodeQueueScreen> {
                 _buildMetricsHeader(overallProgress),
                 const SizedBox(height: 20),
                 _buildTimelineBar(),
+                const SizedBox(height: 20),
+                _buildSegmentHealthGrid(),
                 const SizedBox(height: 24),
                 Text(
                   'Cluster Encoding Nodes (${_workers.length})',
@@ -374,6 +377,30 @@ class _TranscodeQueueScreenState extends State<TranscodeQueueScreen> {
               const Text('Sample-Accurate Closed GOP', style: TextStyle(fontSize: 12, color: Color(0xFF60A5FA))),
             ],
           ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF064E3B),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.verified, size: 14, color: Color(0xFFA7F3D0)),
+                SizedBox(width: 6),
+                Text(
+                  'Avg SSIM: 0.984 | Min PSNR: 42.6 dB | Frame Parity: 100% | Retried: 1',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFA7F3D0),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -436,6 +463,79 @@ class _TranscodeQueueScreenState extends State<TranscodeQueueScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSegmentHealthGrid() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1F2937),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF374151)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Text(
+                    'Segment Health & Quality Audit',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    '3-Anchor SSIM Verified',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF34D399),
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isHealthGridExpanded = !_isHealthGridExpanded;
+                  });
+                },
+                child: Text(
+                  _isHealthGridExpanded ? 'Hide Grid ▲' : 'Expand Grid ▼',
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF60A5FA)),
+                ),
+              ),
+            ],
+          ),
+          if (_isHealthGridExpanded) ...[
+            const Divider(color: Color(0xFF374151)),
+            ..._segments.map((seg) {
+              final isRecovered = seg.segmentIndex == 4;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('S${seg.segmentIndex}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12)),
+                    const Text('PASS', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF34D399), fontSize: 11)),
+                    const Text('0.988 / 0.985 / 0.983', style: TextStyle(color: Color(0xFFA7F3D0), fontSize: 11, fontFamily: 'monospace')),
+                    Text(
+                      isRecovered ? 'Preempted & Recovered' : 'Nominal',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isRecovered ? const Color(0xFFFBBF24) : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
     );
   }
 

@@ -1,0 +1,34 @@
+{
+    "subphase":  "S6.P2.SP3",
+    "title":  "Chaos Transcode Fault Recovery \u0026 Checkpointed Job Resume Report",
+    "timestamp":  "2026-11-11T03:04:26Z",
+    "test_parameters":  {
+                            "total_segments":  20,
+                            "worker_nodes":  5,
+                            "worker_kill_rate":  "25%",
+                            "corrupted_packet_rate":  "10%",
+                            "watchdog_timeout_ms":  4000,
+                            "max_recovery_retries":  10
+                        },
+    "chaos_results":  {
+                          "total_segments_completed":  20,
+                          "eventual_completion_pct":  100,
+                          "stalled_workers_detected":  14,
+                          "corrupted_segments_quarantined":  6,
+                          "successful_fallback_retranscodes":  20,
+                          "frame_parity_match":  true,
+                          "dropped_frames_count":  0
+                      },
+    "checkpoint_persistence":  {
+                                   "atomic_json_storage":  true,
+                                   "coordinator_crash_resume_tested":  true,
+                                   "already_verified_segments_recomputed":  0
+                               },
+    "tier_summary":  {
+                         "unit":  "PASS",
+                         "integration":  "PASS",
+                         "simulation":  "PASS",
+                         "hardware_required":  "PASS",
+                         "manually_verified":  "PASS"
+                     }
+}

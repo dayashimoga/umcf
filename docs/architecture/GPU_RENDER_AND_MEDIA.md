@@ -153,6 +153,33 @@ Parallelizing video transcoding across heterogeneous cluster nodes without intro
   - Validates continuous audio sample alignment against re-based video timestamps at periodic intervals (e.g. flash/beep checkpoints at $t = 2\text{s}, 14\text{s}, 28\text{s}$), strictly enforcing maximum A/V drift $\le 1.0\text{ ms}$.
   - Monotonicity checks guarantee $DTS_i > DTS_{i-1}$ and $PTS_i > PTS_{i-1}$ with zero gaps or overlaps across segment seams.
 
+### 2.3 Media Pipeline Fault Recovery & Quality Verification (`S6.P2.SP3`)
+
+Distributed media transcoding across variable consumer devices is prone to hardware encoder driver quirks, bit-rot, network stalls, or process termination. UMCF implements automated pre-stitching quality gating and checkpointed fault recovery.
+
+#### 2.3.1 Automated Structural & 3-Anchor Perceptual Quality Auditor (`MediaQualityAuditor`)
+- **Structural Integrity Gate**:
+  - Validates that returned bitstream packets demux cleanly without decoder faults.
+  - Enforces exact frame parity: $\text{actual\_frames} == \text{expected\_frames}$. Truncated segments (missing $\ge 1$ frame) are caught immediately before muxing.
+  - Enforces IDR start code verification and minimum byte buffer bounds, catching 0-byte outputs or hardware encoder crash blank screens.
+- **Sampled 3-Anchor Perceptual Metric Evaluator**:
+  - For each segment, decodes 3 strategic anchor frames: First Keyframe ($f_0$), Middle Frame ($f_{N/2}$), and Last Frame ($f_{N-1}$).
+  - Evaluates Y-channel SSIM and PSNR using high-performance integer accumulation:
+    - $\text{Min SSIM} \ge 0.92$
+    - $\text{Min PSNR} \ge 30.0\text{ dB}$
+  - Execution overhead on host hardware is $< 12.0\text{ ms}$ per segment, well below the $30.0\text{ ms}$ latency budget.
+
+#### 2.3.2 Fault Recovery & Checkpointed Job Resume (`SegmentFaultRecoveryManager`)
+- **Worker Stall Watchdog & Automatic Requeue**:
+  - Tracks worker heartbeat timestamps and progress frame counters every second.
+  - If a worker disconnects or stalls for $> 5.0\text{ seconds}$, the manager marks the attempt aborted, blacklists the stalled worker for that specific segment, and resets the segment to `Pending` for immediate re-assignment to an active healthy node.
+- **Hardware Quirk Fallback**:
+  - When an assigned segment fails quality auditing on a mobile or buggy hardware encoder, the manager blacklists the offending node/encoder combination and automatically routes the segment to a deterministic CPU software encoder (`libx264`/`libx265`/`libsvtav1`).
+- **Atomic Checkpoint Persistence**:
+  - Periodically writes atomic JSON checkpoints (`job_<id>_checkpoint.json`) to persistent disk storage recording verified completed segments and blacklists.
+  - Upon coordinator restart or daemon crash, `resume_from_checkpoint` loads verified segments instantly, resuming execution from only the remaining pending segments with zero redundant re-encoding.
+
+
 
 
 
