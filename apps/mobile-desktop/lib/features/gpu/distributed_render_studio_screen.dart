@@ -68,15 +68,32 @@ class _DistributedRenderStudioScreenState extends State<DistributedRenderStudioS
   bool _showAttributionOverlay = true;
   bool _isRendering = false;
   String? _selectedWorkerId;
+  int? _activeAnimatedTiles;
 
-  int get _completedTiles => widget.workers.fold(0, (sum, w) => sum + w.completedTiles);
+  int get _completedTiles =>
+      _activeAnimatedTiles ?? widget.workers.fold(0, (sum, w) => sum + w.completedTiles);
   double get _progress => widget.totalTiles > 0 ? (_completedTiles / widget.totalTiles).clamp(0.0, 1.0) : 0.0;
 
   void _triggerRender() {
-    setState(() => _isRendering = true);
+    setState(() {
+      _isRendering = true;
+      _activeAnimatedTiles = 15;
+    });
+    for (int step = 1; step <= 5; step++) {
+      Future.delayed(Duration(milliseconds: step * 250), () {
+        if (mounted && _isRendering) {
+          setState(() {
+            _activeAnimatedTiles = ((widget.totalTiles * step) / 5).round();
+          });
+        }
+      });
+    }
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
-        setState(() => _isRendering = false);
+        setState(() {
+          _isRendering = false;
+          _activeAnimatedTiles = null;
+        });
       }
     });
   }
@@ -178,6 +195,7 @@ class _DistributedRenderStudioScreenState extends State<DistributedRenderStudioS
                   painter: _TileGridPainter(
                     workers: widget.workers,
                     totalTiles: widget.totalTiles,
+                    completedTiles: _completedTiles,
                     showAttribution: _showAttributionOverlay,
                     selectedWorkerId: _selectedWorkerId,
                   ),
@@ -300,15 +318,104 @@ class _DistributedRenderStudioScreenState extends State<DistributedRenderStudioS
 class _TileGridPainter extends CustomPainter {
   final List<WorkerNodeContribution> workers;
   final int totalTiles;
+  final int completedTiles;
   final bool showAttribution;
   final String? selectedWorkerId;
 
   _TileGridPainter({
     required this.workers,
     required this.totalTiles,
+    required this.completedTiles,
     required this.showAttribution,
     required this.selectedWorkerId,
   });
+
+  void _paintRaytracedScene(Canvas canvas, Size size) {
+    final fullRect = Offset.zero & size;
+    // 1. Horizon sky gradient
+    final skyPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF0B1026),
+          Color(0xFF1B2748),
+          Color(0xFF141824),
+        ],
+        stops: [0.0, 0.58, 1.0],
+      ).createShader(fullRect);
+    canvas.drawRect(fullRect, skyPaint);
+
+    // 2. Perspective checkerboard floor grid
+    final horizonY = size.height * 0.58;
+    final gridPaint = Paint()
+      ..color = Colors.cyanAccent.withAlpha(35)
+      ..strokeWidth = 1.0;
+    for (int i = 0; i <= 8; i++) {
+      final t = i / 8.0;
+      final y = horizonY + (size.height - horizonY) * (t * t);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+    final vanishX = size.width * 0.5;
+    for (int i = -8; i <= 8; i++) {
+      final bottomX = vanishX + (i * size.width * 0.14);
+      canvas.drawLine(Offset(vanishX, horizonY), Offset(bottomX, size.height), gridPaint);
+    }
+
+    // 3. Three raytraced 3D spheres with shadows & specular highlights
+    void drawSphere({
+      required Offset center,
+      required double radius,
+      required Color primary,
+      required Color deep,
+    }) {
+      // Soft ground shadow
+      final shadowRect = Rect.fromCenter(
+        center: Offset(center.dx + radius * 0.18, center.dy + radius * 0.92),
+        width: radius * 1.9,
+        height: radius * 0.42,
+      );
+      canvas.drawOval(
+        shadowRect,
+        Paint()..color = Colors.black.withAlpha(140),
+      );
+
+      // Lit 3D sphere body
+      final sphereRect = Rect.fromCircle(center: center, radius: radius);
+      final spherePaint = Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.38, -0.42),
+          radius: 0.95,
+          colors: [
+            Colors.white,
+            primary,
+            deep,
+            const Color(0xFF05070E),
+          ],
+          stops: const [0.0, 0.22, 0.72, 1.0],
+        ).createShader(sphereRect);
+      canvas.drawCircle(center, radius, spherePaint);
+    }
+
+    drawSphere(
+      center: Offset(size.width * 0.28, size.height * 0.56),
+      radius: size.height * 0.16,
+      primary: const Color(0xFF38BDF8),
+      deep: const Color(0xFF0369A1),
+    );
+    drawSphere(
+      center: Offset(size.width * 0.52, size.height * 0.49),
+      radius: size.height * 0.22,
+      primary: const Color(0xFFA855F7),
+      deep: const Color(0xFF4C1D95),
+    );
+    drawSphere(
+      center: Offset(size.width * 0.74, size.height * 0.58),
+      radius: size.height * 0.14,
+      primary: const Color(0xFF34D399),
+      deep: const Color(0xFF065F46),
+    );
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -317,8 +424,11 @@ class _TileGridPainter extends CustomPainter {
     final tileW = size.width / cols;
     final tileH = size.height / rows;
 
+    // Render procedural 3D raytraced scene first
+    _paintRaytracedScene(canvas, size);
+
     final borderPaint = Paint()
-      ..color = Colors.black26
+      ..color = Colors.black38
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
 
@@ -328,21 +438,26 @@ class _TileGridPainter extends CustomPainter {
         if (tileIdx >= totalTiles) break;
 
         final rect = Rect.fromLTWH(c * tileW, r * tileH, tileW, tileH);
+        final isCompleted = tileIdx < completedTiles;
         final worker = workers[tileIdx % workers.length];
 
-        final isSelected = selectedWorkerId == null || selectedWorkerId == worker.workerId;
-        final baseColor = showAttribution ? worker.color.withAlpha(isSelected ? 100 : 30) : const Color(0xFF22222E);
+        if (!isCompleted) {
+          // Unrendered tile mask during progressive pass
+          canvas.drawRect(rect, Paint()..color = const Color(0xEE0D0D12));
+          canvas.drawRect(rect, borderPaint);
+        } else if (showAttribution) {
+          final isSelected = selectedWorkerId == null || selectedWorkerId == worker.workerId;
+          final overlayColor = worker.color.withAlpha(isSelected ? 75 : 22);
+          canvas.drawRect(rect, Paint()..color = overlayColor);
+          canvas.drawRect(rect, borderPaint);
 
-        final fillPaint = Paint()..color = baseColor;
-        canvas.drawRect(rect, fillPaint);
-        canvas.drawRect(rect, borderPaint);
-
-        if (showAttribution && isSelected) {
-          final outlinePaint = Paint()
-            ..color = worker.color
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0;
-          canvas.drawRect(rect, outlinePaint);
+          if (isSelected) {
+            final outlinePaint = Paint()
+              ..color = worker.color.withAlpha(180)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.0;
+            canvas.drawRect(rect, outlinePaint);
+          }
         }
 
         tileIdx++;
@@ -353,7 +468,8 @@ class _TileGridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _TileGridPainter oldDelegate) {
     return oldDelegate.showAttribution != showAttribution ||
-        oldDelegate.selectedWorkerId != selectedWorkerId;
+        oldDelegate.selectedWorkerId != selectedWorkerId ||
+        oldDelegate.completedTiles != completedTiles;
   }
 }
 

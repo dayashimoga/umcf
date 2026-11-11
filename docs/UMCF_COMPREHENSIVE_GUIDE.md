@@ -296,3 +296,4 @@ All 21 production deliverables have been published to GitHub Release `v1.0.0` wi
 | **`umcfd-x86_64-apple-darwin`** | 1.53 MB | macOS Intel `umcfd` node daemon binary |
 | **`umcf-aarch64-apple-darwin`** | 735 KB | macOS Apple Silicon `umcf` CLI binary |
 | **`umcfd-aarch64-apple-darwin`** | 1.25 MB | macOS Apple Silicon `umcfd` node daemon binary |
+

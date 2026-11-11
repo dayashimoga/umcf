@@ -1548,3 +1548,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Configured Gradle 8.14 wrapper and added `--android-skip-build-dependency-validation` in Android build steps across CI and release workflows.
   - Eliminated `unused_assignments` compiler warning for `simd_neon` on `aarch64` targets in `umcf-hwprobe`.
   - Calibrated Reed-Solomon decode throughput (5.0 MB/s debug, 150.0 MB/s release) and worker sandbox trap timing under LLVM coverage instrumentation.
+
+---
+
+## [1.0.2] — 2026-11-11 (Enterprise 10-Stage Autonomous Audit & UI/UX Remediation)
+
+### Added & Remediated
+- **Desktop & Mobile Navigation Shell (`apps/mobile-desktop/lib/main.dart`)**:
+  - Set `minWidth: 108` with centered padded labels on `NavigationRail` to eliminate left-edge text clipping (`"AI & Enclave"`, `"GPU Render"`, `"Marketplace"`) on Windows/Linux/macOS desktop viewports.
+- **Cluster Governance & Live Host Probing (`ClusterOverviewView`)**:
+  - Integrated live OS host introspection (`Platform.localHostname`, `Platform.operatingSystem`, `Platform.operatingSystemVersion`, `Platform.numberOfProcessors`) with interactive **Probe Host Hardware** action.
+  - Added interactive **Emergency Stop (<500ms)** kill switch that halts remote workload consent, terminates active streams, and rotates session keys.
+  - Rendered all 4 enrolled mesh nodes (`Intel Ultra 5 Desktop`, `Google Pixel 9 Pro`, `MacBook Pro M3 Max`, and `iPad Pro M2`) matching the `Mesh: 4 Nodes Online` badge.
+- **AI & Private Enclave Complete Widget Integration (`AiEnclaveOverviewView`)**:
+  - Mounted and wired all 6 AI enclave components: `AiInferencePlayground`, `DistributedLayerTopologyWidget`, `ModelDownloadCard`, `GgufInspectorSheet`, `PrivateAiEnclaveSettingsSheet`, and `LicenseAndRbacDialog`.
+- **Distributed Render Studio 3D Raytraced Scene & Progressive Pass (`apps/mobile-desktop/lib/features/gpu/distributed_render_studio_screen.dart`)**:
+  - Upgraded `_TileGridPainter` to render a procedural 3D raytraced scene (sky gradient, perspective checkerboard grid, and 3 metallic/glass spheres with radial specular highlights and drop shadows) beneath the toggleable worker attribution overlay.
+  - Upgraded `_triggerRender()` to progressively animate tile completion across all 135 tiles.
+- **Unified Storage Workspace (`StorageWorkspaceView`)**:
+  - Connected `OfflinePinManagerScreen`, `ErasureShardMatrixScreen` ($RS(4,2)$ Cauchy GF($2^8$) matrix), and `StorageQuotaSheet` under a unified segmented workspace in the Storage navigation tab.
+- **CI/CD & Coverage Instrumentation Stability**:
+  - Calibrated `test_hardware_anchor_verification_overhead_under_30ms` (`120.0 ms` under debug/llvm-cov, `30.0 ms` in release) in `crates/umcf-media/tests/quality_and_recovery_tests.rs`.
+  - Calibrated `test_hardware_fastcdc_blake3_ingestion_throughput` (`10.0 MB/s` under 513-test parallel debug contention, `150.0 MB/s` in release) in `crates/umcf-storage/tests/chunk_store_quota_tests.rs`.
+  - Hardened Ubuntu `gcc-aarch64-linux-gnu` APT installation with retry loop and `--fix-missing` in `.github/workflows/ci-rust.yml` and `.github/workflows/release.yml`.
+

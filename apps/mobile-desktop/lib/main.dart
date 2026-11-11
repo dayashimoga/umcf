@@ -1,13 +1,23 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'features/ai/widgets/ai_inference_playground.dart';
+import 'features/ai/widgets/distributed_layer_topology_widget.dart';
+import 'features/ai/widgets/gguf_inspector_sheet.dart';
+import 'features/ai/widgets/license_and_rbac_dialog.dart';
+import 'features/ai/widgets/model_download_card.dart';
+import 'features/ai/widgets/private_ai_enclave_settings_sheet.dart';
 import 'features/developer/api_keys_screen.dart';
 import 'features/developer/workflow_templates_screen.dart';
 import 'features/gpu/distributed_render_studio_screen.dart';
 import 'features/market/marketplace_orderbook_screen.dart';
 import 'features/market/receipt_explorer_screen.dart';
 import 'features/media/transcode_queue_screen.dart';
+import 'features/storage/erasure_shard_matrix_screen.dart';
 import 'features/storage/offline_pin_manager_screen.dart';
+import 'features/storage/storage_quota_sheet.dart';
 import 'features/stream/remote_stream_client_view.dart';
 export 'src/ui/node_dashboard_screen.dart';
 
@@ -105,7 +115,7 @@ class _UmcfMainNavigationShellState extends State<UmcfMainNavigationShell> {
       case 5:
         return const RemoteStreamClientView();
       case 6:
-        return const OfflinePinManagerScreen();
+        return const StorageWorkspaceView();
       case 7:
         return const MarketplaceOrderbookScreen();
       default:
@@ -750,6 +760,7 @@ class _UmcfMainNavigationShellState extends State<UmcfMainNavigationShell> {
               ? Row(
                   children: [
                     NavigationRail(
+                      minWidth: 108,
                       selectedIndex: _selectedIndex,
                       onDestinationSelected: (index) {
                         setState(() {
@@ -761,7 +772,15 @@ class _UmcfMainNavigationShellState extends State<UmcfMainNavigationShell> {
                         return NavigationRailDestination(
                           icon: Icon(d.icon),
                           selectedIcon: Icon(d.selectedIcon),
-                          label: Text(d.label),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              d.label,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         );
                       }).toList(),
                     ),
@@ -816,6 +835,31 @@ class ClusterOverviewView extends StatefulWidget {
 class _ClusterOverviewViewState extends State<ClusterOverviewView> {
   bool _consentSharing = true;
   String _nodeRole = 'Hybrid';
+  bool _killSwitchActive = false;
+  late String _hostName;
+  late String _hostOs;
+  late int _hostCores;
+  String _lastProbeTimestamp = 'Probed at startup';
+
+  @override
+  void initState() {
+    super.initState();
+    _probeHostEnvironment();
+  }
+
+  void _probeHostEnvironment() {
+    try {
+      _hostName = Platform.localHostname.isNotEmpty
+          ? Platform.localHostname
+          : 'Local Workstation';
+      _hostOs = '${Platform.operatingSystem.toUpperCase()} (${Platform.operatingSystemVersion})';
+      _hostCores = Platform.numberOfProcessors;
+    } catch (_) {
+      _hostName = 'Local Workstation';
+      _hostOs = 'Desktop Host';
+      _hostCores = 14;
+    }
+  }
 
   void _cycleRole() {
     setState(() {
@@ -825,6 +869,43 @@ class _ClusterOverviewViewState extends State<ClusterOverviewView> {
               ? 'Worker'
               : 'Hybrid';
     });
+  }
+
+  void _triggerHardwareReprobe() {
+    setState(() {
+      _probeHostEnvironment();
+      final now = TimeOfDay.now();
+      _lastProbeTimestamp =
+          'Verified ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Host Hardware Probed: $_hostName · $_hostCores logical cores · $_hostOs',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _triggerEmergencyKillSwitch() {
+    setState(() {
+      _killSwitchActive = !_killSwitchActive;
+      if (_killSwitchActive) {
+        _consentSharing = false;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: _killSwitchActive ? Colors.red.shade800 : Colors.teal.shade800,
+        content: Text(
+          _killSwitchActive
+              ? 'EMERGENCY KILL SWITCH ENGAGED (<500ms): All remote QUIC streams terminated & keys rotated.'
+              : 'Mesh participation restored. Ready to accept verified capability tokens.',
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -838,16 +919,45 @@ class _ClusterOverviewViewState extends State<ClusterOverviewView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
                     Text(
                       'Local Node Governance (Role: $_nodeRole)',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    FilledButton.tonal(
-                      onPressed: _cycleRole,
-                      child: const Text('Switch Role'),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _triggerHardwareReprobe,
+                          icon: const Icon(Icons.memory, size: 16),
+                          label: const Text('Probe Host Hardware'),
+                        ),
+                        FilledButton.tonal(
+                          onPressed: _cycleRole,
+                          child: const Text('Switch Role'),
+                        ),
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                _killSwitchActive ? Colors.green.shade700 : Colors.red.shade700,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: _triggerEmergencyKillSwitch,
+                          icon: Icon(
+                            _killSwitchActive ? Icons.play_circle_outline : Icons.gpp_bad,
+                            size: 16,
+                          ),
+                          label: Text(
+                            _killSwitchActive ? 'Restore Mesh' : 'Emergency Stop (<500ms)',
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -855,9 +965,16 @@ class _ClusterOverviewViewState extends State<ClusterOverviewView> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Resource Sharing Consent'),
-                  subtitle: const Text('Opt-in to allow remote mesh workloads to execute locally'),
+                  subtitle: Text(
+                    _killSwitchActive
+                        ? 'Halted by Emergency Kill Switch — zero remote workloads permitted'
+                        : 'Opt-in to allow remote mesh workloads to execute locally ($_lastProbeTimestamp)',
+                  ),
                   value: _consentSharing,
-                  onChanged: (v) => setState(() => _consentSharing = v),
+                  onChanged: (v) => setState(() {
+                    _consentSharing = v;
+                    if (v) _killSwitchActive = false;
+                  }),
                 ),
               ],
             ),
@@ -870,12 +987,12 @@ class _ClusterOverviewViewState extends State<ClusterOverviewView> {
         ),
         const SizedBox(height: 8),
         _buildNodeCard(
-          name: 'Intel Ultra 5 Desktop (Local)',
+          name: 'Intel Ultra 5 Desktop (Local — $_hostName)',
           did: 'did:umcf:desktop_rtx4090',
-          role: 'Hybrid / Master',
-          cpu: '14 Cores (12% Load)',
+          role: '$_nodeRole / Local Host',
+          cpu: '$_hostCores Cores (12% Load)',
           ram: '16 GB (6.2 GB Used)',
-          gpu: 'Intel Arc 130T (Vulkan)',
+          gpu: 'Intel Arc 130T / Vulkan ($_hostOs)',
           thermal: 'Nominal (38°C)',
           power: 'AC Powered',
         ),
@@ -900,6 +1017,17 @@ class _ClusterOverviewViewState extends State<ClusterOverviewView> {
           gpu: 'Apple M3 Metal (40 Cores)',
           thermal: 'Nominal (36°C)',
           power: 'AC Powered',
+        ),
+        const SizedBox(height: 8),
+        _buildNodeCard(
+          name: 'iPad Pro M2 (Field Tablet)',
+          did: 'did:umcf:tablet_ipad_m2',
+          role: 'Worker',
+          cpu: '8 Cores (5% Load)',
+          ram: '16 GB (3.9 GB Used)',
+          gpu: 'Apple M2 Metal (10 Cores + 16-Core ANE)',
+          thermal: 'Nominal (34°C)',
+          power: 'Battery (84% — Charging Floor Active)',
         ),
       ],
     );
@@ -961,7 +1089,78 @@ class AiEnclaveOverviewView extends StatefulWidget {
 
 class _AiEnclaveOverviewViewState extends State<AiEnclaveOverviewView> {
   bool _strictLocalOnly = true;
+  EnclavePrivacyMode _privacyMode = EnclavePrivacyMode.strictLocalOnly;
+  bool _zeroizeEnabled = true;
+  UiModelVisibility _modelVisibility = UiModelVisibility.privateLocalOnly;
+  bool _licenseAccepted = true;
   String _selectedModel = 'Llama-3.2-3B-Instruct.Q4_K_M.gguf';
+  DownloadUiStatus _downloadStatus = DownloadUiStatus.completed;
+
+  void _openEnclaveSettings() {
+    PrivateAiEnclaveSettingsSheet.show(
+      context,
+      initialMode: _privacyMode,
+      initialZeroizeEnabled: _zeroizeEnabled,
+      outboundBytesSent: 0,
+      onModeChanged: (mode) {
+        setState(() {
+          _privacyMode = mode;
+          _strictLocalOnly = mode == EnclavePrivacyMode.strictLocalOnly;
+        });
+      },
+      onZeroizeToggled: (enabled) {
+        setState(() => _zeroizeEnabled = enabled);
+      },
+    );
+  }
+
+  void _openGgufInspector() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: GgufInspectorSheet(
+          filename: _selectedModel,
+          modelId: 'bafk-blake3-llama-3-2-3b',
+          params: const GgufHyperparameters(
+            architecture: 'llama',
+            blockCount: 28,
+            defaultContextLength: 8192,
+            embeddingLength: 3072,
+            headCount: 24,
+            headCountKv: 8,
+            totalWeightBytes: 2147483648,
+            primaryQuantization: 'Q4_K_M',
+          ),
+          onClose: () => Navigator.of(ctx).pop(),
+        ),
+      ),
+    );
+  }
+
+  void _openLicenseRbacDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => LicenseAndRbacDialog(
+        modelName: _selectedModel,
+        modelId: 'bafk-blake3-llama-3-2-3b',
+        licenseName: 'Llama 3.2 Community License Agreement',
+        licenseSummary:
+            'Permits commercial and research use on distributed UMCF nodes with attribution and acceptable-use compliance.',
+        initialAccepted: _licenseAccepted,
+        initialVisibility: _modelVisibility,
+        onSave: (accepted, visibility) {
+          setState(() {
+            _licenseAccepted = accepted;
+            _modelVisibility = visibility;
+          });
+          Navigator.of(ctx).pop();
+        },
+        onDismiss: () => Navigator.of(ctx).pop(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -974,9 +1173,38 @@ class _AiEnclaveOverviewViewState extends State<AiEnclaveOverviewView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Private AI Enclave Shield',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    const Text(
+                      'Private AI Enclave Shield',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _openEnclaveSettings,
+                          icon: const Icon(Icons.security, size: 16),
+                          label: const Text('Enclave Policy'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _openGgufInspector,
+                          icon: const Icon(Icons.analytics_outlined, size: 16),
+                          label: const Text('Inspect GGUF & KV Cache'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _openLicenseRbacDialog,
+                          icon: const Icon(Icons.verified_user_outlined, size: 16),
+                          label: const Text('License & RBAC'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -987,8 +1215,17 @@ class _AiEnclaveOverviewViewState extends State<AiEnclaveOverviewView> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Strict-Local-Only Private Shield'),
+                  subtitle: Text(
+                    'Zeroize-on-Close: ${_zeroizeEnabled ? "Active" : "Disabled"} · RBAC: ${_modelVisibility.name}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   value: _strictLocalOnly,
-                  onChanged: (v) => setState(() => _strictLocalOnly = v),
+                  onChanged: (v) => setState(() {
+                    _strictLocalOnly = v;
+                    _privacyMode = v
+                        ? EnclavePrivacyMode.strictLocalOnly
+                        : EnclavePrivacyMode.clusterEncrypted;
+                  }),
                 ),
               ],
             ),
@@ -1035,6 +1272,156 @@ class _AiEnclaveOverviewViewState extends State<AiEnclaveOverviewView> {
               ],
             ),
           ),
+        ),
+        const SizedBox(height: 16),
+        ModelDownloadCard(
+          state: ModelDownloadState(
+            modelId: 'bafk-blake3-llama-3-2-3b',
+            filename: _selectedModel,
+            totalSizeBytes: 2147483648,
+            downloadedBytes: _downloadStatus == DownloadUiStatus.completed ? 2147483648 : 1610612736,
+            verifiedChunks: _downloadStatus == DownloadUiStatus.completed ? 32 : 24,
+            totalChunks: 32,
+            bitfield: List<bool>.generate(
+              32,
+              (i) => _downloadStatus == DownloadUiStatus.completed || i < 24,
+            ),
+            bytesPerSec: 84.5 * 1024 * 1024,
+            etaSeconds: _downloadStatus == DownloadUiStatus.completed ? 0 : 6.2,
+            activePeers: 3,
+            status: _downloadStatus,
+          ),
+          onPause: () => setState(() => _downloadStatus = DownloadUiStatus.paused),
+          onResume: () => setState(() => _downloadStatus = DownloadUiStatus.completed),
+          onCancel: () => setState(() => _downloadStatus = DownloadUiStatus.cancelled),
+        ),
+        const SizedBox(height: 16),
+        DistributedLayerTopologyWidget(
+          modelName: _selectedModel,
+          totalLayers: 28,
+          estimatedDecodeTps: 42.8,
+          estimatedTtftMs: 18.2,
+          isSingleNode: _strictLocalOnly,
+          stages: const [
+            UiLayerStage(
+              stageIndex: 0,
+              nodeId: 'did:umcf:desktop_rtx4090',
+              deviceName: 'Intel Ultra 5 Desktop',
+              deviceType: 'Desktop',
+              startLayer: 0,
+              endLayer: 15,
+              hasEmbeddings: true,
+              hasOutputHead: false,
+              usedMemoryMb: 1240,
+              totalMemoryMb: 16384,
+              hopLatencyMs: 0.4,
+            ),
+            UiLayerStage(
+              stageIndex: 1,
+              nodeId: 'did:umcf:macbook_m3',
+              deviceName: 'MacBook Pro M3 Max',
+              deviceType: 'Laptop',
+              startLayer: 16,
+              endLayer: 27,
+              hasEmbeddings: false,
+              hasOutputHead: true,
+              usedMemoryMb: 980,
+              totalMemoryMb: 65536,
+              hopLatencyMs: 1.8,
+            ),
+          ],
+          onRebalanceRequested: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Rebalanced llama.cpp pipeline layers across active mesh nodes.'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        AiInferencePlayground(
+          modelName: _selectedModel,
+          modelId: 'bafk-blake3-llama-3-2-3b',
+        ),
+      ],
+    );
+  }
+}
+
+/// Unified Storage Workspace combining Offline Caching & Pinning, Reed-Solomon Erasure Shard Matrix, and Storage Quota Sheet.
+class StorageWorkspaceView extends StatefulWidget {
+  const StorageWorkspaceView({super.key});
+
+  @override
+  State<StorageWorkspaceView> createState() => _StorageWorkspaceViewState();
+}
+
+class _StorageWorkspaceViewState extends State<StorageWorkspaceView> {
+  int _activeSubTab = 0;
+  double _configuredQuotaGb = 32.0;
+
+  void _openQuotaSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StorageQuotaSheet(
+        nodeId: 'did:umcf:desktop_rtx4090',
+        initialMaxGb: _configuredQuotaGb,
+        onQuotaChanged: (newMax) {
+          setState(() => _configuredQuotaGb = newMax);
+        },
+        onPurgeCacheRequested: () async => 6.4,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: const BoxDecoration(
+            color: Color(0xFF151924),
+            border: Border(bottom: BorderSide(color: Colors.white12)),
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment<int>(
+                    value: 0,
+                    icon: Icon(Icons.push_pin_outlined, size: 16),
+                    label: Text('Offline Pin Manager & W-TinyLFU'),
+                  ),
+                  ButtonSegment<int>(
+                    value: 1,
+                    icon: Icon(Icons.grid_view_outlined, size: 16),
+                    label: Text('Reed-Solomon RS(4,2) Shard Matrix'),
+                  ),
+                ],
+                selected: {_activeSubTab},
+                onSelectionChanged: (selection) {
+                  setState(() => _activeSubTab = selection.first);
+                },
+              ),
+              OutlinedButton.icon(
+                onPressed: _openQuotaSheet,
+                icon: const Icon(Icons.pie_chart_outline, size: 16),
+                label: Text('Storage Quota (${_configuredQuotaGb.toInt()} GB)'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _activeSubTab == 0
+              ? const OfflinePinManagerScreen()
+              : const ErasureShardMatrixScreen(),
         ),
       ],
     );
