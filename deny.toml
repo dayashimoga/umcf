@@ -16,7 +16,7 @@ version = 2
 vulnerability = "deny"
 unmaintained = "warn"
 yanked = "deny"
-notice = "warn"
+notice = "deny"
 ignore = []
 
 [licenses]
@@ -33,17 +33,31 @@ allow = [
     "Zlib",
     "CC0-1.0",
     "OpenSSL",
+    "MPL-2.0",
+]
+deny = [
+    "GPL-1.0-only",
+    "GPL-1.0-or-later",
+    "GPL-2.0-only",
+    "GPL-2.0-or-later",
+    "GPL-3.0-only",
+    "GPL-3.0-or-later",
+    "AGPL-1.0-only",
+    "AGPL-1.0-or-later",
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later",
+    "SSPL-1.0",
 ]
 confidence-threshold = 0.8
 
 [bans]
 multiple-versions = "warn"
-wildcards = "allow"
+wildcards = "deny"
 deny = []
 skip = []
 
 [sources]
 unknown-registry = "deny"
-unknown-git = "warn"
+unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 allow-git = []

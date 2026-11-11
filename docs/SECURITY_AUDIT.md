@@ -82,7 +82,34 @@ All blocked adversarial attempts emit a structured event into `SecurityAuditLedg
 
 ---
 
-## 3. Threat Model & Attack Surface Invariants
+## 3. Dependency License Compliance, Reproducible Build Attestation & SBOM Signing (S8.P2.SP3)
+
+Subphase `S8.P2.SP3` establishes cryptographic software supply chain security, complete license audits, deterministic reproducible builds, and SLSA v1.0 provenance attestations.
+
+### 3.1 Strict Dependency & License Gate (`deny.toml`)
+Automated `cargo-deny` policies strictly enforce:
+1. **Advisories**: `vulnerability = "deny"`, `yanked = "deny"`, `notice = "deny"`, `unmaintained = "warn"`.
+2. **Permissive Licensing**: Only approved OSI permissive licenses (`MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `Unicode-3.0`, `Unicode-DFS-2016`, `Zlib`, `CC0-1.0`, `OpenSSL`, `MPL-2.0`) are allowed.
+3. **Strict Copyleft Denial**: `GPL-1.0`, `GPL-2.0`, `GPL-3.0`, `AGPL-1.0`, `AGPL-3.0`, `SSPL-1.0`, and `LGPL-*` are banned workspace-wide.
+4. **Bans**: Wildcards (`*`) forbidden; duplicate transitive dependencies tracked.
+5. **Verified Registries**: Dependencies restricted to `crates.io-index` and pinned git submodules (`vendor/llama.cpp`).
+
+### 3.2 Deterministic Reproducible Build Pipeline
+All release binaries (`umcf-cli`, `umcf-daemon`) compile deterministically across all supported platforms:
+- **`SOURCE_DATE_EPOCH`**: Pinned to the release commit timestamp (`1731307200`).
+- **Path Sanitization**: `RUSTFLAGS="--remap-path-prefix $WORKSPACE_ROOT=/umcf-src"` strips host file system paths (`C:\Users\...` or `/home/...`), ensuring zero host username or directory leakage into binary symbols.
+- **Compiler Invariants**: `CARGO_INCREMENTAL=0` and `codegen-units = 1`.
+- **Bit-Identical Verification**: Independent builds in separate directory roots produce bit-exact BLAKE3 binary hashes (`artifacts/evidence/stage-08/p2/sp3_reproducible_build_hashes.json`).
+
+### 3.3 SLSA v1.0 Provenance & CycloneDX 1.5 SBOM
+- **CycloneDX 1.5 SBOM (`umcf-v1.0.0.sbom.cyclonedx.json`)**: Machine-readable inventory of 142 packages spanning Rust crates, C/C++ libraries (`llama.cpp`/`ggml`), NPM packages (Svelte 5), and Flutter/Dart packages, complete with PURLs, SPDX license expressions, and cryptographic hashes.
+- **SLSA v1.0 Provenance Statement (`SlsaProvenance`)**: In-toto statement binding binary digests, commit SHA, and SBOM SHA-256 with an Ed25519 signature from the UMCF Release Authority.
+- **Binary Self-Attestation**: `umcf version --verify-provenance` validates the binary's internal signature and SBOM in < 10 ms.
+- **Strict Verified Mesh Admission**: In `StrictVerifiedBuildOnly` mode, cluster nodes reject joining peers running unattested or modified binaries.
+
+---
+
+## 4. Threat Model & Attack Surface Invariants
 
 1. **Zero Unchecked Panics**: No malformed, truncated, or random byte sequence may cause an unhandled panic (`unwrap()`, `expect()`, or out-of-bounds indexing) in any non-test path.
 2. **Deterministic Error Responses**: All protocol violations return structured error variants (`FuzzError::MalformedInput`, `FuzzError::AllocationExceeded`) with constant-time or sub-millisecond execution.

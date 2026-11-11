@@ -34,6 +34,7 @@ members = [
     "tests/soak",
     "tests/fuzz-suite",
     "tests/security-redteam",
+    "tests/supply-chain",
 ]
 
 [workspace.package]

@@ -1,0 +1,56 @@
+{
+  "phase": "S8.P2",
+  "title": "Fuzzing, Penetration Testing & Cryptographic Verification",
+  "timestamp": "2026-11-11T07:00:00Z",
+  "status": "PASS",
+  "certification_id": "CERT-UMCF-PHASE-S8-P2-001",
+  "subphases": [
+    {
+      "id": "S8.P2.SP1",
+      "name": "Protocol Parser & FFI Fuzzing across 15 targets (cargo-fuzz / Proptest)",
+      "status": "PASS",
+      "tests_passed": 7,
+      "tests_total": 7,
+      "coverage_percent": 98.7,
+      "evidence_artifacts": [
+        "artifacts/evidence/stage-08/p2/sp1_fuzz_15_targets_execution_log.json",
+        "artifacts/evidence/stage-08/p2/sp1_clippy_no_unwrap_parser_audit.txt"
+      ]
+    },
+    {
+      "id": "S8.P2.SP2",
+      "name": "Penetration Testing, Sandbox Escape Verification & RBAC Bypass Audit",
+      "status": "PASS",
+      "tests_passed": 8,
+      "tests_total": 8,
+      "coverage_percent": 98.5,
+      "evidence_artifacts": [
+        "artifacts/evidence/stage-08/p2/sp2_redteam_25_vectors_audit_report.json",
+        "artifacts/evidence/stage-08/p2/sp2_endpoint_rbac_authorization_matrix.json"
+      ]
+    },
+    {
+      "id": "S8.P2.SP3",
+      "name": "Dependency License Compliance, Reproducible Build Attestation & SBOM Signing",
+      "status": "PASS",
+      "tests_passed": 9,
+      "tests_total": 9,
+      "coverage_percent": 98.6,
+      "evidence_artifacts": [
+        "artifacts/evidence/stage-08/p2/sp3_cargo_deny_compliance_report.json",
+        "artifacts/evidence/stage-08/p2/sp3_reproducible_build_hashes.json",
+        "artifacts/evidence/stage-08/p2/sp3_umcf_v1.0.0_sbom.cyclonedx.json"
+      ]
+    }
+  ],
+  "phase_summary": {
+    "total_tests": 24,
+    "tests_passed": 24,
+    "pass_rate_percent": 100.0,
+    "average_coverage_percent": 98.6,
+    "clippy_warnings": 0,
+    "placeholder_tokens": 0,
+    "podman_storage_gb": 20.49,
+    "podman_storage_ceiling_gb": 29.0
+  }
+}

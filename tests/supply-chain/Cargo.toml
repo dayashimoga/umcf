@@ -1,0 +1,23 @@
+[package]
+name = "supply-chain"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+umcf-core = { workspace = true }
+umcf-cli = { path = "../../crates/umcf-cli" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+blake3 = "1.8"
+hex = "0.4"
+ed25519-dalek = { workspace = true }
+rand_core = { version = "0.6", features = ["getrandom"] }
+tempfile = "3.17"
+
+[lints]
+workspace = true

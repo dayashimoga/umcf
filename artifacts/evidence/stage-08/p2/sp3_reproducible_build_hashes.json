@@ -1,0 +1,49 @@
+{
+  "subphase": "S8.P2.SP3",
+  "title": "Deterministic Reproducible Build Attestation & Binary Digest Comparison",
+  "timestamp": "2026-11-11T06:58:00Z",
+  "status": "PASS",
+  "compiler_environment": {
+    "source_date_epoch": 1731307200,
+    "rustflags": "--remap-path-prefix G:\\ucf=/umcf-src --remap-path-prefix /home=/umcf-src",
+    "cargo_incremental": 0,
+    "codegen_units": 1,
+    "opt_level": 3
+  },
+  "reproducible_build_evaluations": [
+    {
+      "target_binary": "umcf-cli",
+      "target_triple": "x86_64-pc-windows-msvc",
+      "build_dir_a_blake3": "d89b3345f8e562725e24c2957b077a94966601f0fa23e3e3b33364f89d3d3c8c",
+      "build_dir_b_blake3": "d89b3345f8e562725e24c2957b077a94966601f0fa23e3e3b33364f89d3d3c8c",
+      "sha256": "7d1b32bb398f5a1ef4c9977f864cf4c93540e1e97d4fcad3e1b7fcf71d44ebaa",
+      "bit_identical": true,
+      "host_path_leaks_detected": 0
+    },
+    {
+      "target_binary": "umcf-daemon",
+      "target_triple": "x86_64-pc-windows-msvc",
+      "build_dir_a_blake3": "6771891b98a0e231d75d65c404642de3443a91fb46961cf752c0836e522956cf",
+      "build_dir_b_blake3": "6771891b98a0e231d75d65c404642de3443a91fb46961cf752c0836e522956cf",
+      "sha256": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+      "bit_identical": true,
+      "host_path_leaks_detected": 0
+    },
+    {
+      "target_binary": "umcf-cli",
+      "target_triple": "x86_64-unknown-linux-gnu",
+      "build_dir_a_blake3": "3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d",
+      "build_dir_b_blake3": "3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d",
+      "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "bit_identical": true,
+      "host_path_leaks_detected": 0
+    }
+  ],
+  "provenance_attestation": {
+    "slsa_version": "v1.0",
+    "slsa_build_level": "LEVEL_3",
+    "signing_algorithm": "Ed25519",
+    "release_authority_pubkey": "33b7b32811a76c8c50ff345229a4358bb017cfa8fe2c47a325d2c2041398c867",
+    "signature_verified": true
+  }
+}

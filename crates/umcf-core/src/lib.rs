@@ -3,10 +3,16 @@
 //! capability profiles, units with checked arithmetic, and resource-sharing consent invariants.
 //! Adheres strictly to `#![forbid(unsafe_code)]` and zero-placeholder invariants.
 
+pub mod attestation;
 pub mod capabilities;
 pub mod types;
 pub mod units;
 
+pub use attestation::{
+    compare_binary_digests, is_license_permissive, verify_no_host_path_leak,
+    verify_peer_build_admission, AttestationError, CycloneDxSbom, SbomPackage, SlsaDigest,
+    SlsaPredicate, SlsaProvenance, SlsaSubject,
+};
 pub use capabilities::{
     AcceleratorCapability, AcceleratorKind, ComputeBackend, CpuCapability,
     HardwareCapabilityDescriptor, MemoryCapability, NetworkCapability, NetworkLinkType,
