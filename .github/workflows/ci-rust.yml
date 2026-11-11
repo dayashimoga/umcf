@@ -91,7 +91,7 @@ jobs:
           sha256sum lcov.info coverage-summary.json certification-evidence.json > SHA256SUMS.txt
 
       - name: Upload Rust Test & Coverage Report Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-rust-test-and-coverage-report
           path: |
@@ -256,7 +256,7 @@ jobs:
           cat SHA256SUMS.txt
 
       - name: Upload Standalone Native Binary Bundle (umcf-rust-cli-${{ matrix.target }})
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-rust-cli-${{ matrix.target }}
           path: dist/umcf-rust-cli-${{ matrix.target }}/

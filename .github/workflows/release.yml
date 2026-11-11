@@ -161,7 +161,7 @@ jobs:
           fi
 
       - name: Upload Independent Rust Platform Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-rust-cli-${{ matrix.target }}
           path: release-assets/umcf-rust-cli-${{ matrix.target }}/
@@ -236,7 +236,7 @@ jobs:
           (cd release-assets/umcf-control-plane-cf-bundle && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
 
       - name: Upload Web Dashboard Artifact (`umcf-web-dashboard-dist`)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-web-dashboard-dist
           path: release-assets/umcf-web-dashboard-dist/
@@ -244,7 +244,7 @@ jobs:
           retention-days: 90
 
       - name: Upload Cloudflare Worker Artifact (`umcf-control-plane-cf-bundle`)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-control-plane-cf-bundle
           path: release-assets/umcf-control-plane-cf-bundle/
@@ -283,13 +283,13 @@ jobs:
           cp build/app/outputs/bundle/release/app-release.aab dist-aab/umcf-android-release.aab
           (cd dist-apk && sha256sum umcf-android-release.apk > SHA256SUMS.txt)
           (cd dist-aab && sha256sum umcf-android-release.aab > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: umcf-android-apk
           path: apps/mobile-desktop/dist-apk/
           if-no-files-found: error
           retention-days: 90
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: umcf-android-aab
           path: apps/mobile-desktop/dist-aab/
@@ -320,7 +320,7 @@ jobs:
           mkdir -p dist-windows
           cp -R build/windows/x64/runner/Release/* dist-windows/
           (cd dist-windows && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: umcf-windows-x64-portable
           path: apps/mobile-desktop/dist-windows/
@@ -354,7 +354,7 @@ jobs:
           mkdir -p dist-linux
           cp -R build/linux/x64/release/bundle/* dist-linux/
           (cd dist-linux && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: umcf-linux-x64-bundle
           path: apps/mobile-desktop/dist-linux/
@@ -399,13 +399,13 @@ jobs:
           }
           EOF
           (cd dist-ios && find . -type f ! -name "SHA256SUMS.txt" -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: umcf-macos-universal-app
           path: apps/mobile-desktop/dist-macos/
           if-no-files-found: error
           retention-days: 90
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: umcf-ios-unsigned-archive
           path: apps/mobile-desktop/dist-ios/
@@ -498,7 +498,7 @@ jobs:
           cat SHA256SUMS
 
       - name: Upload Unified Release Manifest & Master SHA256SUMS Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: umcf-release-manifest-and-checksums
           path: |
