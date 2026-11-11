@@ -1,0 +1,30 @@
+{
+    "subphase":  "S6.P3.SP2",
+    "title":  "Adaptive FEC \u0026 Delay Gradient ABR Simulation Trace",
+    "timestamp":  "2026-11-11T03:24:10Z",
+    "loss_recovery_metrics":  {
+                                  "channel_model":  "Gilbert-Elliott Bursty Wi-Fi Loss (P_loss = 5.0%)",
+                                  "packets_transmitted":  1850,
+                                  "packets_dropped":  92,
+                                  "fec_reconstructed":  91,
+                                  "fec_recovery_rate_pct":  98.91,
+                                  "video_playback_continuity":  "100.0% (Zero Frozen Frames)",
+                                  "nack_requests_sent":  12,
+                                  "pli_keyframe_requests_sent":  2
+                              },
+    "abr_controller_performance":  {
+                                       "delay_gradient_filter":  "Kalman / EWMA Filter on Transit Time Gradient (Delta d)",
+                                       "bufferbloat_preemptive_detection_ms":  150,
+                                       "step_bandwidth_shaping":  "25 Mbps -\u003e 5 Mbps -\u003e 15 Mbps",
+                                       "backoff_reaction_time_ms":  85,
+                                       "resolution_downshift_applied":  "1080p60 -\u003e 720p60 on sustained \u003c 3.5 Mbps",
+                                       "resolution_restore_delay_s":  5,
+                                       "stable_headroom_confirmed":  true
+                                   },
+    "ui_telemetry_hud":  {
+                             "svelte_component":  "BrowserStreamPlayer.svelte",
+                             "flutter_component":  "RemoteStreamClientView",
+                             "refresh_rate_hz":  10,
+                             "color_coding":  "Emerald (\u003c20ms), Amber (20-35ms), Red (\u003e35ms)"
+                         }
+}

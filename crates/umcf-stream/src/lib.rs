@@ -9,11 +9,14 @@
 
 #![forbid(unsafe_code)]
 
+pub mod abr;
 pub mod audio_loopback;
 pub mod capture;
 pub mod error;
 pub mod low_latency_encoder;
+pub mod transport;
 
+pub use abr::{AbrState, DelayGradientAbrController, StreamResolution};
 pub use audio_loopback::{AudioPacket, LoopbackAudioCapturer};
 pub use capture::{
     CaptureTarget, CapturedFrame, ColorConverter, CursorMetadata, DisplayCapturer,
@@ -22,4 +25,8 @@ pub use capture::{
 pub use error::StreamError;
 pub use low_latency_encoder::{
     EncodedFrameMetadata, LowLatencyEncoderConfig, ZeroLatencyVideoEncoder,
+};
+pub use transport::{
+    AdaptiveFecCodec, FramePacketizer, MediaShardHeader, MediaShardPacket, NackRequest,
+    PliRequest, RecoveryDecision, ZeroDelayJitterBuffer, MAX_DATAGRAM_PAYLOAD_BYTES,
 };
