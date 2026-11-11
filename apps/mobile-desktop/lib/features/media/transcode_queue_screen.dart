@@ -176,7 +176,6 @@ class _TranscodeQueueScreenState extends State<TranscodeQueueScreen> {
   late List<TranscodeWorkerNode> _workers;
   bool _isPaused = false;
   bool _isHealthGridExpanded = false;
-  GopSegmentItem? _selectedSegment;
 
   @override
   void initState() {
@@ -200,9 +199,6 @@ class _TranscodeQueueScreenState extends State<TranscodeQueueScreen> {
   }
 
   void _showSegmentDetails(GopSegmentItem seg) {
-    setState(() {
-      _selectedSegment = seg;
-    });
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1F2937),
@@ -343,12 +339,12 @@ class _TranscodeQueueScreenState extends State<TranscodeQueueScreen> {
                   ),
                 ],
               ),
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text('A/V SYNC DRIFT', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), letterSpacing: 0.5)),
-                  const SizedBox(height: 4),
-                  const Text(
+                  Text('A/V SYNC DRIFT', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), letterSpacing: 0.5)),
+                  SizedBox(height: 4),
+                  Text(
                     '< 0.05 ms (Pass)',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF34D399)),
                   ),

@@ -4,7 +4,6 @@
 // Multiplatform Flutter (Android, iOS, Windows, Linux, macOS), Riverpod state management, zero decorative controls.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TemplateItemModel {

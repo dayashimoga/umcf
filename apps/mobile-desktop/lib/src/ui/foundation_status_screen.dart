@@ -102,11 +102,13 @@ class _FoundationStatusScreenState extends State<FoundationStatusScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'Node Status: $_nodeStatus',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                  Expanded(
+                                    child: Text(
+                                      'Node Status: $_nodeStatus',
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
                                   ),
                                   Switch(
                                     key: const Key('sharing_toggle'),

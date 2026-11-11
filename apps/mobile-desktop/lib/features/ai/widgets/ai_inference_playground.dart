@@ -80,7 +80,7 @@ class _AiInferencePlaygroundState extends State<AiInferencePlayground> {
       _generationStart = DateTime.now();
     });
 
-    final onTokenCallback = (String chunk) {
+    void onTokenCallback(String chunk) {
       if (!mounted) return;
       setState(() {
         _generatedOutput += chunk;
@@ -90,7 +90,7 @@ class _AiInferencePlaygroundState extends State<AiInferencePlayground> {
           _tokensPerSecond = _tokenCount / elapsed;
         }
       });
-    };
+    }
 
     if (widget.onGenerate != null) {
       try {

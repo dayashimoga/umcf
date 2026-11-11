@@ -268,7 +268,6 @@ class OfflinePinManagerScreen extends ConsumerWidget {
     final state = ref.watch(offlinePinNotifierProvider);
     final notifier = ref.read(offlinePinNotifierProvider.notifier);
     final theme = Theme.of(context);
-    final isDesktop = MediaQuery.of(context).size.width >= 1024;
 
     return Scaffold(
       appBar: AppBar(
@@ -483,11 +482,11 @@ class OfflinePinManagerScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.tune, color: Colors.orangeAccent),
-                const SizedBox(width: 8),
-                const Text(
+                Icon(Icons.tune, color: Colors.orangeAccent),
+                SizedBox(width: 8),
+                Text(
                   'W-TinyLFU Cache & GC Controls',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
@@ -600,7 +599,7 @@ class OfflinePinManagerScreen extends ConsumerWidget {
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.white12),
+        side: const BorderSide(color: Colors.white12),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),

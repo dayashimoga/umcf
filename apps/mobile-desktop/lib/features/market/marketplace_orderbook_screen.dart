@@ -364,8 +364,8 @@ class MarketplaceOrderbookScreen extends ConsumerWidget {
                                 label: Text(isEligible ? 'Eligible' : 'Paused',
                                     style: const TextStyle(fontSize: 10)),
                                 backgroundColor: isEligible
-                                    ? Colors.green.withValues(alpha: 0.2)
-                                    : Colors.orange.withValues(alpha: 0.2),
+                                    ? Colors.green.withOpacity(0.2)
+                                    : Colors.orange.withOpacity(0.2),
                                 padding: EdgeInsets.zero,
                               ),
                             ],

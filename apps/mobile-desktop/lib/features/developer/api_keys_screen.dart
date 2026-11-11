@@ -154,15 +154,15 @@ class ApiKeysScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Developer API Keys'),
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(right: 16),
             child: Center(
               child: Chip(
-                avatar: const Icon(Icons.check_circle, size: 16, color: Colors.greenAccent),
-                label: const Text('Gateway /api/v1 Ready'),
+                avatar: Icon(Icons.check_circle, size: 16, color: Colors.greenAccent),
+                label: Text('Gateway /api/v1 Ready'),
                 backgroundColor: Colors.white10,
-                labelStyle: const TextStyle(fontSize: 12),
+                labelStyle: TextStyle(fontSize: 12),
               ),
             ),
           ),
@@ -342,7 +342,7 @@ class ApiKeysScreen extends ConsumerWidget {
   void _showCreateKeyDialog(BuildContext context, ApiKeysNotifier notifier) {
     final labelCtrl = TextEditingController();
     final selectedScopes = <String>{"cluster:read", "jobs:read"};
-    int rps = 50;
+    const int rps = 50;
 
     showDialog(
       context: context,

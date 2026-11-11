@@ -9,7 +9,7 @@ import 'features/market/receipt_explorer_screen.dart';
 import 'features/media/transcode_queue_screen.dart';
 import 'features/storage/offline_pin_manager_screen.dart';
 import 'features/stream/remote_stream_client_view.dart';
-import 'l10n/app_localizations.dart';
+export 'src/ui/node_dashboard_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: UmcfUnifiedApp()));
@@ -28,10 +28,6 @@ class UmcfUnifiedApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
         colorSchemeSeed: Colors.indigo,
-        cardTheme: const CardTheme(
-          elevation: 2,
-          margin: EdgeInsets.zero,
-        ),
       ),
       home: const UmcfMainNavigationShell(),
     );
@@ -49,7 +45,7 @@ class UmcfMainNavigationShell extends StatefulWidget {
 
 class _UmcfMainNavigationShellState extends State<UmcfMainNavigationShell> {
   int _selectedIndex = 0;
-  bool _isMeshConnected = true;
+  final bool _isMeshConnected = true;
 
   final List<NavigationDestinationItem> _destinations = [
     const NavigationDestinationItem(

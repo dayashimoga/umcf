@@ -4,7 +4,6 @@
 // Multiplatform Flutter (Android, iOS, Windows, Linux, macOS), Riverpod state management, zero decorative controls.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ReceiptItemModel {
@@ -217,15 +216,15 @@ class ReceiptExplorerScreen extends ConsumerWidget {
                           style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.grey),
                         ),
                         const Divider(height: 20),
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(Icons.security, size: 16, color: Colors.green),
-                            const SizedBox(width: 4),
-                            const Text('Worker Signed', style: TextStyle(color: Colors.green, fontSize: 12)),
-                            const SizedBox(width: 16),
-                            const Icon(Icons.verified_user, size: 16, color: Colors.teal),
-                            const SizedBox(width: 4),
-                            const Text('Requester Countersigned', style: TextStyle(color: Colors.teal, fontSize: 12)),
+                            Icon(Icons.security, size: 16, color: Colors.green),
+                            SizedBox(width: 4),
+                            Text('Worker Signed', style: TextStyle(color: Colors.green, fontSize: 12)),
+                            SizedBox(width: 16),
+                            Icon(Icons.verified_user, size: 16, color: Colors.teal),
+                            SizedBox(width: 4),
+                            Text('Requester Countersigned', style: TextStyle(color: Colors.teal, fontSize: 12)),
                           ],
                         ),
                         const SizedBox(height: 12),

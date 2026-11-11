@@ -571,7 +571,7 @@ class ErasureShardMatrixScreen extends ConsumerWidget {
           onPressed: notifier.reset,
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFFCBD5E1),
-            side: const Color(0xFF334155),
+            side: const BorderSide(color: Color(0xFF334155)),
           ),
           child: const Text("Reset Cluster"),
         ),

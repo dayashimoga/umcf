@@ -181,7 +181,7 @@ class _DistributedLayerTopologyWidgetState extends State<DistributedLayerTopolog
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? theme.colorScheme.surfaceVariant
+                          ? theme.colorScheme.surfaceContainerHighest
                           : theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
