@@ -55,6 +55,18 @@ pub enum EngineError {
     #[error("invalid partition plan: {reason}")]
     InvalidPartitionPlan { reason: String },
 
+    #[error("RPC authentication or capability token validation failed: {reason}")]
+    RpcAuthenticationFailed { reason: String },
+
+    #[error("RPC activation payload checksum mismatch: expected {expected}, got {actual}")]
+    RpcChecksumMismatch { expected: String, actual: String },
+
+    #[error("pipeline worker node {node_id} failed: {reason}")]
+    WorkerNodeFailed { node_id: String, reason: String },
+
+    #[error("pipeline failover timed out after {elapsed_ms} ms")]
+    FailoverTimeout { elapsed_ms: u64 },
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

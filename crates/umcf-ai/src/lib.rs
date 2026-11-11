@@ -9,11 +9,16 @@ pub mod error;
 pub mod ffi_bridge;
 pub mod kv_cache;
 pub mod partitioner;
+pub mod distributed_rpc;
 
 pub use backend_loader::{DynamicBackendLoader, GgmlBackendDescriptor};
 pub use backend_selector::{
     BackendExecutionPlan, BackendKind, CpuBackend, CpuIsaFlags, FallbackExecutor, FallbackTier,
     GpuBackend, HardwareBackendSelector,
+};
+pub use distributed_rpc::{
+    ActivationCodec, ActivationDtype, DistributedPipelineCoordinator, ForwardActivationPacket,
+    ForwardActivationResponse, PipelineStageWorker, RpcCapabilityToken,
 };
 pub use engine::{InferenceEngine, SamplingConfig, StreamEvent, Utf8TokenAssembler};
 pub use error::EngineError;

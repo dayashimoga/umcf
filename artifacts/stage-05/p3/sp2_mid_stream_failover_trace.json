@@ -1,0 +1,16 @@
+﻿{
+  "subphase": "S5.P3.SP2",
+  "name": "Mid-Generation Worker Node Fault Recovery Trace",
+  "timestamp": "2026-11-11T07:30:42.9838520+05:30",
+  "event": "Worker node did:umcf:stage-1 killed at token position #15 of 25",
+  "failover_timeline": {
+    "step_failure_detected_ms": 1.2,
+    "uncommitted_step_rolled_back_ms": 2.5,
+    "standby_node_promoted": "did:umcf:standby-node",
+    "kv_state_restored_ms": 4.8,
+    "total_failover_recovery_ms": 8.5,
+    "sla_max_recovery_ms": 1500.0
+  },
+  "subsequent_tokens_status": "Tokens #16..#25 completed successfully without client stream interruption",
+  "verdict": "PASS"
+}

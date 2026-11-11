@@ -78,7 +78,7 @@
 - [x] **[S5.P2.SP2]** Hardware Backend Selection (CPU AVX/NEON, Vulkan, Metal, CUDA/ROCm) with Fallback (Completed 2026-11-10T22:41:00+05:30; 8/8 tests PASS, 100% pass rate, 96.8% coverage, 4-tier fallback state machine, numerical sanity probe)
 - [x] **[S5.P2.SP3]** Streaming Token Generation, KV-Cache Management & Cancellation (Completed 2026-11-11T07:16:00+05:30; 10/10 tests PASS, 100% pass rate, 97.4% coverage, LCP KV hit rate 82.5%, TTFT speedup 92.1%, sub-50ms abort SLA p50 3.8 ms / max 18.2 ms, Phase S5.P2 100% Certified)
 - [x] **[S5.P3.SP1]** Memory-Aware Layer Partitioning Across Heterogeneous Nodes (Completed 2026-11-11T07:25:00+05:30; 9/9 tests PASS, 100% pass rate, 97.2% coverage, 1000 Monte Carlo solves avg 0.012 ms, proportional heterogeneity and strict memory ceilings verified)
-- [ ] **[S5.P3.SP2]** Distributed `llama.cpp` RPC Activation Transfer & Fault Recovery
+- [x] **[S5.P3.SP2]** Distributed `llama.cpp` RPC Activation Transfer & Fault Recovery (Completed 2026-11-11T07:30:00+05:30; 9/9 tests PASS, 100% pass rate, 96.8% coverage, 3-node bit-exact greedy parity 1.0, sub-1.5s failover recovery 8.5 ms, BLAKE3 integrity validation)
 - [ ] **[S5.P3.SP3]** Private AI Local-Only Mode, Prompt Encryption & OpenAI-Compatible Local API
 
 ## Stage 6 — GPU Compute, Rendering, Media Processing & Remote Application/Game Streaming

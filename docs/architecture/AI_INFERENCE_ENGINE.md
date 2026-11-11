@@ -226,5 +226,39 @@ $$T_{\text{cycle}} = \sum_{i=0}^{k-1} \left( (l_i^{\text{end}} - l_i^{\text{star
 - **Standby Failover Mapping**: For each node in the active partition ring, the solver determines a standby node with spare memory headroom to ensure $< 1.5\text{ s}$ failover recovery.
 - **Dynamic Rebalance Triggers**: `RebalanceDetector` continuously checks telemetry and automatically initiates migration if any node drops below the health or battery threshold.
 
+---
+
+## 5. Distributed Activation RPC, Codec Compression & Mid-Stream Failover
+
+UMCF coordinates pipeline inference across nodes using an authenticated data-plane protocol layered over mutual-TLS (mTLS 1.3) QUIC streams, avoiding unencrypted or unauthenticated TCP sockets.
+
+### 5.1 Activation Wire Protocol & BLAKE3 Integrity
+
+Each step forwards intermediate transformer activations between consecutive stages:
+- `ForwardActivationPacket`: Encapsulates `session_id`, `step_idx`, `seq_id`, `token_positions`, data type (`F32`, `F16`, `Q8_0`), shape `[batch, seq, n_embd]`, payload bytes, and a 256-bit **BLAKE3 checksum**.
+- Workers reject any packet with checksum mismatches before executing tensor operations, preventing silent corruption across noisy or flaky network links.
+- Workers require a valid `RpcCapabilityToken` signed by an authorized node, preventing rogue devices from injecting activations or reading intermediate embeddings.
+
+### 5.2 Dynamic Activation Codec (FP16 & Q8_0)
+
+To minimize network hop latency across constrained Wi-Fi or WAN connections:
+- **FP16 Compression**: Encodes 32-bit floats into IEEE 754 half-precision bytes, halving network payload size while maintaining $> 65\text{ dB}$ SNR.
+- **Q8_0 Block Quantization**: Groups every 32 activation floats into an FP16 scale factor plus 32 signed 8-bit integers (`i8`), achieving a $4\times$ payload reduction ($34\text{ bytes}$ per 32 floats) with $> 40\text{ dB}$ SNR.
+- Uncompressed FP32 is preserved on high-bandwidth local PCIe/IPC interfaces for bit-exact floating-point parity.
+
+### 5.3 Deterministic KV Step Commit & Rollback
+
+Multi-stage pipeline inference can suffer mid-stream failure if any worker drops:
+1. **Uncommitted Step State**:
+   - Each worker stage stores newly computed KV cache tokens for `step_idx` in a tentative buffer while preserving a snapshot of committed state.
+2. **Two-Phase Commit**:
+   - When the final stage produces valid logits and the next token is sampled, the coordinator broadcasts a commit signal, finalizing `step_idx` across all stages.
+3. **Rollback & Replay on Failure**:
+   - If a stage fails or times out during `step_idx`, the coordinator broadcasts `RollbackKvStep(step_idx)`.
+   - Surviving stages instantly restore their committed state, discarding uncommitted residue.
+   - The coordinator hot-swaps the failed layer shard onto a pre-assigned standby node (or local head node) from cached GGUF shards.
+   - Generation resumes from `step_idx` within $\le 1.5\text{ seconds}$ without terminating the user's client stream.
+
+
 
 

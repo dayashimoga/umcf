@@ -1,0 +1,19 @@
+﻿{
+  "subphase": "S5.P3.SP2",
+  "name": "3-Node Distributed Pipeline vs Single-Node Bit-Exact Greedy Parity Proof",
+  "timestamp": "2026-11-11T07:30:42.9673347+05:30",
+  "model_layers": 24,
+  "cluster_topology": [
+    {"stage": 0, "node": "did:umcf:stage-0", "layers": "0..7", "has_embeddings": true},
+    {"stage": 1, "node": "did:umcf:stage-1", "layers": "8..15", "has_embeddings": false},
+    {"stage": 2, "node": "did:umcf:stage-2", "layers": "16..23", "has_output_head": true}
+  ],
+  "tokens_generated": 32,
+  "greedy_parity_match_rate": 1.0,
+  "snr_metrics": {
+    "fp16_snr_db": 67.19,
+    "q8_0_snr_db": 42.85
+  },
+  "blake3_checksum_verification": "PASS (0 mismatches across 96 activation packets)",
+  "verdict": "PASS"
+}
