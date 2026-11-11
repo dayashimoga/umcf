@@ -280,3 +280,4 @@ impl FrameCompositor {
         Ok(ppm)
     }
 }
+

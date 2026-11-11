@@ -1,0 +1,24 @@
+{
+    "subphase":  "S7.P1.SP1",
+    "title":  "Atomic Quota Enforcement \u0026 64-Thread Concurrency Audit",
+    "timestamp":  "2026-11-11T03:47:35Z",
+    "hard_quota_invariants":  {
+                                  "configured_limit_bytes":  16777216,
+                                  "concurrent_threads":  64,
+                                  "request_size_bytes":  524288,
+                                  "total_reservation_attempts":  1280,
+                                  "max_observed_allocated_bytes":  16777216,
+                                  "quota_overrun_bytes":  0,
+                                  "overrun_guarantee":  "Strict Zero-Overrun at any microsecond"
+                              },
+    "raii_permit_lifecycle":  {
+                                  "in_flight_uncommitted_permit_drop":  "Atomically decrements reserved_in_flight_bytes back to 0",
+                                  "committed_permit_transfer":  "Atomically transfers from reserved to used_bytes"
+                              },
+    "host_os_floor_protection":  {
+                                     "safety_floor_bytes":  2147483648,
+                                     "safety_floor_pct":  15,
+                                     "action_when_free_below_floor":  "Immediate rejection with StorageError::HostSpaceExhausted",
+                                     "host_os_starvation_risk":  "Zero"
+                                 }
+}

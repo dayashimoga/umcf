@@ -24,3 +24,4 @@ mkdir -p artifacts/stage-06/p1 artifacts/evidence/stage-06/p1
 cp -r artifacts/stage-06/p1/* artifacts/evidence/stage-06/p1/ 2>/dev/null || true
 
 echo "=== S6.P1.SP2 Verification Complete: ALL PASS ==="
+

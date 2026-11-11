@@ -3033,6 +3033,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "umcf-storage"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "bytes",
+ "hex",
+ "proptest",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "umcf-core",
+ "umcf-telemetry",
+]
+
+[[package]]
 name = "umcf-stream"
 version = "0.1.0"
 dependencies = [

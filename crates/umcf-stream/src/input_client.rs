@@ -192,3 +192,4 @@ impl InputReturnClient {
                 || rumble.right_trigger_motor > 0)
     }
 }
+

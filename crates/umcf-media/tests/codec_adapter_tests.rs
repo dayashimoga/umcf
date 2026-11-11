@@ -311,3 +311,4 @@ fn test_manual_codec_capability_matrix_ui_schema() {
     assert!(json.contains("supports_10bit_hdr"));
     assert!(json.contains("140"));
 }
+

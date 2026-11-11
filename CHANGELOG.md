@@ -1006,6 +1006,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **Classified Test Harness**: Implemented `scripts/test-s6-p3-sp3.sh` and `scripts/test-s6-p3-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
 - **Verification Evidence**: Archived `artifacts/stage-06/p3/sp3_input_latency_and_stuck_key_audit.json`, `artifacts/stage-06/p3/sp3_view_only_rbac_enforcement.json`, `artifacts/stage-06/p3/S6_P3_PHASE_SUMMARY.json`, and `artifacts/stage-06/STAGE_06_CERTIFICATION.json` (mirrored to `artifacts/evidence/stage-06/`).
 
+### Added (S7.P1.SP1: BLAKE3 Content-Addressed Chunk Store & Explicit Quota Enforcement)
+- **Scaffolded `umcf-storage` Crate (`crates/umcf-storage`)**:
+  - Initialized content-addressed storage crate with zero unsafe code `#![forbid(unsafe_code)]`.
+- **FastCDC Content-Defined Chunking Engine (`crates/umcf-storage/src/chunk_store.rs`)**:
+  - Implemented `FastCdcConfig` and `GEAR_TABLE` (256-entry pseudo-random 64-bit LCG table) supporting production boundaries ($256\text{ KiB} .. 4\text{ MiB}$) and configurable test profiles.
+  - Demonstrated $\ge 94\%$ chunk reuse ($94.53\%$ measured) when inserting 100 bytes near the start of a multi-megabyte stream, proving shift-resilient deduplication.
+  - Implemented `ChunkId` (32-byte BLAKE3 cryptographic digest) and hierarchical `ObjectDagManifest` with root CID computation.
+- **Two-Level Fanout Persistence Layout & Integrity Verification (`ContentAddressedChunkStore`)**:
+  - Stored chunks in `chunks/{hex[0..2]}/{hex[2..4]}/{full_hex}.chk` using atomic `.staging.<cid>.<nonce>` writes + fsync + rename.
+  - Verified 100% chunk deduplication on duplicate writes without consuming extra disk bytes.
+  - Implemented cryptographic readback integrity check: bit-flipped or tampered chunk files are rejected with `StorageError::ChunkIntegrityMismatch`.
+  - Implemented `startup_recovery()`: cleans orphan incomplete staging files and reconciles index and storage usage in $< 50\text{ ms}$.
+- **Byte-Exact Atomic Quota Enforcer (`crates/umcf-storage/src/quota.rs`)**:
+  - Implemented `StrictQuotaEnforcer` tracking `used_bytes`, `reserved_in_flight_bytes`, and `configured_max_bytes`.
+  - Lock-free CAS reservation loop verified under a 64-thread concurrent storm against a $16\text{ MiB}$ limit with **zero overrun at any microsecond**.
+  - Implemented Host OS Floor Protection ($15\%$ safety floor or $2\text{ GiB}$): automatically clamps effective quota and rejects writes with `StorageError::HostSpaceExhausted` when host partition is constrained.
+  - Implemented RAII `QuotaReservationPermit`: uncommitted permits automatically release in-flight reservation upon drop.
+  - Implemented LRU unpinned cache eviction (`evict_unpinned_chunks()`) to admit new writes when quota is depleted.
+- **Interactive Multiplatform Storage Quota UI (Svelte 5 & Flutter)**:
+  - Implemented Svelte 5 `apps/web-dashboard/src/lib/components/storage/StorageQuotaCard.svelte` and `ui/admin_web/...` with interactive quota slider ($1..128\text{ GB}$), stacked allocation bar (Pinned, Models, Cache, In-Flight, Safety Floor), numerical metrics, and working "Purge Cache" action.
+  - Implemented Flutter `apps/mobile-desktop/lib/features/storage/storage_quota_sheet.dart` and `ui/flutter_app/...` with Material 3 modal sheet, stacked progress bar, and cache eviction feedback.
+- **Architecture Documentation & Invariants**:
+  - Authored `docs/architecture/DISTRIBUTED_STORAGE.md` detailing FastCDC normalization, fanout directory layout, lock-free CAS quota invariants, and host floor protection.
+- **Classified Test Harness**: Implemented `scripts/test-s7-p1-sp1.sh` and `scripts/test-s7-p1-sp1.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
+- **Verification Evidence**: Archived `artifacts/stage-07/p1/sp1_fastcdc_dedup_ratio.json` and `artifacts/stage-07/p1/sp1_quota_64thread_invariant_audit.json` (mirrored to `artifacts/evidence/stage-07/p1/`).
+
+
 
 
 

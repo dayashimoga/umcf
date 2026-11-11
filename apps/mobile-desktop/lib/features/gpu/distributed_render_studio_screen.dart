@@ -356,3 +356,4 @@ class _TileGridPainter extends CustomPainter {
         oldDelegate.selectedWorkerId != selectedWorkerId;
   }
 }
+

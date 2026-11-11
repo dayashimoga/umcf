@@ -346,3 +346,4 @@ fn test_manual_shader_sandbox_telemetry_and_ui_schema_inspection() {
     assert!(json.contains("max_storage_buffers"));
     assert!(json.contains("default_loop_fuel"));
 }
+

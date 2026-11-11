@@ -419,3 +419,4 @@ impl DistributedRenderCoordinator {
         (completed, total, ratio)
     }
 }
+
