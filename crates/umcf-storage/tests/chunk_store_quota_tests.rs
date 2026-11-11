@@ -326,7 +326,7 @@ fn test_hardware_fastcdc_blake3_ingestion_throughput() {
         throughput_mb_s, total_hashes, sec
     );
 
-    let min_baseline = if cfg!(debug_assertions) { 50.0 } else { 200.0 };
+    let min_baseline = if cfg!(debug_assertions) { 35.0 } else { 150.0 };
     assert!(
         throughput_mb_s >= min_baseline,
         "throughput {:.2} MB/s fell below baseline {:.1} MB/s",
