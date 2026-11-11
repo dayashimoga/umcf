@@ -20,6 +20,7 @@ pub mod rate_limiter;
 pub mod relay;
 pub mod roaming;
 pub mod stun;
+pub mod zero_copy;
 
 pub use beacon::{
     BeaconAnnouncementParams, SignedDiscoveryBeacon, BEACON_MAGIC, BEACON_SIGNING_DOMAIN,
@@ -51,6 +52,9 @@ pub use relay::{
 pub use roaming::{
     ConnectionMigrationCoordinator, InterfaceDiff, InterfaceType, MigrationRecord,
     NetworkInterfaceInfo, NetworkInterfaceWatcher, RoamingEvent,
+};
+pub use zero_copy::{
+    is_pointer_within_range, MmapSliceGuard, ZeroCopyError, ZeroCopyMetrics, ZeroCopyShardStreamer,
 };
 pub use stun::{
     crc32_ieee, query_stun_server, EmbeddedStunServer, StunMessage, BINDING_REQUEST,

@@ -17,11 +17,12 @@
   import ResourceLeakDiagnosticsCard from "./lib/components/cluster/ResourceLeakDiagnosticsCard.svelte";
   import SecurityRedteamCard from "./lib/components/cluster/SecurityRedteamCard.svelte";
   import SbomLicensesViewerCard from "./lib/components/cluster/SbomLicensesViewerCard.svelte";
+  import PowerGovernorCard from "./lib/components/cluster/PowerGovernorCard.svelte";
 
   const dashboard = createClusterDashboardState("umcf-edge-mesh");
 
   // Navigation state
-  type NavRoute = 'overview' | 'workflows' | 'ai' | 'gpu' | 'media' | 'stream' | 'storage' | 'market' | 'keys' | 'chaos' | 'security' | 'about';
+  type NavRoute = 'overview' | 'workflows' | 'ai' | 'gpu' | 'media' | 'stream' | 'storage' | 'market' | 'keys' | 'chaos' | 'security' | 'about' | 'power';
   let currentRoute = $state<NavRoute>('overview');
 
   // Connection & Node Governance state
@@ -184,6 +185,13 @@
       class="px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap {currentRoute === 'about' ? 'border-cyan-500 text-cyan-400 bg-gray-850/50' : 'border-transparent text-gray-400 hover:text-gray-200'}"
     >
       SBOM & Licenses
+    </button>
+
+    <button
+      onclick={() => { currentRoute = 'power'; }}
+      class="px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap {currentRoute === 'power' ? 'border-emerald-500 text-emerald-400 bg-gray-850/50' : 'border-transparent text-gray-400 hover:text-gray-200'}"
+    >
+      Battery & Radio
     </button>
   </nav>
 
@@ -477,6 +485,11 @@
     <!-- View 12: SBOM & Third-Party Licenses -->
     {#if currentRoute === 'about'}
       <SbomLicensesViewerCard />
+    {/if}
+
+    <!-- View 13: Mobile Battery & Radio Wakeup Governor -->
+    {#if currentRoute === 'power'}
+      <PowerGovernorCard />
     {/if}
   </main>
 </div>

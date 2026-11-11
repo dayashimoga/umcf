@@ -9,6 +9,7 @@ pub mod benchmark;
 pub mod cpu;
 pub mod error;
 pub mod memory_storage;
+pub mod power_governor;
 pub mod power_thermal;
 pub mod system_probe;
 
@@ -20,5 +21,8 @@ pub use benchmark::{
 pub use cpu::CpuProber;
 pub use error::HwProbeError;
 pub use memory_storage::MemoryStorageProber;
+pub use power_governor::{
+    DeviceTelemetry, MobilePowerGovernor, PowerGovernorError, PowerState, TaskKind, TimerCoalescer,
+};
 pub use power_thermal::PowerThermalProber;
 pub use system_probe::SystemProber;

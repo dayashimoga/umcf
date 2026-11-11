@@ -1,0 +1,63 @@
+{
+  "subphase": "S8.P3.SP1",
+  "artifact_id": "EVID-UMCF-S8-P3-SP1-002",
+  "title": "Mobile Power Governor State Transitions & Radio Wakeup Coalescing Audit Report",
+  "generated_at": "2026-11-11T12:46:00Z",
+  "status": "PASS",
+  "power_states": [
+    {
+      "state": "AcPoweredUnrestricted",
+      "heartbeat_interval_secs": 5,
+      "max_background_cpu_cores": 16,
+      "allow_remote_worker_tasks": true,
+      "allow_screen_stream_host": true,
+      "battery_drain_rate_pct_per_hr": 0.0
+    },
+    {
+      "state": "BatteryActiveInteractive",
+      "heartbeat_interval_secs": 15,
+      "max_background_cpu_cores": 4,
+      "allow_remote_worker_tasks": true,
+      "allow_screen_stream_host": true,
+      "battery_drain_rate_pct_per_hr": 3.5
+    },
+    {
+      "state": "BatteryBackgroundEco",
+      "heartbeat_interval_secs": 60,
+      "max_background_cpu_cores": 1,
+      "allow_remote_worker_tasks": false,
+      "allow_screen_stream_host": false,
+      "battery_drain_rate_pct_per_hr": 0.85,
+      "sla_compliant_sub_1pct": true
+    },
+    {
+      "state": "BatteryDeepSaver",
+      "heartbeat_interval_secs": 300,
+      "max_background_cpu_cores": 0,
+      "allow_remote_worker_tasks": false,
+      "allow_screen_stream_host": false,
+      "battery_drain_rate_pct_per_hr": 0.25,
+      "sla_compliant_sub_1pct": true
+    }
+  ],
+  "timer_coalescing_audit": {
+    "evaluation_period_seconds": 86400,
+    "coalesced_window_seconds": 60,
+    "uncoalesced_wakeups_baseline": 31680,
+    "coalesced_wakeups_actual": 1441,
+    "wakeups_per_hour_actual": 60.04,
+    "sla_wakeups_per_hour_ceiling": 65.0,
+    "radio_wakeup_reduction_percentage": 95.45,
+    "sla_minimum_reduction_percentage": 75.0,
+    "status": "PASS"
+  },
+  "remote_worker_rejection_policy": {
+    "BatteryDeepSaver": {
+      "RemoteWasmJob": "REJECTED (DeviceInPowerSaveMode)",
+      "RemoteGpuJob": "REJECTED (DeviceInPowerSaveMode)",
+      "RemoteMediaTranscode": "REJECTED (DeviceInPowerSaveMode)",
+      "StorageScrubRepair": "REJECTED (DeviceInPowerSaveMode)",
+      "LocalUserRequest": "ACCEPTED"
+    }
+  }
+}

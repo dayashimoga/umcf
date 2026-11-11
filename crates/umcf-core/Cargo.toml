@@ -8,6 +8,7 @@ description = "Core identity, dynamic role state machine, explicit hardware desc
 [dependencies]
 bincode.workspace = true
 blake3.workspace = true
+bytes.workspace = true
 ed25519-dalek.workspace = true
 hex = "0.4"
 schemars.workspace = true

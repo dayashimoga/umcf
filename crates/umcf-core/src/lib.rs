@@ -4,6 +4,7 @@
 //! Adheres strictly to `#![forbid(unsafe_code)]` and zero-placeholder invariants.
 
 pub mod attestation;
+pub mod buffer_pool;
 pub mod capabilities;
 pub mod types;
 pub mod units;
@@ -13,6 +14,7 @@ pub use attestation::{
     verify_peer_build_admission, AttestationError, CycloneDxSbom, SbomPackage, SlsaDigest,
     SlsaPredicate, SlsaProvenance, SlsaSubject,
 };
+pub use buffer_pool::{AlignedSlabBufferPool, BufferLease, BufferPoolError};
 pub use capabilities::{
     AcceleratorCapability, AcceleratorKind, ComputeBackend, CpuCapability,
     HardwareCapabilityDescriptor, MemoryCapability, NetworkCapability, NetworkLinkType,
