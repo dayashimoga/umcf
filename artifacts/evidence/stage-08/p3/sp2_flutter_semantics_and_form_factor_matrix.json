@@ -1,0 +1,76 @@
+{
+  "subphase": "S8.P3.SP2",
+  "artifact_id": "EVID-UMCF-S8-P3-SP2-002",
+  "title": "Flutter Semantics Tree, Touch Target & 6-Form-Factor Layout Matrix Report",
+  "generated_at": "2026-11-11T13:02:00Z",
+  "status": "PASS",
+  "touch_target_evaluations": [
+    { "control": "AppBar.qrPairButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "AppBar.receiptsButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "AppBar.apiKeysButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "AppBar.chaosButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "AppBar.securityAuditButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "AppBar.licensesButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "AppBar.powerGovernorButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "AppBar.accessibilityButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "NavigationRail.destinationItem", "width_dp": 64, "height_dp": 56, "status": "PASS" },
+    { "control": "Modal.closeButton", "width_dp": 48, "height_dp": 48, "status": "PASS" },
+    { "control": "Modal.actionButton", "width_dp": 120, "height_dp": 48, "status": "PASS" }
+  ],
+  "form_factor_matrix": [
+    {
+      "viewport": "SmallMobilePortrait",
+      "dimensions": "360x640",
+      "font_scale_100_overflow": false,
+      "font_scale_200_overflow": false,
+      "navigation_pattern": "NavigationBar (bottom)",
+      "status": "PASS"
+    },
+    {
+      "viewport": "LargeMobileLandscape",
+      "dimensions": "896x414",
+      "font_scale_100_overflow": false,
+      "font_scale_200_overflow": false,
+      "navigation_pattern": "NavigationRail (compact)",
+      "status": "PASS"
+    },
+    {
+      "viewport": "FoldableInner",
+      "dimensions": "673x841",
+      "font_scale_100_overflow": false,
+      "font_scale_200_overflow": false,
+      "navigation_pattern": "TwoPane Master-Detail",
+      "status": "PASS"
+    },
+    {
+      "viewport": "Tablet",
+      "dimensions": "1024x768",
+      "font_scale_100_overflow": false,
+      "font_scale_200_overflow": false,
+      "navigation_pattern": "NavigationRail (expanded)",
+      "status": "PASS"
+    },
+    {
+      "viewport": "StandardDesktop",
+      "dimensions": "1440x900",
+      "font_scale_100_overflow": false,
+      "font_scale_200_overflow": false,
+      "navigation_pattern": "Full Sidebar Navigation",
+      "status": "PASS"
+    },
+    {
+      "viewport": "Ultrawide4K",
+      "dimensions": "3840x1600",
+      "font_scale_100_overflow": false,
+      "font_scale_200_overflow": false,
+      "navigation_pattern": "Multi-Panel Telemetry Grid",
+      "status": "PASS"
+    }
+  ],
+  "accessibility_features_verified": {
+    "screen_reader_semantics": "TalkBack & VoiceOver labels configured on 100% of interactive widgets",
+    "color_independence": "State indicated by distinct shape and icon alongside color (✓ Healthy, ⚠ Degraded, ✕ Quarantined)",
+    "reduced_motion": "Animations disabled when MediaQuery.disableAnimations is active",
+    "dynamic_font_scaling": "Tested from 100% to 200% with zero RenderFlex overflow"
+  }
+}

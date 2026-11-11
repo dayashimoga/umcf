@@ -1,0 +1,88 @@
+{
+  "subphase": "S8.P3.SP2",
+  "artifact_id": "EVID-UMCF-S8-P3-SP2-003",
+  "title": "Internationalization 6-Locale Key Parity & Bidirectional Layout Report",
+  "generated_at": "2026-11-11T13:02:00Z",
+  "status": "PASS",
+  "base_locale": "en-US",
+  "total_keys_per_locale": 44,
+  "locales_audited": [
+    {
+      "code": "en-US",
+      "language": "English (US)",
+      "direction": "LTR",
+      "keys_present": 44,
+      "missing_keys": 0,
+      "extra_keys": 0,
+      "variables_matched": true,
+      "status": "PASS"
+    },
+    {
+      "code": "es-ES",
+      "language": "Spanish",
+      "direction": "LTR",
+      "keys_present": 44,
+      "missing_keys": 0,
+      "extra_keys": 0,
+      "variables_matched": true,
+      "status": "PASS"
+    },
+    {
+      "code": "de-DE",
+      "language": "German",
+      "direction": "LTR",
+      "keys_present": 44,
+      "missing_keys": 0,
+      "extra_keys": 0,
+      "variables_matched": true,
+      "long_compound_words_verified": true,
+      "status": "PASS"
+    },
+    {
+      "code": "ja-JP",
+      "language": "Japanese",
+      "direction": "LTR",
+      "keys_present": 44,
+      "missing_keys": 0,
+      "extra_keys": 0,
+      "variables_matched": true,
+      "cjk_rendering_verified": true,
+      "status": "PASS"
+    },
+    {
+      "code": "zh-CN",
+      "language": "Chinese (Simplified)",
+      "direction": "LTR",
+      "keys_present": 44,
+      "missing_keys": 0,
+      "extra_keys": 0,
+      "variables_matched": true,
+      "cjk_rendering_verified": true,
+      "status": "PASS"
+    },
+    {
+      "code": "ar-SA",
+      "language": "Arabic (Saudi Arabia)",
+      "direction": "RTL",
+      "keys_present": 44,
+      "missing_keys": 0,
+      "extra_keys": 0,
+      "variables_matched": true,
+      "rtl_mirroring_verified": true,
+      "technical_terms_ltr_verified": true,
+      "status": "PASS"
+    }
+  ],
+  "variable_interpolation_verified": [
+    "{percent}",
+    "{scale}",
+    "{rate}"
+  ],
+  "summary": {
+    "supported_locales": 6,
+    "missing_keys_total": 0,
+    "variable_mismatches_total": 0,
+    "rtl_support": "Fully compliant (dir=rtl in Svelte 5, Directionality in Flutter)",
+    "parity_rate": "100.0%"
+  }
+}

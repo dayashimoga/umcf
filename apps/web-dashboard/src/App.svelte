@@ -18,6 +18,8 @@
   import SecurityRedteamCard from "./lib/components/cluster/SecurityRedteamCard.svelte";
   import SbomLicensesViewerCard from "./lib/components/cluster/SbomLicensesViewerCard.svelte";
   import PowerGovernorCard from "./lib/components/cluster/PowerGovernorCard.svelte";
+  import A11yToolbar from "./lib/components/a11y/A11yToolbar.svelte";
+  import { i18n } from "./lib/i18n/i18n.svelte";
 
   const dashboard = createClusterDashboardState("umcf-edge-mesh");
 
@@ -62,32 +64,38 @@
 </script>
 
 <div class="min-h-screen bg-gray-950 text-gray-100 flex flex-col font-sans">
+  <!-- Accessibility & Internationalization Toolbar -->
+  <A11yToolbar />
+
   <!-- Top Navigation Header -->
   <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-600/30">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-600/30" aria-hidden="true">
         U
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <span class="font-bold text-lg tracking-tight text-white">UMCF Control Plane</span>
+          <h1 class="font-bold text-lg tracking-tight text-white m-0 p-0 text-base">{i18n.t('app_title')}</h1>
           <span class="text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">v{PROTOCOL_VERSION}</span>
         </div>
         <div class="text-xs text-gray-400">Universal Mobile Compute Fabric Dashboard</div>
       </div>
     </div>
 
-    <!-- Cluster Status Banner & Health -->
+    <!-- Cluster Status Banner & Health (Accessible with icon + text) -->
     <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2 bg-gray-850 border border-gray-800 px-3 py-1.5 rounded-lg text-xs">
-        <span class="w-2.5 h-2.5 rounded-full {isWsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-red-500'}"></span>
+      <div class="flex items-center gap-2 bg-gray-850 border border-gray-800 px-3 py-1.5 rounded-lg text-xs" role="status" aria-live="polite">
+        <span class="font-bold {isWsConnected ? 'text-emerald-400' : 'text-red-400'}" aria-hidden="true">
+          {isWsConnected ? '✓' : '✕'}
+        </span>
         <span class="font-medium {isWsConnected ? 'text-emerald-400' : 'text-red-400'}">
-          {isWsConnected ? 'Gateway WebSocket: Connected' : 'Reconnecting...'}
+          {isWsConnected ? 'Gateway WebSocket: ' + i18n.t('healthy') : 'Gateway WebSocket: ' + i18n.t('offline')}
         </span>
         <button
           onclick={simulateReconnect}
-          class="text-gray-500 hover:text-gray-300 ml-1 underline"
+          class="text-gray-500 hover:text-gray-300 ml-1 underline cursor-pointer"
           title="Simulate network reconnect"
+          aria-label="Probe network connection"
         >
           [Probe]
         </button>
@@ -195,8 +203,8 @@
     </button>
   </nav>
 
-  <!-- Main Content Area -->
-  <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+  <!-- Main Content Area with Skip Target -->
+  <main id="main-content" class="flex-1 p-6 max-w-7xl mx-auto w-full" tabindex="-1">
     <!-- View 1: Overview & Node Governance -->
     {#if currentRoute === 'overview'}
       <div class="space-y-6">
