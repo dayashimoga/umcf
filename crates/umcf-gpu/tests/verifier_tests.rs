@@ -382,8 +382,11 @@ fn test_hardware_software_vs_gpu_rendered_distribution() {
     let elapsed = start.elapsed();
     let per_canary_us = (elapsed.as_micros() as f64) / 100.0;
 
-    // Canary check must be lightning-fast (< 50 µs per 8x8 check)
+    // Canary check must be lightning-fast (< 50 µs in release, < 250 µs under debug/llvm-cov)
+    #[cfg(not(debug_assertions))]
     assert!(per_canary_us < 50.0, "canary check took {per_canary_us} µs");
+    #[cfg(debug_assertions)]
+    assert!(per_canary_us < 250.0, "canary check took {per_canary_us} µs");
 }
 
 // =========================================================================
