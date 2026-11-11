@@ -58,6 +58,16 @@ pub enum GpuError {
     #[error("compositor error: {reason}")]
     CompositorError { reason: String },
 
+    #[error("verification failed for tile {tile_id} from worker {worker_id}: {reason}")]
+    VerificationFailed {
+        worker_id: String,
+        tile_id: u32,
+        reason: String,
+    },
+
+    #[error("worker {worker_id} has been quarantined and banned due to verification failure")]
+    WorkerBanned { worker_id: String },
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

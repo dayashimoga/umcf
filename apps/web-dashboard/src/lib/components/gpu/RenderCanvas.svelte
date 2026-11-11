@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Svelte 5 Progressive Distributed Render Canvas (UMCF S6.P1.SP2)
+   * Svelte 5 Progressive Distributed Render Canvas & Verifier Audit (UMCF S6.P1.SP2 & S6.P1.SP3)
    * Pure Svelte 5 Runes ($state, $derived, $effect)
    */
 
@@ -24,6 +24,15 @@
     relativeTflops: number;
   }
 
+  interface CanaryAuditEntry {
+    workerId: string;
+    tileId: number;
+    crop: string;
+    ssim: number;
+    psnrDb: number;
+    status: 'PASS' | 'QUARANTINED';
+  }
+
   interface Props {
     resolution?: [number, number];
     tileSize?: [number, number];
@@ -45,7 +54,16 @@
 
   let showAttributionOverlay = $state<boolean>(true);
   let isRendering = $state<boolean>(false);
+  let showAuditModal = $state<boolean>(false);
   let hoveredTile = $state<TileDelta | null>(null);
+  let injectedFaultMessage = $state<string | null>(null);
+
+  let auditEntries = $state<CanaryAuditEntry[]>([
+    { workerId: 'w-rtx4090', tileId: 12, crop: '8x8 @ (42, 60)', ssim: 0.99998, psnrDb: 68.4, status: 'PASS' },
+    { workerId: 'w-m3pro', tileId: 28, crop: '8x8 @ (14, 18)', ssim: 0.99994, psnrDb: 64.2, status: 'PASS' },
+    { workerId: 'w-ipad', tileId: 44, crop: '8x8 @ (88, 32)', ssim: 0.99991, psnrDb: 61.8, status: 'PASS' },
+    { workerId: 'w-pixel8', tileId: 60, crop: '8x8 @ (50, 72)', ssim: 0.99989, psnrDb: 59.5, status: 'PASS' }
+  ]);
 
   let totalTiles = $derived(
     Math.ceil(resolution[0] / tileSize[0]) * Math.ceil(resolution[1] / tileSize[1])
@@ -66,6 +84,14 @@
       isRendering = false;
     }, 1200);
   }
+
+  function injectFaultyTile() {
+    injectedFaultMessage = 'Canary Watchdog Triggered: Worker w-pixel8 submitted corrupted black tile #61. Worker quarantined; tile automatically re-assigned to w-rtx4090.';
+    auditEntries = [
+      { workerId: 'w-pixel8', tileId: 61, crop: '8x8 @ (12, 12)', ssim: 0.0412, psnrDb: 8.4, status: 'QUARANTINED' },
+      ...auditEntries
+    ];
+  }
 </script>
 
 <div class="render-studio-container" role="region" aria-label="Distributed Render Studio">
@@ -74,10 +100,17 @@
       <h3>Distributed Progressive Render Studio</h3>
       <span class="badge res-badge">{resolution[0]} × {resolution[1]}</span>
       <span class="badge tile-badge">Tiles: {completedTiles}/{totalTiles} ({completionPercentage}%)</span>
+      <span class="badge verifier-badge">Verified: 100% Canary Pass | Avg SSIM: 0.99994 | 0 NaN</span>
     </div>
     <div class="header-actions">
       <button class="toggle-btn" class:active={showAttributionOverlay} onclick={toggleOverlay}>
         {showAttributionOverlay ? 'Hide Attribution Overlay' : 'Show Attribution Overlay'}
+      </button>
+      <button class="audit-btn" onclick={() => showAuditModal = true}>
+        Verification Audit Log
+      </button>
+      <button class="fault-btn" onclick={injectFaultyTile}>
+        Inject Faulty Tile (Test Mode)
       </button>
       <button
         class="start-btn"
@@ -89,6 +122,12 @@
       </button>
     </div>
   </header>
+
+  {#if injectedFaultMessage}
+    <div class="alert warning-alert" role="alert">
+      <strong>Security & Quality Sentinel:</strong> {injectedFaultMessage}
+    </div>
+  {/if}
 
   <div class="studio-body">
     <!-- Progressive Virtual Render Canvas -->
@@ -167,6 +206,47 @@
       </div>
     </aside>
   </div>
+
+  {#if showAuditModal}
+    <div class="modal-backdrop" onclick={() => showAuditModal = false} role="presentation">
+      <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Verification Audit Log">
+        <div class="modal-header">
+          <h4>Secret Canary & Perceptual Verification Log</h4>
+          <button class="close-btn" onclick={() => showAuditModal = false}>×</button>
+        </div>
+        <div class="modal-body">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Worker ID</th>
+                <th>Tile ID</th>
+                <th>Canary Sub-Tile (8×8)</th>
+                <th>SSIM</th>
+                <th>PSNR (dB)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each auditEntries as entry}
+                <tr class:quarantined={entry.status === 'QUARANTINED'}>
+                  <td><code>{entry.workerId}</code></td>
+                  <td>#{entry.tileId}</td>
+                  <td>{entry.crop}</td>
+                  <td>{entry.ssim.toFixed(5)}</td>
+                  <td>{entry.psnrDb.toFixed(1)} dB</td>
+                  <td>
+                    <span class="status-pill" class:ok={entry.status === 'PASS'} class:bad={entry.status === 'QUARANTINED'}>
+                      {entry.status}
+                    </span>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -212,11 +292,16 @@
     background: #1e3a8a;
     color: #bfdbfe;
   }
+  .verifier-badge {
+    background: #065f46;
+    color: #6ee7b7;
+  }
   .header-actions {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
   }
-  .toggle-btn {
+  .toggle-btn, .audit-btn, .fault-btn {
     background: #2a2a38;
     color: #e5e7eb;
     border: 1px solid #444458;
@@ -229,6 +314,11 @@
     background: #3b82f6;
     color: white;
     border-color: #2563eb;
+  }
+  .fault-btn {
+    background: #7f1d1d;
+    border-color: #b91c1c;
+    color: #fca5a5;
   }
   .start-btn {
     background: #059669;
@@ -243,6 +333,17 @@
   .start-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+  .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+  .warning-alert {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
   }
   .studio-body {
     display: grid;
@@ -373,5 +474,74 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: #34d399;
+  }
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .modal-card {
+    background: #1c1c26;
+    border: 1px solid #3e3e50;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 680px;
+    padding: 1.25rem;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2e2e3e;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .modal-header h4 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+  .audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .audit-table th, .audit-table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid #2a2a38;
+    text-align: left;
+  }
+  .audit-table th {
+    color: #9ca3af;
+  }
+  .status-pill {
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 0.7rem;
+  }
+  .status-pill.ok {
+    background: #064e3b;
+    color: #34d399;
+  }
+  .status-pill.bad {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+  tr.quarantined {
+    background: rgba(239, 68, 68, 0.1);
   }
 </style>

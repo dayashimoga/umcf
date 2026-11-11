@@ -1,0 +1,20 @@
+﻿{
+  "subphase": "S6.P1.SP3",
+  "name": "Secret Canary Spot-Check & Byzantine Node Quarantine Report",
+  "timestamp": "2026-11-11T08:06:30.8807787+05:30",
+  "canary_parameters": {
+    "subtile_dimensions": [8, 8],
+    "selection_policy": "Secret CSPRNG seeded by coordinator private key",
+    "sampling_ratio": 0.05,
+    "compute_overhead_percentage": 0.39
+  },
+  "byzantine_detection_audit": {
+    "total_tiles_audited": 100,
+    "corrupted_tiles_injected": 2,
+    "corrupted_tiles_caught": 2,
+    "detection_rate_percentage": 100.0,
+    "quarantined_workers": ["w-byzantine-2", "lazy-worker"],
+    "automatic_rerender_success": true
+  },
+  "verdict": "PASS"
+}

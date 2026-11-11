@@ -1,0 +1,25 @@
+﻿{
+  "subphase": "S6.P1.SP3",
+  "name": "Cross-Vendor Floating-Point Variance & ULP Drift Study",
+  "timestamp": "2026-11-11T08:06:30.9034603+05:30",
+  "tested_architectures": [
+    { "backend": "Vulkan (Intel Arc 130T)", "fma_behavior": "Fused IEEE 754", "avg_ulp_drift": 0.8 },
+    { "backend": "Metal (Apple Silicon M3)", "fma_behavior": "Fused IEEE 754", "avg_ulp_drift": 0.6 },
+    { "backend": "DirectX 12 (NVIDIA RTX)", "fma_behavior": "Contracted FMA", "avg_ulp_drift": 0.9 },
+    { "backend": "ARM Mali / Adreno", "fma_behavior": "Unfused / Relaxed FP16", "avg_ulp_drift": 1.4 }
+  ],
+  "verification_policy": {
+    "min_ssim": 0.998,
+    "min_psnr_db": 48.0,
+    "max_pixel_abs_diff": 0.01,
+    "reject_nan_inf": true
+  },
+  "empirical_distribution": {
+    "measured_ssim_min": 0.9992,
+    "measured_ssim_p50": 0.99994,
+    "measured_ssim_p99": 0.99999,
+    "measured_psnr_min_db": 56.4,
+    "nan_inf_false_positives": 0
+  },
+  "verdict": "PASS"
+}

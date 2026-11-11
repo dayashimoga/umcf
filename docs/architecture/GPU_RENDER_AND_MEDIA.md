@@ -63,3 +63,31 @@ High-resolution distributed rendering (e.g., 4K/8K path tracing or raymarching) 
 - Emits real-time `ProgressiveFrameDelta` events containing tile bounding box, worker attribution, and BLAKE3 digests for live UI canvas updates.
 - Supports lossless export to OpenEXR (`.exr` with IEEE half-float scanlines), raw RGBA buffers, and Netpbm PPM.
 
+---
+
+### 1.3 Deterministic Verification & Checksum Auditing (`S6.P1.SP3`)
+
+In a heterogeneous multi-device compute mesh, integer compute tasks require bit-exact repeatability, whereas floating-point graphics workloads naturally exhibit small ULP (units in the last place) differences across architectures (e.g. FMA contraction and transcendental hardware differences between Vulkan, Metal, and DX12). At the same time, Byzantine cheating nodes or buggy graphics drivers can return corrupt, noisy, or empty black tiles to fraudulently claim compute rewards.
+
+#### 1.3.1 Dual-Mode Verification Policies
+- **`DeterministicBitExact`**:
+  - Enforced for integer arithmetic, cryptographic operations, and uncompressed bitmap transformations.
+  - Requires 100% BLAKE3 hash equality between submitted tiles and redundant evaluations.
+- **`FloatingPointPerceptual`**:
+  - Enforced for floating-point rendering (e.g. path tracing, raymarching, neural shaders).
+  - Tolerates legitimate cross-vendor floating-point ULP drift while strictly flagging visual corruption:
+    - $\text{SSIM} \ge 0.998$ (Structural Similarity Index)
+    - $\text{PSNR} \ge 48.0\text{ dB}$ (Peak Signal-to-Noise Ratio)
+    - $\text{Max Absolute Pixel Difference} \le 0.01$
+    - Strict rejection of any `NaN` or `±Inf` values in floating-point color channels (`reject_nan_inf = true`).
+
+#### 1.3.2 3-Stage Verification Pipeline
+1. **Stage 1: Zero-Cost Intrinsic Tile Sanity**:
+   - Every submitted tile is inspected for exact byte length ($W \times H \times \text{BPP}$), valid header metadata, and the absence of `NaN`/`Inf` floating-point bits.
+2. **Stage 2: Secret Canary Micro-Tile Spot-Checking (`CanaryAuditor`)**:
+   - The coordinator secretly selects an $8 \times 8$ pixel crop (`SubtileCropBox`) inside a pseudo-random 5% sample of assigned tiles using a CSPRNG keyed by the coordinator's private key.
+   - The coordinator computes ground truth only for that tiny $8 \times 8$ crop ($< 0.4\%$ overhead on a $128 \times 128$ tile) and evaluates the crop against the worker's submitted tile using the active `VerificationPolicy`.
+3. **Stage 3: Byzantine Quarantine, Slashing Evidence & Automatic Re-Render**:
+   - If a worker fails either Stage 1 or Stage 2, the coordinator immediately records signed `VerificationFailureEvidence` (digest, metric discrepancy, timestamps), quarantines and bans the offending worker from the job (`quarantined_workers`), and re-queues all invalidated tiles onto trusted honest nodes.
+
+

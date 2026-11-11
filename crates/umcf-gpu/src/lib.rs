@@ -12,6 +12,7 @@ pub mod dispatcher;
 pub mod error;
 pub mod render_coordinator;
 pub mod shader_sandbox;
+pub mod verifier;
 
 pub use compositor::{CompletedTilePacket, FrameCompositor, ProgressiveFrameDelta};
 pub use dispatcher::{
@@ -26,4 +27,9 @@ pub use render_coordinator::{
 pub use shader_sandbox::{
     BoundsCheckPolicy, ShaderResourceLimits, ShaderSandbox, StorageBufferBinding,
     UniformBufferBinding, ValidatedShader,
+};
+pub use verifier::{
+    compute_max_abs_diff, compute_psnr, compute_ssim, extract_subtile_crop, has_nan_or_inf_pixels,
+    select_canary_crop, RenderOutputVerifier, SubtileCropBox, TileVerificationReceipt,
+    VerificationFailureEvidence, VerificationPolicy,
 };
