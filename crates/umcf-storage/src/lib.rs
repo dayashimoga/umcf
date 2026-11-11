@@ -22,8 +22,8 @@ pub use chunk_store::{
     ObjectCid, ObjectDagManifest,
 };
 pub use erasure::{
-    shannon_entropy, ConvergentChunkCipher, EncryptedShard, RedundancyProfile,
-    ReedSolomonErasureEngine, Gf256,
+    shannon_entropy, ConvergentChunkCipher, EncryptedShard, Gf256, RedundancyProfile,
+    ReedSolomonErasureEngine,
 };
 pub use error::StorageError;
 pub use gc::{ConcurrentGarbageCollector, ExternalGcRoots, GcConfig, GcSummaryReport};
@@ -32,6 +32,6 @@ pub use pinning::{
 };
 pub use placement::{
     DurabilityState, FailureDomainPlacementEngine, ObjectPlacementRecord, RepairEvent,
-    ShardHealthReport, ShardHealthRepairWorker, StorageNodeDescriptor,
+    ShardHealthRepairWorker, ShardHealthReport, StorageNodeDescriptor,
 };
 pub use quota::{QuotaReservationPermit, StrictQuotaEnforcer};

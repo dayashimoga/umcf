@@ -139,7 +139,8 @@ impl PhiAccrualDetector {
         // For large y (> 6.0), use asymptotic expansion to avoid underflow in erfc
         if y > 6.0 {
             // ln(P_later) ≈ -y^2 / 2 - ln(y * sqrt(2 * PI))
-            let ln_p = -0.5 * y * y - (y * std::f64::consts::SQRT_2 * (std::f64::consts::PI).sqrt()).ln();
+            let ln_p =
+                -0.5 * y * y - (y * std::f64::consts::SQRT_2 * (std::f64::consts::PI).sqrt()).ln();
             let phi = -ln_p / std::f64::consts::LN_10;
             return phi.max(0.0);
         }
@@ -460,17 +461,25 @@ impl SpeculativeRetryEngine {
 
         let heartbeat_guard = self.latest_heartbeats.read().ok();
         let last_hb = heartbeat_guard.as_ref().and_then(|g| g.get(task_id));
-        let worker_id = last_hb.map(|h| h.worker_node_id.clone()).unwrap_or_else(|| "unknown".into());
+        let worker_id = last_hb
+            .map(|h| h.worker_node_id.clone())
+            .unwrap_or_else(|| "unknown".into());
 
         let checkpoint_guard = self.latest_checkpoints.read().ok();
-        let latest_ckpt = checkpoint_guard.as_ref().and_then(|g| g.get(task_id)).cloned();
+        let latest_ckpt = checkpoint_guard
+            .as_ref()
+            .and_then(|g| g.get(task_id))
+            .cloned();
 
         // 1. Crash failure check: Phi exceeds threshold
         if phi >= self.phi_config.phi_threshold {
             return RecoveryAction::Failover {
                 task_id: task_id.to_string(),
                 failed_worker: worker_id,
-                reason: format!("Heartbeat timeout: Phi = {phi:.2} >= threshold {}", self.phi_config.phi_threshold),
+                reason: format!(
+                    "Heartbeat timeout: Phi = {phi:.2} >= threshold {}",
+                    self.phi_config.phi_threshold
+                ),
                 phi,
                 resume_from_checkpoint: latest_ckpt,
             };

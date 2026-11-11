@@ -33,7 +33,7 @@ impl LowLatencyEncoderConfig {
     pub fn default_1080p60_h264() -> Self {
         let fps = 60;
         let bitrate = 12_000; // 12 Mbps
-        // Single-frame VBV buffer with 1.2x burst tolerance: (bitrate / fps) * 1.2
+                              // Single-frame VBV buffer with 1.2x burst tolerance: (bitrate / fps) * 1.2
         let vbv_single_frame = ((bitrate as f64 / fps as f64) * 1.2).ceil() as u32;
 
         Self {
@@ -77,12 +77,18 @@ impl LowLatencyEncoderConfig {
         }
         if self.max_b_frames != 0 {
             return Err(StreamError::InvalidEncoderConfig {
-                reason: format!("max_b_frames must be 0 for zero-latency streaming, got {}", self.max_b_frames),
+                reason: format!(
+                    "max_b_frames must be 0 for zero-latency streaming, got {}",
+                    self.max_b_frames
+                ),
             });
         }
         if self.rc_lookahead != 0 {
             return Err(StreamError::InvalidEncoderConfig {
-                reason: format!("rc_lookahead must be 0 for zero-latency streaming, got {}", self.rc_lookahead),
+                reason: format!(
+                    "rc_lookahead must be 0 for zero-latency streaming, got {}",
+                    self.rc_lookahead
+                ),
             });
         }
         Ok(())
@@ -125,19 +131,25 @@ impl ZeroLatencyVideoEncoder {
         match config.codec {
             MediaCodecId::H264 => {
                 header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x67, 0x64, 0x00, 0x2A]); // SPS (High 4.2)
-                header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x68, 0xEB, 0xE3, 0xCB]); // PPS
+                header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x68, 0xEB, 0xE3, 0xCB]);
+                // PPS
             }
             MediaCodecId::Hevc => {
                 header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x40, 0x01, 0x0C, 0x01]); // VPS
                 header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x42, 0x01, 0x01, 0x01]); // SPS
-                header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x44, 0x01, 0xC0, 0xF3]); // PPS
+                header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x44, 0x01, 0xC0, 0xF3]);
+                // PPS
             }
             MediaCodecId::Av1 => {
-                header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x12, 0x00, 0x0A]); // AV1 Sequence Header OBU
+                header.extend_from_slice(&[0x00, 0x00, 0x00, 0x01, 0x12, 0x00, 0x0A]);
+                // AV1 Sequence Header OBU
             }
             _ => {
                 return Err(StreamError::InvalidEncoderConfig {
-                    reason: format!("unsupported codec {:?} for low-latency streaming", config.codec),
+                    reason: format!(
+                        "unsupported codec {:?} for low-latency streaming",
+                        config.codec
+                    ),
                 });
             }
         }
@@ -171,7 +183,10 @@ impl ZeroLatencyVideoEncoder {
     }
 
     /// Encodes a single captured frame instantaneously with zero buffering delay.
-    pub fn encode_frame(&mut self, captured: &CapturedFrame) -> Result<EncodedFrameMetadata, StreamError> {
+    pub fn encode_frame(
+        &mut self,
+        captured: &CapturedFrame,
+    ) -> Result<EncodedFrameMetadata, StreamError> {
         let encode_start = Instant::now();
         let encode_start_us = self.start_time.elapsed().as_micros() as u64;
 
@@ -193,7 +208,8 @@ impl ZeroLatencyVideoEncoder {
         }
 
         // Realistic compressed payload sizing based on target bitrate
-        let avg_frame_bytes = (self.config.target_bitrate_kbps * 1000 / 8 / self.config.fps) as usize;
+        let avg_frame_bytes =
+            (self.config.target_bitrate_kbps * 1000 / 8 / self.config.fps) as usize;
         let payload_size = if is_idr {
             avg_frame_bytes * 3 // IDR frames are typically ~3x average P-frame
         } else {

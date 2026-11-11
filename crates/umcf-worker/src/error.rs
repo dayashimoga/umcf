@@ -54,7 +54,9 @@ pub enum WorkerError {
     #[error("E4203: Sandbox resource exhausted: {reason}")]
     SandboxResourceExhausted { reason: String },
 
-    #[error("E4204: Unauthorized native kernel '{engine_id}' (hash: {hash}) not in engine allow-list")]
+    #[error(
+        "E4204: Unauthorized native kernel '{engine_id}' (hash: {hash}) not in engine allow-list"
+    )]
     UnauthorizedNativeKernel { engine_id: String, hash: String },
 
     #[error("E4205: Task execution failed with exit code {exit_code}: {stderr}")]

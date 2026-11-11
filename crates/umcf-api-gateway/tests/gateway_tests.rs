@@ -49,7 +49,10 @@ async fn test_api_key_capability_scope_and_rate_limiter_enforcement() {
     let auth_res = validator
         .validate_token(&token_a, CapabilityScope::AiInference)
         .await;
-    assert!(auth_res.is_ok(), "Key A must be authorized for ai:inference");
+    assert!(
+        auth_res.is_ok(),
+        "Key A must be authorized for ai:inference"
+    );
 
     // Assert: Key A FORBIDDEN for StorageWrite (insufficient scope)
     let forbidden_res = validator
@@ -147,7 +150,10 @@ fn test_openapi_3_1_schema_completeness_and_validity() {
     let spec = generate_openapi_spec();
 
     assert_eq!(spec["openapi"], "3.1.0");
-    assert_eq!(spec["info"]["title"], "Universal Mobile Compute Fabric (UMCF) API");
+    assert_eq!(
+        spec["info"]["title"],
+        "Universal Mobile Compute Fabric (UMCF) API"
+    );
 
     let paths = spec["paths"].as_object().expect("paths object");
     let expected_paths = [
@@ -227,7 +233,9 @@ async fn spawn_test_gateway() -> (String, String, Arc<GatewayState>) {
     let endpoint = format!("http://127.0.0.1:{}", addr.port());
 
     tokio::spawn(async move {
-        axum::serve(listener, app).await.expect("serve test gateway");
+        axum::serve(listener, app)
+            .await
+            .expect("serve test gateway");
     });
 
     (endpoint, admin_token, state)
@@ -302,7 +310,10 @@ async fn test_rust_sdk_e2e_wasm_job_ai_stream_and_storage_roundtrip() {
         .get_object(&ingest_resp.root_cid)
         .await
         .expect("get storage object");
-    assert_eq!(readback, test_payload, "Readback payload must match exactly");
+    assert_eq!(
+        readback, test_payload,
+        "Readback payload must match exactly"
+    );
 
     // Pin object
     let pin_req = PinRequest {

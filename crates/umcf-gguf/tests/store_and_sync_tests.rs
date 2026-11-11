@@ -267,13 +267,11 @@ fn test_integration_multi_peer_swarmed_gguf_download_with_peer_drop() {
 
     // Swarm setup:
     // Seeder 1: Drops on chunk 1 (simulated disconnect at ~50%)
-    let mut seeder_1 = MockPeerProvider::new("seeder-1", 2)
-        .with_chunk(0, chunk_0_data.clone());
+    let mut seeder_1 = MockPeerProvider::new("seeder-1", 2).with_chunk(0, chunk_0_data.clone());
     seeder_1.fail_chunk_index = Some(1);
 
     // Seeder 2: Delivers corrupted chunk 1 (triggers corruption ban)
-    let mut seeder_2 = MockPeerProvider::new("seeder-2", 2)
-        .with_chunk(0, chunk_0_data.clone());
+    let mut seeder_2 = MockPeerProvider::new("seeder-2", 2).with_chunk(0, chunk_0_data.clone());
     seeder_2.corrupt_chunk_index = Some(1);
 
     // Seeder 3: Healthy reliable peer
@@ -281,11 +279,8 @@ fn test_integration_multi_peer_swarmed_gguf_download_with_peer_drop() {
         .with_chunk(0, chunk_0_data)
         .with_chunk(1, chunk_1_data);
 
-    let peers: Vec<Arc<dyn PeerChunkProvider>> = vec![
-        Arc::new(seeder_1),
-        Arc::new(seeder_2),
-        Arc::new(seeder_3),
-    ];
+    let peers: Vec<Arc<dyn PeerChunkProvider>> =
+        vec![Arc::new(seeder_1), Arc::new(seeder_2), Arc::new(seeder_3)];
 
     // Create isolated leecher store
     let leecher_dir = temp.path().join("leecher_store");
@@ -492,7 +487,10 @@ fn test_hardware_storage_blake3_throughput_benchmark() {
 
     println!(
         "[HARDWARE-REQUIRED] Ingested 32 MiB GGUF in {:.3}s ({:.1} MB/s) with {} chunks. Root: {}",
-        secs, mb_per_sec, manifest.chunks.len(), manifest.model_id
+        secs,
+        mb_per_sec,
+        manifest.chunks.len(),
+        manifest.model_id
     );
 
     assert!(
@@ -517,12 +515,9 @@ fn test_manual_ui_pause_resume_cancel_and_bitfield_visualization() {
     fs::write(&file_path, &payload).expect("write file");
     let manifest = store.ingest_local_file(&file_path).expect("ingest");
 
-    let mut downloader = ResumableShardDownloader::new(
-        store.clone(),
-        manifest.clone(),
-        DownloadScope::FullModel,
-    )
-    .expect("downloader");
+    let mut downloader =
+        ResumableShardDownloader::new(store.clone(), manifest.clone(), DownloadScope::FullModel)
+            .expect("downloader");
 
     // Verify initial idle state
     assert_eq!(downloader.status(), SyncStatus::Idle);
@@ -538,4 +533,3 @@ fn test_manual_ui_pause_resume_cancel_and_bitfield_visualization() {
     downloader.cancel().expect("cancel downloader");
     assert_eq!(downloader.status(), SyncStatus::Cancelled);
 }
-

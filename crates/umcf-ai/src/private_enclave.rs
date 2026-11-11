@@ -137,12 +137,16 @@ impl EphemeralInferenceSession {
                 ),
             });
         }
-        self.outbound_bytes.fetch_add(bytes as u64, Ordering::SeqCst);
+        self.outbound_bytes
+            .fetch_add(bytes as u64, Ordering::SeqCst);
         Ok(())
     }
 
     /// Validates whether a generated partition plan is permissible in this enclave mode.
-    pub fn validate_partition_plan(&self, plan: &DistributedPartitionPlan) -> Result<(), EngineError> {
+    pub fn validate_partition_plan(
+        &self,
+        plan: &DistributedPartitionPlan,
+    ) -> Result<(), EngineError> {
         if self.mode == PrivacyEnclaveMode::StrictLocalOnly && !plan.is_single_node {
             return Err(EngineError::EnclaveViolation {
                 reason: "Model requires distributed cluster split, which is forbidden in StrictLocalOnly enclave mode".to_string(),
@@ -162,4 +166,3 @@ impl EphemeralInferenceSession {
 pub fn redact_enclave_text(text: &str, canary: &str) -> String {
     text.replace(canary, "[REDACTED_PRIVATE_ENCLAVE]")
 }
-

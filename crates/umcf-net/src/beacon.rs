@@ -134,10 +134,11 @@ impl SignedDiscoveryBeacon {
         })?;
 
         let sig = Signature::from_bytes(&self.signature);
-        vk.verify_strict(&canonical_bytes, &sig)
-            .map_err(|_| NetError::SignatureVerificationFailed {
+        vk.verify_strict(&canonical_bytes, &sig).map_err(|_| {
+            NetError::SignatureVerificationFailed {
                 node_id: self.sender_did.clone(),
-            })
+            }
+        })
     }
 
     /// Returns the canonical sign target bytes for this beacon instance.
@@ -170,8 +171,7 @@ impl SignedDiscoveryBeacon {
     /// # Errors
     /// Returns `NetError::Serialization` if encoding fails or payload exceeds UDP MTU ceiling.
     pub fn to_bytes(&self) -> Result<Vec<u8>, NetError> {
-        let bytes = bincode::serialize(self)
-            .map_err(|e| NetError::Serialization(e.to_string()))?;
+        let bytes = bincode::serialize(self).map_err(|e| NetError::Serialization(e.to_string()))?;
 
         if bytes.len() > MAX_BEACON_PAYLOAD_BYTES {
             return Err(NetError::Serialization(format!(
@@ -204,8 +204,8 @@ impl SignedDiscoveryBeacon {
             )));
         }
 
-        let beacon: Self = bincode::deserialize(bytes)
-            .map_err(|e| NetError::Serialization(e.to_string()))?;
+        let beacon: Self =
+            bincode::deserialize(bytes).map_err(|e| NetError::Serialization(e.to_string()))?;
 
         if beacon.magic != BEACON_MAGIC {
             return Err(NetError::InvalidBeacon(format!(

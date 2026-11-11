@@ -48,19 +48,22 @@ pub enum GatewayError {
 impl IntoResponse for GatewayError {
     fn into_response(self) -> Response {
         let problem = match self {
-            Self::MissingToken => {
-                Rfc9457ProblemDetails::unauthorized("Bearer token required in Authorization header.")
-            }
-            Self::InvalidToken => {
-                Rfc9457ProblemDetails::unauthorized("The provided Bearer token is invalid or unrecognized.")
-            }
+            Self::MissingToken => Rfc9457ProblemDetails::unauthorized(
+                "Bearer token required in Authorization header.",
+            ),
+            Self::InvalidToken => Rfc9457ProblemDetails::unauthorized(
+                "The provided Bearer token is invalid or unrecognized.",
+            ),
             Self::TokenExpired => {
-                let mut p = Rfc9457ProblemDetails::unauthorized("The provided Bearer token has expired.");
+                let mut p =
+                    Rfc9457ProblemDetails::unauthorized("The provided Bearer token has expired.");
                 p.error_code = "UMCF_AUTH_TOKEN_EXPIRED".to_string();
                 p
             }
             Self::TokenRevoked => {
-                let mut p = Rfc9457ProblemDetails::unauthorized("The provided Bearer token has been revoked.");
+                let mut p = Rfc9457ProblemDetails::unauthorized(
+                    "The provided Bearer token has been revoked.",
+                );
                 p.error_code = "UMCF_AUTH_TOKEN_REVOKED".to_string();
                 p
             }
@@ -70,12 +73,11 @@ impl IntoResponse for GatewayError {
             Self::RateLimited { retry_after_ms } => {
                 Rfc9457ProblemDetails::rate_limited(retry_after_ms)
             }
-            Self::NotFound { resource, id } => {
-                Rfc9457ProblemDetails::not_found(&resource, &id)
-            }
-            Self::Validation { detail, invalid_params } => {
-                Rfc9457ProblemDetails::validation_error(detail, invalid_params)
-            }
+            Self::NotFound { resource, id } => Rfc9457ProblemDetails::not_found(&resource, &id),
+            Self::Validation {
+                detail,
+                invalid_params,
+            } => Rfc9457ProblemDetails::validation_error(detail, invalid_params),
             Self::Internal(msg) => Rfc9457ProblemDetails {
                 error_type: "https://umcf.dev/errors/internal".to_string(),
                 title: "Internal Server Error".to_string(),
@@ -99,4 +101,3 @@ impl IntoResponse for GatewayError {
         problem.into_response()
     }
 }
-

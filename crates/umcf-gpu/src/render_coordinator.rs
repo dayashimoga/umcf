@@ -4,9 +4,9 @@
 //! adaptive batch sizing by worker EWMA throughput, dynamic work-stealing, and
 //! speculative tail execution for straggler elimination.
 
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::ops::RangeInclusive;
-use serde::{Deserialize, Serialize};
 
 use crate::error::GpuError;
 use crate::shader_sandbox::ValidatedShader;
@@ -108,7 +108,11 @@ pub struct WorkerThroughputTracker {
 
 impl WorkerThroughputTracker {
     #[must_use]
-    pub fn new(worker_id: impl Into<String>, name: impl Into<String>, relative_tflops: f64) -> Self {
+    pub fn new(
+        worker_id: impl Into<String>,
+        name: impl Into<String>,
+        relative_tflops: f64,
+    ) -> Self {
         // Initial estimate based on relative TFLOPS (baseline 1.0 TFLOPS ~= 20,000 pixels/ms)
         let initial_pixels_per_ms = (relative_tflops * 20_000.0).max(100.0);
         Self {
@@ -126,7 +130,8 @@ impl WorkerThroughputTracker {
         if duration_ms > 0.0 {
             let measured_rate = f64::from(pixels) / duration_ms;
             let alpha = 0.25;
-            self.ewma_pixels_per_ms = alpha * measured_rate + (1.0 - alpha) * self.ewma_pixels_per_ms;
+            self.ewma_pixels_per_ms =
+                alpha * measured_rate + (1.0 - alpha) * self.ewma_pixels_per_ms;
         }
         self.completed_tiles_count += 1;
         self.total_pixels_rendered += u64::from(pixels);
@@ -183,7 +188,8 @@ impl DistributedRenderCoordinator {
 
                 let tile_cx = f64::from(x) + (f64::from(width) / 2.0);
                 let tile_cy = f64::from(y) + (f64::from(height) / 2.0);
-                let distance_to_center = ((tile_cx - center_x).powi(2) + (tile_cy - center_y).powi(2)).sqrt();
+                let distance_to_center =
+                    ((tile_cx - center_x).powi(2) + (tile_cy - center_y).powi(2)).sqrt();
                 let morton_index = morton_2d(tx, ty);
 
                 tiles.push(TileDescriptor {
@@ -230,7 +236,12 @@ impl DistributedRenderCoordinator {
     }
 
     /// Register a worker node.
-    pub fn register_worker(&mut self, worker_id: impl Into<String>, name: impl Into<String>, relative_tflops: f64) {
+    pub fn register_worker(
+        &mut self,
+        worker_id: impl Into<String>,
+        name: impl Into<String>,
+        relative_tflops: f64,
+    ) {
         let tracker = WorkerThroughputTracker::new(worker_id, name, relative_tflops);
         self.workers.insert(tracker.worker_id.clone(), tracker);
     }
@@ -419,4 +430,3 @@ impl DistributedRenderCoordinator {
         (completed, total, ratio)
     }
 }
-

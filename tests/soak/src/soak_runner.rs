@@ -1,8 +1,8 @@
 //! Continuous High-Velocity Soak Runner executing heterogeneous workloads.
 
-use serde::{Deserialize, Serialize};
 use crate::error::SoakError;
 use crate::leak_profiler::{LeakProfiler, RegressionResult, ResourceSnapshot};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SoakReport {
@@ -37,7 +37,7 @@ impl SoakTestCoordinator {
 
         // Baseline steady-state resource counters
         let baseline_heap = 16 * 1024 * 1024u64; // 16 MiB baseline
-        let baseline_rss = 32 * 1024 * 1024u64;  // 32 MiB baseline
+        let baseline_rss = 32 * 1024 * 1024u64; // 32 MiB baseline
         let baseline_fds = 48usize;
 
         for cycle in 1..=self.total_cycles {
@@ -45,7 +45,10 @@ impl SoakTestCoordinator {
             // GOP video transcodes, remote streaming, and storage chunks with zero net leak.
             let (heap_bytes, rss_bytes) = if cycle <= self.warmup_cycles {
                 let warmup_drift = (cycle as u64) * 128; // minor initial pool warmup
-                (baseline_heap + warmup_drift, baseline_rss + warmup_drift * 2)
+                (
+                    baseline_heap + warmup_drift,
+                    baseline_rss + warmup_drift * 2,
+                )
             } else {
                 // In steady-state post-warmup: zero net allocation drift
                 (
@@ -73,17 +76,24 @@ impl SoakTestCoordinator {
         }
 
         // Final Quiescence Check & Gauge Assertions
-        let final_snapshot = snapshots.last().cloned().ok_or_else(|| SoakError::SoakCycleFailed {
-            cycle: self.total_cycles,
-            reason: "No snapshots recorded".to_string(),
-        })?;
+        let final_snapshot =
+            snapshots
+                .last()
+                .cloned()
+                .ok_or_else(|| SoakError::SoakCycleFailed {
+                    cycle: self.total_cycles,
+                    reason: "No snapshots recorded".to_string(),
+                })?;
 
         if final_snapshot.wgpu_active_buffer_count != 0 {
             return Err(SoakError::LeakDetected {
                 metric: "wgpu_active_buffer_count".to_string(),
                 slope: final_snapshot.wgpu_active_buffer_count as f64,
                 threshold: 0.0,
-                details: format!("Leaked {} GPU buffers", final_snapshot.wgpu_active_buffer_count),
+                details: format!(
+                    "Leaked {} GPU buffers",
+                    final_snapshot.wgpu_active_buffer_count
+                ),
             });
         }
 
@@ -92,7 +102,10 @@ impl SoakTestCoordinator {
                 metric: "llama_active_contexts".to_string(),
                 slope: final_snapshot.llama_active_contexts as f64,
                 threshold: 0.0,
-                details: format!("Leaked {} LLM KV contexts", final_snapshot.llama_active_contexts),
+                details: format!(
+                    "Leaked {} LLM KV contexts",
+                    final_snapshot.llama_active_contexts
+                ),
             });
         }
 
@@ -101,7 +114,10 @@ impl SoakTestCoordinator {
                 metric: "temp_directory_file_count".to_string(),
                 slope: final_snapshot.temp_directory_file_count as f64,
                 threshold: 0.0,
-                details: format!("Leaked {} temporary files", final_snapshot.temp_directory_file_count),
+                details: format!(
+                    "Leaked {} temporary files",
+                    final_snapshot.temp_directory_file_count
+                ),
             });
         }
 

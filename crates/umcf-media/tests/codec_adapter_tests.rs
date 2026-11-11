@@ -121,7 +121,8 @@ fn test_unit_hw_to_sw_encoder_parameter_translation_h264_hevc_av1() {
 #[test]
 fn test_unit_realtime_telemetry_progress_line_parser() {
     let line = "frame=  120 fps= 60.0 q=28.0 size=    1024kB time=00:00:02.00 bitrate=4194.3kbits/s speed=1.00x";
-    let progress = TranscodeProgress::parse_progress_line(line).expect("progress parsing must succeed");
+    let progress =
+        TranscodeProgress::parse_progress_line(line).expect("progress parsing must succeed");
 
     assert_eq!(progress.frame, 120);
     assert!((progress.fps - 60.0).abs() < 1e-4);
@@ -191,14 +192,20 @@ async fn test_integration_hardware_session_limit_exhaustion_triggers_software_fa
     };
 
     // First task gets hardware encoder
-    let res1 = adapter.execute_transcode(req1.clone(), Some(&dummy_qsv), None).await.unwrap();
+    let res1 = adapter
+        .execute_transcode(req1.clone(), Some(&dummy_qsv), None)
+        .await
+        .unwrap();
     assert_eq!(res1.backend, AccelerationBackend::Qsv);
 
     // Simulate session saturation by artificially holding active session
     adapter.active_hw_sessions = 1;
 
     // Second task exhausts hardware limit -> transparently falls back to libx264!
-    let res2 = adapter.execute_transcode(req1, Some(&dummy_qsv), None).await.unwrap();
+    let res2 = adapter
+        .execute_transcode(req1, Some(&dummy_qsv), None)
+        .await
+        .unwrap();
     assert_eq!(res2.backend, AccelerationBackend::SoftwareCpu);
     assert_eq!(res2.encoder_name, "libx264");
 }
@@ -228,7 +235,11 @@ async fn test_integration_mid_transcode_cancellation_cleans_up_resources_under_5
 
     assert!(res.is_err());
     // Cancellation must complete under <= 50 ms
-    assert!(elapsed.as_millis() <= 50, "cancellation took {} ms", elapsed.as_millis());
+    assert!(
+        elapsed.as_millis() <= 50,
+        "cancellation took {} ms",
+        elapsed.as_millis()
+    );
 }
 
 // =========================================================================
@@ -278,7 +289,10 @@ fn test_hardware_codec_prober_live_host_matrix() {
     let mut prober = HardwareCodecProber::new();
     let codecs = prober.probe_all();
 
-    assert!(!codecs.is_empty(), "must detect at least default codecs on host");
+    assert!(
+        !codecs.is_empty(),
+        "must detect at least default codecs on host"
+    );
     // Ensure all returned codecs are live verified
     for c in &codecs {
         assert!(c.verified_live);
@@ -311,4 +325,3 @@ fn test_manual_codec_capability_matrix_ui_schema() {
     assert!(json.contains("supports_10bit_hdr"));
     assert!(json.contains("140"));
 }
-

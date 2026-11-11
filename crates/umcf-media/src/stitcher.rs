@@ -96,7 +96,10 @@ impl SampleAccurateStitcher {
             if let Some(first_pkt) = seg.packets.first() {
                 if !first_pkt.is_keyframe {
                     return Err(MediaError::TranscodeExecutionFailed {
-                        reason: format!("segment {} does not start with an IDR keyframe", seg.segment_index),
+                        reason: format!(
+                            "segment {} does not start with an IDR keyframe",
+                            seg.segment_index
+                        ),
                         exit_code: Some(1),
                     });
                 }
@@ -105,11 +108,13 @@ impl SampleAccurateStitcher {
             for pkt in &seg.packets {
                 if pkt.stream_index == 0 {
                     // Rebase PTS according to continuous global frame index
-                    let rebased_pts = compute_fractional_pts(global_frame_idx, fps_num, fps_den, timebase_den);
+                    let rebased_pts =
+                        compute_fractional_pts(global_frame_idx, fps_num, fps_den, timebase_den);
                     let rebased_dts = rebased_pts; // Simple closed-GOP display order
 
                     // Verify strict monotonicity
-                    if (rebased_dts <= prev_dts || rebased_pts <= prev_pts) && global_frame_idx > 0 {
+                    if (rebased_dts <= prev_dts || rebased_pts <= prev_pts) && global_frame_idx > 0
+                    {
                         return Err(MediaError::PtsDtsDiscontinuity {
                             segment_index: seg.segment_index,
                             prev_pts: prev_dts,
@@ -146,7 +151,8 @@ impl SampleAccurateStitcher {
             if t <= duration_sec {
                 let expected_video_pts = (t * (timebase_den as f64)).round() as i64;
                 let nearest_frame = ((t * f64::from(fps_num)) / f64::from(fps_den)).round() as u64;
-                let actual_video_pts = compute_fractional_pts(nearest_frame, fps_num, fps_den, timebase_den);
+                let actual_video_pts =
+                    compute_fractional_pts(nearest_frame, fps_num, fps_den, timebase_den);
 
                 let drift_pts = (actual_video_pts - expected_video_pts).abs();
                 let drift_ms = (drift_pts as f64 * 1000.0) / (timebase_den as f64);

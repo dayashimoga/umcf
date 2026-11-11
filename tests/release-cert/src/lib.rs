@@ -93,7 +93,9 @@ impl MasterAuditReceipt {
             .map_err(|e| ReleaseCertError::Crypto(e.to_string()))?;
 
         if pub_bytes.len() != 32 || sig_bytes.len() != 64 {
-            return Err(ReleaseCertError::Crypto("Invalid key or signature length".to_string()));
+            return Err(ReleaseCertError::Crypto(
+                "Invalid key or signature length".to_string(),
+            ));
         }
 
         let mut key_arr = [0u8; 32];
@@ -158,9 +160,13 @@ impl ReleaseAuditor {
         ReleaseGateResult {
             gate_number: 2,
             name: "100% Test Pass Rate across All Suites".to_string(),
-            description: "Verifies 100.0% pass rate across [UNIT], [INT], [SIM], [HW], and [MANUAL] tiers".to_string(),
+            description:
+                "Verifies 100.0% pass rate across [UNIT], [INT], [SIM], [HW], and [MANUAL] tiers"
+                    .to_string(),
             status: GateStatus::Passed,
-            details: "369/369 test targets executed with 100.0% pass rate, 0 failed, 0 flaky, 0 ignored".to_string(),
+            details:
+                "369/369 test targets executed with 100.0% pass rate, 0 failed, 0 flaky, 0 ignored"
+                    .to_string(),
         }
     }
 
@@ -203,7 +209,9 @@ impl ReleaseAuditor {
         ReleaseGateResult {
             gate_number: 5,
             name: "Performance & Latency SLA Verification".to_string(),
-            description: "Verifies critical performance, throughput, and mobile energy metrics against SLAs".to_string(),
+            description:
+                "Verifies critical performance, throughput, and mobile energy metrics against SLAs"
+                    .to_string(),
             status: GateStatus::Passed,
             details: slas.join(" | "),
         }
@@ -247,10 +255,17 @@ impl ReleaseAuditor {
         ReleaseGateResult {
             gate_number: 8,
             name: "Stage 1–8 Evidence Bundle Completeness".to_string(),
-            description: "Verifies all required verification evidence and certification reports are archived".to_string(),
-            status: if passed { GateStatus::Passed } else { GateStatus::Failed },
+            description:
+                "Verifies all required verification evidence and certification reports are archived"
+                    .to_string(),
+            status: if passed {
+                GateStatus::Passed
+            } else {
+                GateStatus::Failed
+            },
             details: if passed {
-                "Evidence bundles present and complete for all 8 stages (stage-01 through stage-08)".to_string()
+                "Evidence bundles present and complete for all 8 stages (stage-01 through stage-08)"
+                    .to_string()
             } else {
                 format!("Missing evidence bundles: {missing_stages:?}")
             },
@@ -333,7 +348,10 @@ impl ReleaseAuditor {
             Self::audit_gate_10_documentation_and_changelog(root_path),
         ];
 
-        let passed_count = gates.iter().filter(|g| g.status == GateStatus::Passed).count();
+        let passed_count = gates
+            .iter()
+            .filter(|g| g.status == GateStatus::Passed)
+            .count();
         let all_pass = passed_count == 10;
 
         let mut receipt = MasterAuditReceipt {
@@ -343,7 +361,11 @@ impl ReleaseAuditor {
             gates_total: 10,
             gates_passed: passed_count,
             gates,
-            overall_status: if all_pass { "CERTIFIED".to_string() } else { "REJECTED".to_string() },
+            overall_status: if all_pass {
+                "CERTIFIED".to_string()
+            } else {
+                "REJECTED".to_string()
+            },
             authority_public_key: String::new(),
             authority_signature: String::new(),
         };
@@ -368,4 +390,3 @@ fn walkdir_simple(dir: &Path) -> Vec<String> {
     }
     files
 }
-

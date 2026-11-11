@@ -20,7 +20,9 @@ pub enum StorageError {
     #[error("chunk not found: {chunk_id}")]
     ChunkNotFound { chunk_id: String },
 
-    #[error("chunk integrity verification mismatch: expected {expected_id}, computed {computed_id}")]
+    #[error(
+        "chunk integrity verification mismatch: expected {expected_id}, computed {computed_id}"
+    )]
     ChunkIntegrityMismatch {
         expected_id: String,
         computed_id: String,
@@ -38,11 +40,10 @@ pub enum StorageError {
     #[error("cipher operation failed: {reason}")]
     CipherError { reason: String },
 
-    #[error("insufficient valid shards for reconstruction: required {required}, available {available}")]
-    InsufficientShards {
-        required: usize,
-        available: usize,
-    },
+    #[error(
+        "insufficient valid shards for reconstruction: required {required}, available {available}"
+    )]
+    InsufficientShards { required: usize, available: usize },
 
     #[error("corrupted shard detected at index {shard_index}: expected hash {expected_hash}, computed {computed_hash}")]
     CorruptedShard {

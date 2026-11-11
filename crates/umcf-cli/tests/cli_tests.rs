@@ -71,7 +71,11 @@ fn test_clap_command_tree_parsing_all_subcommands_and_flags() {
             cmd,
             output
         );
-        assert!(!output.is_empty(), "Command produced empty output: {:?}", cmd);
+        assert!(
+            !output.is_empty(),
+            "Command produced empty output: {:?}",
+            cmd
+        );
     }
 }
 
@@ -87,7 +91,9 @@ fn test_json_output_mode_produces_valid_parseable_json_for_all_commands() {
         vec!["job", "submit", "manifest.json", "--format", "json"],
         vec!["job", "status", "job_1", "--format", "json"],
         vec!["ai", "models", "--format", "json"],
-        vec!["ai", "run", "--model", "llama", "--prompt", "hi", "--format", "json"],
+        vec![
+            "ai", "run", "--model", "llama", "--prompt", "hi", "--format", "json",
+        ],
         vec!["storage", "quota", "--format", "json"],
         vec!["storage", "gc", "--format", "json"],
         vec!["market", "balance", "--format", "json"],
@@ -97,7 +103,13 @@ fn test_json_output_mode_produces_valid_parseable_json_for_all_commands() {
     for cmd in json_cmds {
         let args: Vec<String> = cmd.iter().map(|s| s.to_string()).collect();
         let (code, output, is_json) = run_cli(&args);
-        assert_eq!(code, CliExitCode::Ok, "Command {:?} failed: {}", cmd, output);
+        assert_eq!(
+            code,
+            CliExitCode::Ok,
+            "Command {:?} failed: {}",
+            cmd,
+            output
+        );
         assert!(is_json, "Command {:?} did not flag output as JSON", cmd);
 
         let parsed: Result<Value, _> = serde_json::from_str(&output);
@@ -118,12 +130,19 @@ fn test_utf8_terminal_qr_code_renderer() {
     // Must be non-empty and contain UTF-8 half-block or block characters
     assert!(!rendered.is_empty());
     assert!(
-        rendered.contains('▀') || rendered.contains('▄') || rendered.contains('█') || rendered.contains(' '),
+        rendered.contains('▀')
+            || rendered.contains('▄')
+            || rendered.contains('█')
+            || rendered.contains(' '),
         "Rendered QR does not contain expected UTF-8 terminal characters"
     );
 
     let lines: Vec<&str> = rendered.lines().collect();
-    assert!(lines.len() >= 10, "QR code too small: {} lines", lines.len());
+    assert!(
+        lines.len() >= 10,
+        "QR code too small: {} lines",
+        lines.len()
+    );
 }
 
 #[test]
@@ -247,7 +266,10 @@ fn test_shell_completions_generation_bash_zsh_fish_powershell() {
     for shell in ["bash", "zsh", "fish", "powershell"] {
         let script = generate_completions(shell);
         assert!(!script.is_empty(), "Empty completions for {shell}");
-        assert!(script.contains("umcf"), "Completions for {shell} missing 'umcf'");
+        assert!(
+            script.contains("umcf"),
+            "Completions for {shell} missing 'umcf'"
+        );
 
         match shell {
             "bash" => assert!(script.contains("_umcf()")),
@@ -323,7 +345,10 @@ fn test_top_headless_terminal_buffer_layout_80x24_and_160x50() {
 fn test_hardware_doctor_diagnostics_report() {
     let report = run_doctor_checks();
 
-    assert!(report.total_checks >= 5, "Fewer than 5 diagnostics checks performed");
+    assert!(
+        report.total_checks >= 5,
+        "Fewer than 5 diagnostics checks performed"
+    );
     assert!(
         report.overall_status == "PASS" || report.overall_status == "WARN",
         "Unexpected doctor status: {}",
@@ -337,7 +362,9 @@ fn test_hardware_doctor_diagnostics_report() {
         .find(|c| c.name == "Logical Cores")
         .expect("CPU check missing");
     assert_eq!(cpu_check.status, "PASS");
-    assert!(cpu_check.details.contains("hardware execution threads detected"));
+    assert!(cpu_check
+        .details
+        .contains("hardware execution threads detected"));
 
     // Assert Podman 30 GB check ran
     let podman_check = report
@@ -355,10 +382,18 @@ fn test_hardware_doctor_diagnostics_report() {
 #[test]
 fn test_manual_cluster_pair_qr_ai_chat_and_top_cli_schema() {
     // 1. Validate Pairing QR URI schema
-    let pair_args = vec!["cluster".to_string(), "pair".to_string(), "--format".to_string(), "json".to_string()];
+    let pair_args = vec![
+        "cluster".to_string(),
+        "pair".to_string(),
+        "--format".to_string(),
+        "json".to_string(),
+    ];
     let (_, pair_out, _) = run_cli(&pair_args);
     let pair_json: Value = serde_json::from_str(&pair_out).unwrap();
-    assert!(pair_json["pairing_uri"].as_str().unwrap().starts_with("umcf://pair/"));
+    assert!(pair_json["pairing_uri"]
+        .as_str()
+        .unwrap()
+        .starts_with("umcf://pair/"));
     assert!(pair_json["pin"].as_str().unwrap().len() == 6);
     assert_eq!(pair_json["expires_in_sec"], 300);
 
@@ -384,5 +419,7 @@ fn test_manual_cluster_pair_qr_ai_chat_and_top_cli_schema() {
     let ai_json: Value = serde_json::from_str(&ai_out).unwrap();
     assert_eq!(ai_json["model"], "llama-3-8b");
     assert!(ai_json["response"].is_string());
-    assert!(ai_json["throughput_tok_per_sec"].is_f64() || ai_json["throughput_tok_per_sec"].is_u64());
+    assert!(
+        ai_json["throughput_tok_per_sec"].is_f64() || ai_json["throughput_tok_per_sec"].is_u64()
+    );
 }

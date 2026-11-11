@@ -101,7 +101,10 @@ impl<'a> BoundedSliceReader<'a> {
         if self.remaining() < len {
             return Err(FuzzError::MalformedInput {
                 target: target_name.to_string(),
-                reason: format!("Truncated payload: claimed {len} bytes, only {} available", self.remaining()),
+                reason: format!(
+                    "Truncated payload: claimed {len} bytes, only {} available",
+                    self.remaining()
+                ),
             });
         }
 
@@ -140,4 +143,3 @@ pub fn check_nesting_depth(data: &[u8], max_depth: usize) -> Result<usize, FuzzE
 
     Ok(max_observed)
 }
-

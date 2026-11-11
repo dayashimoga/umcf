@@ -35,17 +35,14 @@ fn test_structural_frame_count_and_idr_keyframe_validator() {
         worker_id: "worker-mobile-truncated".to_string(),
         encoder_backend: "h264_mediacodec".to_string(),
     };
-    let report_truncated = MediaQualityAuditor::verify_segment(
-        0,
-        300,
-        &truncated_output,
-        &[],
-        &[],
-        &policy,
-    )
-    .expect("auditor should return report");
+    let report_truncated =
+        MediaQualityAuditor::verify_segment(0, 300, &truncated_output, &[], &[], &policy)
+            .expect("auditor should return report");
     assert!(!report_truncated.passed);
-    assert!(report_truncated.rejection_reason.unwrap().contains("frame count mismatch"));
+    assert!(report_truncated
+        .rejection_reason
+        .unwrap()
+        .contains("frame count mismatch"));
 
     // 2. Missing IDR start: first packet is not keyframe
     let no_idr_output = TranscodedSegmentOutput {
@@ -61,17 +58,14 @@ fn test_structural_frame_count_and_idr_keyframe_validator() {
         worker_id: "worker-no-idr".to_string(),
         encoder_backend: "h264_qsv".to_string(),
     };
-    let report_no_idr = MediaQualityAuditor::verify_segment(
-        1,
-        300,
-        &no_idr_output,
-        &[],
-        &[],
-        &policy,
-    )
-    .expect("auditor should return report");
+    let report_no_idr =
+        MediaQualityAuditor::verify_segment(1, 300, &no_idr_output, &[], &[], &policy)
+            .expect("auditor should return report");
     assert!(!report_no_idr.passed);
-    assert!(report_no_idr.rejection_reason.unwrap().contains("IDR keyframe"));
+    assert!(report_no_idr
+        .rejection_reason
+        .unwrap()
+        .contains("IDR keyframe"));
 
     // 3. Below minimum byte size (hardware encoder glitch / empty file)
     let empty_output = TranscodedSegmentOutput {
@@ -87,17 +81,14 @@ fn test_structural_frame_count_and_idr_keyframe_validator() {
         worker_id: "worker-glitch".to_string(),
         encoder_backend: "h264_nvenc".to_string(),
     };
-    let report_empty = MediaQualityAuditor::verify_segment(
-        2,
-        300,
-        &empty_output,
-        &[],
-        &[],
-        &policy,
-    )
-    .expect("auditor should return report");
+    let report_empty =
+        MediaQualityAuditor::verify_segment(2, 300, &empty_output, &[], &[], &policy)
+            .expect("auditor should return report");
     assert!(!report_empty.passed);
-    assert!(report_empty.rejection_reason.unwrap().contains("below minimum threshold"));
+    assert!(report_empty
+        .rejection_reason
+        .unwrap()
+        .contains("below minimum threshold"));
 }
 
 /// [UNIT] 3-anchor frame Y-channel SSIM and PSNR evaluator.
@@ -125,8 +116,14 @@ fn test_3_anchor_frame_y_channel_ssim_and_psnr_evaluator() {
     }
     let ssim_hq = MediaQualityAuditor::compute_y_ssim(&src_luma, &hq_luma);
     let psnr_hq = MediaQualityAuditor::compute_y_psnr(&src_luma, &hq_luma);
-    assert!(ssim_hq > 0.98, "high quality SSIM must be > 0.98, got {ssim_hq}");
-    assert!(psnr_hq > 45.0, "high quality PSNR must be > 45 dB, got {psnr_hq}");
+    assert!(
+        ssim_hq > 0.98,
+        "high quality SSIM must be > 0.98, got {ssim_hq}"
+    );
+    assert!(
+        psnr_hq > 45.0,
+        "high quality PSNR must be > 45 dB, got {psnr_hq}"
+    );
 
     // 3. Corrupted / severely degraded frame (macroblocked)
     let mut corrupted_luma = src_luma.clone();
@@ -137,8 +134,14 @@ fn test_3_anchor_frame_y_channel_ssim_and_psnr_evaluator() {
     }
     let ssim_corrupt = MediaQualityAuditor::compute_y_ssim(&src_luma, &corrupted_luma);
     let psnr_corrupt = MediaQualityAuditor::compute_y_psnr(&src_luma, &corrupted_luma);
-    assert!(ssim_corrupt < 0.85, "corrupted SSIM should be < 0.85, got {ssim_corrupt}");
-    assert!(psnr_corrupt < 25.0, "corrupted PSNR should be < 25 dB, got {psnr_corrupt}");
+    assert!(
+        ssim_corrupt < 0.85,
+        "corrupted SSIM should be < 0.85, got {ssim_corrupt}"
+    );
+    assert!(
+        psnr_corrupt < 25.0,
+        "corrupted PSNR should be < 25 dB, got {psnr_corrupt}"
+    );
 
     // Test verify_segment with 3 anchors
     let policy = QualityPolicy::default();
@@ -190,16 +193,24 @@ fn test_stalled_worker_progress_watchdog_and_segment_requeue() {
     manager.register_segments(&[(0, 300), (1, 300)]);
 
     // Assign segment 0 to worker-slow at t = 0
-    manager.assign_segment(0, "worker-slow", "h264_mediacodec", 0).expect("assign");
+    manager
+        .assign_segment(0, "worker-slow", "h264_mediacodec", 0)
+        .expect("assign");
     // Assign segment 1 to worker-fast at t = 0
-    manager.assign_segment(1, "worker-fast", "h264_nvenc", 0).expect("assign");
+    manager
+        .assign_segment(1, "worker-fast", "h264_nvenc", 0)
+        .expect("assign");
 
     // Worker-fast reports progress at t = 4000
     manager.record_heartbeat(1, 150, 4000).expect("heartbeat");
 
     // At t = 6000 ms, timeout is 5000 ms. Worker-slow has not reported since t = 0 (> 5000ms)
     let recovered = manager.check_and_recover_stalled_workers(6000, 5000);
-    assert_eq!(recovered, vec![0], "only stalled segment 0 should be recovered");
+    assert_eq!(
+        recovered,
+        vec![0],
+        "only stalled segment 0 should be recovered"
+    );
 
     // Verify segment 0 is now Pending and worker-slow is blacklisted
     match manager.segment_states.get(&0) {
@@ -207,12 +218,20 @@ fn test_stalled_worker_progress_watchdog_and_segment_requeue() {
         other => panic!("expected Pending, got {other:?}"),
     }
 
-    assert!(manager.blacklists.get(&0).unwrap().contains(&"worker-slow".to_string()));
+    assert!(manager
+        .blacklists
+        .get(&0)
+        .unwrap()
+        .contains(&"worker-slow".to_string()));
 
     // Attempting to re-assign segment 0 to worker-slow must fail due to blacklist
-    assert!(manager.assign_segment(0, "worker-slow", "h264_mediacodec", 6100).is_err());
+    assert!(manager
+        .assign_segment(0, "worker-slow", "h264_mediacodec", 6100)
+        .is_err());
     // Re-assigning to a healthy worker succeeds
-    assert!(manager.assign_segment(0, "worker-backup", "libx264", 6100).is_ok());
+    assert!(manager
+        .assign_segment(0, "worker-backup", "libx264", 6100)
+        .is_ok());
 }
 
 /// [INT] Corrupted segment and truncated segment caught and retranscoded on fallback node.
@@ -232,7 +251,9 @@ fn test_corrupted_segment_and_truncated_segment_caught_and_retranscoded_on_fallb
     let hq_anchors = [(AnchorFrameType::FirstKeyframe, 0u64, &hq_luma[..])];
 
     // Assign to buggy mobile worker
-    manager.assign_segment(0, "worker-mobile-buggy", "h264_mediacodec", 1000).expect("assign");
+    manager
+        .assign_segment(0, "worker-mobile-buggy", "h264_mediacodec", 1000)
+        .expect("assign");
 
     let buggy_output = TranscodedSegmentOutput {
         segment_index: 0,
@@ -262,11 +283,20 @@ fn test_corrupted_segment_and_truncated_segment_caught_and_retranscoded_on_fallb
     assert_eq!(*manager.retry_counts.get(&0).unwrap(), 1);
 
     // Segment 0 is automatically reset to Pending and worker-mobile-buggy is blacklisted
-    assert!(matches!(manager.segment_states.get(&0), Some(SegmentLifecycleStatus::Pending)));
-    assert!(manager.blacklists.get(&0).unwrap().contains(&"worker-mobile-buggy".to_string()));
+    assert!(matches!(
+        manager.segment_states.get(&0),
+        Some(SegmentLifecycleStatus::Pending)
+    ));
+    assert!(manager
+        .blacklists
+        .get(&0)
+        .unwrap()
+        .contains(&"worker-mobile-buggy".to_string()));
 
     // Re-assign to deterministic software CPU node
-    manager.assign_segment(0, "worker-desktop-cpu", "libx264", 2000).expect("assign to fallback");
+    manager
+        .assign_segment(0, "worker-desktop-cpu", "libx264", 2000)
+        .expect("assign to fallback");
 
     let hq_output = TranscodedSegmentOutput {
         segment_index: 0,
@@ -283,13 +313,7 @@ fn test_corrupted_segment_and_truncated_segment_caught_and_retranscoded_on_fallb
     };
 
     let report_pass = manager
-        .audit_and_complete_segment(
-            0,
-            &hq_output,
-            "/tmp/seg0_hq.ts",
-            &src_anchors,
-            &hq_anchors,
-        )
+        .audit_and_complete_segment(0, &hq_output, "/tmp/seg0_hq.ts", &src_anchors, &hq_anchors)
         .expect("audit should pass");
     assert!(report_pass.passed);
     assert!(matches!(
@@ -314,7 +338,9 @@ fn test_coordinator_crash_recovery_resumes_from_verified_segment_checkpoints() {
 
         // Complete segments 0 and 1
         for seg_idx in 0..2 {
-            manager.assign_segment(seg_idx, "worker-1", "h264_nvenc", 1000).expect("assign");
+            manager
+                .assign_segment(seg_idx, "worker-1", "h264_nvenc", 1000)
+                .expect("assign");
             let output = TranscodedSegmentOutput {
                 segment_index: seg_idx,
                 actual_frame_count: 300,
@@ -340,13 +366,16 @@ fn test_coordinator_crash_recovery_resumes_from_verified_segment_checkpoints() {
         }
 
         // Save checkpoint
-        let checkpoint_path = manager.save_checkpoint(job_id, 2000).expect("save checkpoint");
+        let checkpoint_path = manager
+            .save_checkpoint(job_id, 2000)
+            .expect("save checkpoint");
         assert!(checkpoint_path.exists());
     }
 
     // 2. Simulate coordinator crash and reboot
     {
-        let mut new_manager = SegmentFaultRecoveryManager::new(tmp.path(), QualityPolicy::default());
+        let mut new_manager =
+            SegmentFaultRecoveryManager::new(tmp.path(), QualityPolicy::default());
         new_manager.register_segments(&[(0, 300), (1, 300), (2, 300), (3, 300)]);
 
         let resumed = new_manager.resume_from_checkpoint(job_id).expect("resume");
@@ -408,9 +437,19 @@ fn test_simulation_chaos_transcode_resilience_worker_kills_and_corruption() {
 
         // 1. Assign pending segments to available (non-blacklisted) workers
         for seg_idx in 0..total_segments {
-            if matches!(manager.segment_states.get(&seg_idx), Some(SegmentLifecycleStatus::Pending)) {
-                let blacklist = manager.blacklists.get(&seg_idx).cloned().unwrap_or_default();
-                if let Some(&w) = workers.iter().find(|&&w| !blacklist.contains(&w.to_string())) {
+            if matches!(
+                manager.segment_states.get(&seg_idx),
+                Some(SegmentLifecycleStatus::Pending)
+            ) {
+                let blacklist = manager
+                    .blacklists
+                    .get(&seg_idx)
+                    .cloned()
+                    .unwrap_or_default();
+                if let Some(&w) = workers
+                    .iter()
+                    .find(|&&w| !blacklist.contains(&w.to_string()))
+                {
                     let _ = manager.assign_segment(seg_idx, w, "sim_encoder", sim_clock_ms);
                 }
             }
@@ -442,7 +481,11 @@ fn test_simulation_chaos_transcode_resilience_worker_kills_and_corruption() {
                 continue;
             }
 
-            let anchors = if is_corrupted { &bad_anchors } else { &good_anchors };
+            let anchors = if is_corrupted {
+                &bad_anchors
+            } else {
+                &good_anchors
+            };
             let output = TranscodedSegmentOutput {
                 segment_index: idx,
                 actual_frame_count: 240,
@@ -474,8 +517,7 @@ fn test_simulation_chaos_transcode_resilience_worker_kills_and_corruption() {
         .filter(|s| matches!(s, SegmentLifecycleStatus::VerifiedCompleted { .. }))
         .count();
     assert_eq!(
-        final_completed_count,
-        total_segments as usize,
+        final_completed_count, total_segments as usize,
         "all 20 segments must eventually reach VerifiedCompleted under chaos"
     );
 }
@@ -523,7 +565,8 @@ fn test_manual_segment_health_grid_and_quality_telemetry_schema() {
     assert!(json.contains("avg_ssim"));
     assert!(json.contains("min_psnr_db"));
 
-    let deserialized: SegmentQualityReport = serde_json::from_str(&json).expect("deserialize report");
+    let deserialized: SegmentQualityReport =
+        serde_json::from_str(&json).expect("deserialize report");
     assert_eq!(deserialized.segment_index, 0);
     assert!(deserialized.passed);
 }

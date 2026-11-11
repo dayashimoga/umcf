@@ -134,7 +134,8 @@ impl GopSegmenter {
             let expected_frame_count = end_frame - start_kf.frame_idx;
 
             // Compute end PTS in stream time base
-            let pts_per_frame = (f64::from(time_base.1) / (f64::from(time_base.0) * fps)).round() as i64;
+            let pts_per_frame =
+                (f64::from(time_base.1) / (f64::from(time_base.0) * fps)).round() as i64;
             let end_pts = start_kf.pts + (expected_frame_count as i64) * pts_per_frame;
 
             let byte_range = if seg_end_idx < num_kf {
@@ -209,7 +210,11 @@ impl ParallelTranscodeCoordinator {
 
         let mut planned = Vec::with_capacity(segments.len());
         let total_capacity: f32 = workers.iter().map(|(_, _, fps)| *fps).sum();
-        let total_capacity = if total_capacity <= 0.0 { 1.0 } else { total_capacity };
+        let total_capacity = if total_capacity <= 0.0 {
+            1.0
+        } else {
+            total_capacity
+        };
 
         // Assign segments round-robin weighted by capacity
         for (i, seg) in segments.iter().enumerate() {

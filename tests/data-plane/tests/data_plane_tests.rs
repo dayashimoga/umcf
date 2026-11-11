@@ -29,7 +29,11 @@ fn test_aligned_slab_buffer_pool_64b_and_16kb_alignment_and_auto_return_on_drop(
 
         // Invariant: pointer address is 64-byte aligned
         let addr = lease1.as_ptr() as usize;
-        assert_eq!(addr % 64, 0, "Buffer pointer must be 64-byte cacheline aligned");
+        assert_eq!(
+            addr % 64,
+            0,
+            "Buffer pointer must be 64-byte cacheline aligned"
+        );
     }
 
     // After drop, lease1 automatically returns to the pool free list
@@ -45,7 +49,10 @@ fn test_aligned_slab_buffer_pool_64b_and_16kb_alignment_and_auto_return_on_drop(
     let page_pool = AlignedSlabBufferPool::new(65536, 16384, 4).unwrap();
     let page_lease = page_pool.acquire().unwrap();
     assert_eq!(page_lease.len(), 65536);
-    assert!(page_lease.is_aligned_to(16384), "Buffer must satisfy 16 KiB page boundary");
+    assert!(
+        page_lease.is_aligned_to(16384),
+        "Buffer must satisfy 16 KiB page boundary"
+    );
 }
 
 #[test]
@@ -69,8 +76,16 @@ fn test_mmap_to_bytes_slice_preserves_exact_pointer_address_zero_alloc() {
     assert_eq!(chunk4.as_ptr() as usize, base_addr + 500000);
 
     // Invariant: Pointer resides strictly within base buffer bounds
-    assert!(is_pointer_within_range(chunk1.as_ptr(), base_ptr, guard.len()));
-    assert!(is_pointer_within_range(chunk4.as_ptr(), base_ptr, guard.len()));
+    assert!(is_pointer_within_range(
+        chunk1.as_ptr(),
+        base_ptr,
+        guard.len()
+    ));
+    assert!(is_pointer_within_range(
+        chunk4.as_ptr(),
+        base_ptr,
+        guard.len()
+    ));
 }
 
 #[test]
@@ -186,8 +201,12 @@ fn test_battery_deep_saver_gracefully_drains_and_rejects_remote_worker_tasks() {
     // Must reject all heavy remote compute
     assert!(governor.can_accept_task(TaskKind::RemoteWasmJob).is_err());
     assert!(governor.can_accept_task(TaskKind::RemoteGpuJob).is_err());
-    assert!(governor.can_accept_task(TaskKind::RemoteMediaTranscode).is_err());
-    assert!(governor.can_accept_task(TaskKind::StorageScrubRepair).is_err());
+    assert!(governor
+        .can_accept_task(TaskKind::RemoteMediaTranscode)
+        .is_err());
+    assert!(governor
+        .can_accept_task(TaskKind::StorageScrubRepair)
+        .is_err());
 
     // Only local user requests allowed
     assert!(governor.can_accept_task(TaskKind::LocalUserRequest).is_ok());
@@ -239,7 +258,10 @@ fn test_data_plane_zero_copy_throughput_and_benchmarks() {
 
     println!("  -> Zero-copy slicing throughput: {throughput_gbps:.2} GB/s in {elapsed:?}");
     // Slicing in-memory Bytes pointers easily exceeds the >= 1.8 GB/s desktop SLA
-    assert!(throughput_gbps >= 1.8, "Throughput must exceed 1.8 GB/s; got {throughput_gbps:.2} GB/s");
+    assert!(
+        throughput_gbps >= 1.8,
+        "Throughput must exceed 1.8 GB/s; got {throughput_gbps:.2} GB/s"
+    );
 }
 
 // ============================================================================
@@ -265,7 +287,10 @@ fn test_manual_mobile_power_profile_and_wakeup_schema() {
         "coalesced_wakeup_window_secs": 60
     });
 
-    assert_eq!(telemetry_report["current_power_state"], "BatteryBackgroundEco");
+    assert_eq!(
+        telemetry_report["current_power_state"],
+        "BatteryBackgroundEco"
+    );
     assert_eq!(telemetry_report["heartbeat_interval_secs"], 60);
     assert_eq!(telemetry_report["sla_compliant_eco_drain"], true);
 }

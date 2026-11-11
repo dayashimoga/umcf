@@ -19,7 +19,9 @@ pub enum EnrollmentError {
     #[error("malformed enrollment URI or base64url payload: {0}")]
     MalformedUri(String),
 
-    #[error("requested token TTL of {requested_ms} ms exceeds maximum allowed ceiling of {max_ms} ms")]
+    #[error(
+        "requested token TTL of {requested_ms} ms exceeds maximum allowed ceiling of {max_ms} ms"
+    )]
     MaxTtlExceeded { requested_ms: u64, max_ms: u64 },
 
     #[error("QR code matrix generation failed: {0}")]
@@ -45,7 +47,9 @@ pub enum EnrollmentError {
     #[error("local resource-sharing consent violation: {reason}")]
     ConsentViolation { reason: String },
 
-    #[error("resource consent policy signature is invalid or not signed by device owner {owner_did}")]
+    #[error(
+        "resource consent policy signature is invalid or not signed by device owner {owner_did}"
+    )]
     ForgedConsentPolicy { owner_did: String },
 
     #[error("requested workload kind '{workload_kind}' is not permitted by node consent policy")]

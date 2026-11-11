@@ -76,9 +76,7 @@ impl Rfc9457ProblemDetails {
             error_type: "https://umcf.dev/errors/rate-limited".to_string(),
             title: "Too Many Requests".to_string(),
             status: 429,
-            detail: format!(
-                "Rate limit bucket exhausted. Please retry after {retry_after_ms} ms."
-            ),
+            detail: format!("Rate limit bucket exhausted. Please retry after {retry_after_ms} ms."),
             instance: None,
             error_code: "UMCF_RATE_LIMIT_EXCEEDED".to_string(),
             invalid_params: Vec::new(),
@@ -92,7 +90,9 @@ impl Rfc9457ProblemDetails {
             error_type: "https://umcf.dev/errors/not-found".to_string(),
             title: format!("{resource} Not Found"),
             status: 404,
-            detail: format!("{resource} with identifier '{identifier}' was not found in mesh registry."),
+            detail: format!(
+                "{resource} with identifier '{identifier}' was not found in mesh registry."
+            ),
             instance: None,
             error_code: "UMCF_RESOURCE_NOT_FOUND".to_string(),
             invalid_params: Vec::new(),
@@ -129,4 +129,3 @@ impl IntoResponse for Rfc9457ProblemDetails {
             .into_response()
     }
 }
-

@@ -122,7 +122,11 @@ fn test_unified_sps_pps_extradata_normalizer_across_mixed_encoders() {
 
     // Split check
     let units_vt = ExtradataNormalizer::split_nal_units(&vt_data);
-    assert_eq!(units_vt.len(), 2, "VideoToolbox 3-byte NALs split correctly");
+    assert_eq!(
+        units_vt.len(),
+        2,
+        "VideoToolbox 3-byte NALs split correctly"
+    );
 
     // Normalization check: convert 3-byte to standard 4-byte Annex-B
     let normalized_vt = ExtradataNormalizer::normalize_annex_b(&vt_data);
@@ -325,8 +329,8 @@ fn test_hardware_parallel_transcode_speedup_scaling() {
 #[test]
 fn test_manual_transcode_pipeline_ui_schema_and_timeline() {
     let profile = UnifiedEncodingProfile::default_h264();
-    let serialized_profile = serde_json::to_string_pretty(&profile)
-        .expect("profile serialization should succeed");
+    let serialized_profile =
+        serde_json::to_string_pretty(&profile).expect("profile serialization should succeed");
     assert!(serialized_profile.contains("high"));
     assert!(serialized_profile.contains("closed_gop"));
 
@@ -338,6 +342,7 @@ fn test_manual_transcode_pipeline_ui_schema_and_timeline() {
         data_size: 32768,
     };
     let serialized_packet = serde_json::to_string(&packet).expect("packet serialize");
-    let deserialized_packet: MediaPacket = serde_json::from_str(&serialized_packet).expect("packet deserialize");
+    let deserialized_packet: MediaPacket =
+        serde_json::from_str(&serialized_packet).expect("packet deserialize");
     assert_eq!(packet, deserialized_packet);
 }

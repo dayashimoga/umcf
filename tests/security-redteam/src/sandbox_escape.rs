@@ -67,7 +67,9 @@ impl SandboxEscapeAuditor {
                 &format!("Denied forbidden ambient syscall '{syscall_name}' in WASM sandbox"),
             );
             return Err(RedteamError::OperationRejected {
-                reason: format!("WASI_ERRNO_NOTCAPABLE: Syscall '{syscall_name}' forbidden in sandbox"),
+                reason: format!(
+                    "WASI_ERRNO_NOTCAPABLE: Syscall '{syscall_name}' forbidden in sandbox"
+                ),
             });
         }
 
@@ -139,7 +141,9 @@ impl SandboxEscapeAuditor {
                 return Err(RedteamError::ContainmentFailed {
                     vector_id: 4,
                     attack_name: "GPU Cross-Tenant VRAM Read".to_string(),
-                    reason: format!("VRAM buffer contained non-zero unscrubbed residue: {val:#010x}"),
+                    reason: format!(
+                        "VRAM buffer contained non-zero unscrubbed residue: {val:#010x}"
+                    ),
                 });
             }
         }
@@ -155,7 +159,8 @@ impl SandboxEscapeAuditor {
                 &format!("Shader loop watchdog tripped: {simulated_shader_loop_cycles} cycles > {max_loop_fuel}"),
             );
             return Err(RedteamError::OperationRejected {
-                reason: "NagaShaderWatchdog: Shader loop fuel exhausted, execution halted".to_string(),
+                reason: "NagaShaderWatchdog: Shader loop fuel exhausted, execution halted"
+                    .to_string(),
             });
         }
 
@@ -187,10 +192,11 @@ impl SandboxEscapeAuditor {
                     &format!("Tensor '{tensor_name}' offset {tensor_offset} + {tensor_bytes} exceeds file size {file_size_bytes}"),
                 );
                 Err(RedteamError::OperationRejected {
-                    reason: format!("ModelIntegrityVerifier: Tensor '{tensor_name}' bounds exceed file bounds"),
+                    reason: format!(
+                        "ModelIntegrityVerifier: Tensor '{tensor_name}' bounds exceed file bounds"
+                    ),
                 })
             }
         }
     }
 }
-

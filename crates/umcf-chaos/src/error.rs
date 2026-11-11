@@ -5,10 +5,7 @@ use thiserror::Error;
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum ChaosError {
     #[error("Invariant {invariant_id} violation: {reason}")]
-    InvariantViolation {
-        invariant_id: u8,
-        reason: String,
-    },
+    InvariantViolation { invariant_id: u8, reason: String },
 
     #[error("Split-brain convergence timed out: elapsed {elapsed_ms} ms exceeds limit of {max_allowed_ms} ms")]
     SplitBrainConvergenceTimeout {
@@ -31,9 +28,7 @@ pub enum ChaosError {
     },
 
     #[error("Ledger double-payout detected: receipt '{receipt_id}' settled multiple times")]
-    LedgerDoublePayout {
-        receipt_id: String,
-    },
+    LedgerDoublePayout { receipt_id: String },
 
     #[error("Storage durability lost for CID '{cid}': only {surviving_shards} shards survive (minimum {min_required} required)")]
     StorageDurabilityLost {
@@ -49,9 +44,5 @@ pub enum ChaosError {
     },
 
     #[error("Task migration failed for node '{node_id}': {reason}")]
-    TaskMigrationFailed {
-        node_id: String,
-        reason: String,
-    },
+    TaskMigrationFailed { node_id: String, reason: String },
 }
-

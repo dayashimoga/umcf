@@ -53,7 +53,9 @@ impl SecurityAuditLedger {
     }
 
     pub fn count_by_severity(&self, severity: SecuritySeverity) -> usize {
-        self.events.iter().filter(|e| e.severity == severity).count()
+        self.events
+            .iter()
+            .filter(|e| e.severity == severity)
+            .count()
     }
 }
-

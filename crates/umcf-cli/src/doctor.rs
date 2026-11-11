@@ -35,7 +35,11 @@ pub fn run_doctor_checks() -> DoctorReport {
     checks.push(DoctorCheckItem {
         category: "CPU".to_string(),
         name: "Logical Cores".to_string(),
-        status: if cpu_cores >= 4 { "PASS".to_string() } else { "WARN".to_string() },
+        status: if cpu_cores >= 4 {
+            "PASS".to_string()
+        } else {
+            "WARN".to_string()
+        },
         details: format!("{cpu_cores} hardware execution threads detected"),
         recommendation: if cpu_cores < 4 {
             Some("Compute workloads perform best with >= 4 CPU threads.".to_string())
@@ -48,7 +52,11 @@ pub fn run_doctor_checks() -> DoctorReport {
     checks.push(DoctorCheckItem {
         category: "CPU".to_string(),
         name: "Vector SIMD Acceleration".to_string(),
-        status: if has_simd { "PASS".to_string() } else { "WARN".to_string() },
+        status: if has_simd {
+            "PASS".to_string()
+        } else {
+            "WARN".to_string()
+        },
         details: if cfg!(target_arch = "x86_64") {
             "AVX2 / FMA instruction support detected".to_string()
         } else if cfg!(target_arch = "aarch64") {
@@ -115,4 +123,3 @@ pub fn run_doctor_checks() -> DoctorReport {
         checks,
     }
 }
-

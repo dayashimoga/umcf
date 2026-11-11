@@ -17,10 +17,7 @@ use umcf_scheduler::fault_tolerance::TaskFailoverCoordinator;
 use umcf_scheduler::solver::ConstraintSolver;
 
 use crate::error::WorkerError;
-use crate::recovery::{
-    CheckpointManager, CommitResult, PhiAccrualConfig,
-    SpeculativeRetryEngine,
-};
+use crate::recovery::{CheckpointManager, CommitResult, PhiAccrualConfig, SpeculativeRetryEngine};
 use crate::sandbox::{
     ArtifactStager, EphemeralScratchDir, NativeEngineRegistry, NativeKernelRunner,
     WasmSandboxConfig, WasmSandboxRunner,
@@ -88,10 +85,11 @@ impl ClusterNodeRuntime {
         let preemptor = InstantPreemptor::new(config.preemption_config.clone());
         let sandbox = WasmSandboxRunner::new(config.wasm_config.clone());
         let native_runner = NativeKernelRunner::new(NativeEngineRegistry::new());
-        let retry_engine =
-            SpeculativeRetryEngine::new(config.phi_config.clone(), config.straggler_threshold_ratio);
-        let failover_coordinator =
-            TaskFailoverCoordinator::new(config.node_id.clone(), 3);
+        let retry_engine = SpeculativeRetryEngine::new(
+            config.phi_config.clone(),
+            config.straggler_threshold_ratio,
+        );
+        let failover_coordinator = TaskFailoverCoordinator::new(config.node_id.clone(), 3);
 
         Self {
             role: RwLock::new(config.initial_role),
@@ -131,7 +129,10 @@ impl ClusterNodeRuntime {
 
     #[must_use]
     pub fn role(&self) -> NodeRole {
-        self.role.read().map(|r| *r).unwrap_or(self.config.initial_role)
+        self.role
+            .read()
+            .map(|r| *r)
+            .unwrap_or(self.config.initial_role)
     }
 
     /// Promotes a worker node to Master during active cluster operation.
@@ -168,7 +169,9 @@ impl ClusterNodeRuntime {
         if !matches!(role, NodeRole::Master | NodeRole::Hybrid) {
             return Err(WorkerError::TaskExecutionFailed {
                 exit_code: 2,
-                stderr: format!("Node {role:?} is not authorized to schedule DAGs (requires Master or Hybrid)"),
+                stderr: format!(
+                    "Node {role:?} is not authorized to schedule DAGs (requires Master or Hybrid)"
+                ),
             });
         }
 
@@ -215,17 +218,20 @@ impl ClusterNodeRuntime {
         for (idx, task_id) in topo_tasks.iter().enumerate() {
             let t_dispatch_start = Instant::now();
             let scoped_task_id = format!("{job_id}_{task_id}");
-            let task_node = dag.task(task_id).ok_or_else(|| WorkerError::TaskExecutionFailed {
-                exit_code: 6,
-                stderr: format!("Task {task_id} not found"),
-            })?;
+            let task_node = dag
+                .task(task_id)
+                .ok_or_else(|| WorkerError::TaskExecutionFailed {
+                    exit_code: 6,
+                    stderr: format!("Task {task_id} not found"),
+                })?;
 
-            let initial_decision = plan.assignments.get(task_id).ok_or_else(|| {
-                WorkerError::TaskExecutionFailed {
-                    exit_code: 7,
-                    stderr: format!("Placement decision missing for {task_id}"),
-                }
-            })?;
+            let initial_decision =
+                plan.assignments
+                    .get(task_id)
+                    .ok_or_else(|| WorkerError::TaskExecutionFailed {
+                        exit_code: 7,
+                        stderr: format!("Placement decision missing for {task_id}"),
+                    })?;
 
             let mut assigned_worker = initial_decision.assigned_node_id.clone();
             self.failover_coordinator
@@ -271,7 +277,13 @@ impl ClusterNodeRuntime {
             // Save intermediate checkpoint at 50% step
             let step_half = 5u64;
             let intermediate_state = format!("{scoped_task_id}_ckpt_state").into_bytes();
-            let ckpt_blob = ckpt_mgr.save_checkpoint(&scoped_task_id, step_half, 10, &intermediate_state, 500)?;
+            let ckpt_blob = ckpt_mgr.save_checkpoint(
+                &scoped_task_id,
+                step_half,
+                10,
+                &intermediate_state,
+                500,
+            )?;
             self.retry_engine.on_checkpoint(ckpt_blob.clone());
 
             if inject_thermal || inject_kill {
@@ -306,7 +318,10 @@ impl ClusterNodeRuntime {
             )?;
 
             // Commit to single-winner barrier
-            let commit_res = self.retry_engine.commit_barrier().try_commit(receipt.clone());
+            let commit_res = self
+                .retry_engine
+                .commit_barrier()
+                .try_commit(receipt.clone());
             assert_eq!(commit_res, CommitResult::Committed);
 
             // Read output artifact to pass to downstream tasks
@@ -334,10 +349,7 @@ impl ClusterNodeRuntime {
         } else {
             dispatch_latencies_ms.iter().sum::<f64>() / (dispatch_latencies_ms.len() as f64)
         };
-        let max_lat = dispatch_latencies_ms
-            .iter()
-            .copied()
-            .fold(0.0f64, f64::max);
+        let max_lat = dispatch_latencies_ms.iter().copied().fold(0.0f64, f64::max);
 
         let total_dur = (t_job_start.elapsed().as_micros() as f64) / 1000.0;
 

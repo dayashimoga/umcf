@@ -84,10 +84,10 @@ impl InputSink for MockInputSink {
 /// and gamepad actuators to ensure 100% automatic rollback upon disconnect or revocation.
 #[derive(Debug, Default)]
 pub struct ActiveInputStateTracker {
-    pub held_keys: HashSet<u16>,             // Set of currently held scancodes
-    pub held_mouse_buttons: HashSet<u8>,     // Set of currently held mouse buttons (1=Left, etc.)
-    pub active_touch_pointers: HashSet<u8>,  // Set of active touch pointer IDs
-    pub active_gamepads: HashMap<u8, u32>,   // Active gamepad controllers and button bitmasks
+    pub held_keys: HashSet<u16>,            // Set of currently held scancodes
+    pub held_mouse_buttons: HashSet<u8>,    // Set of currently held mouse buttons (1=Left, etc.)
+    pub active_touch_pointers: HashSet<u8>, // Set of active touch pointer IDs
+    pub active_gamepads: HashMap<u8, u32>,  // Active gamepad controllers and button bitmasks
 }
 
 impl ActiveInputStateTracker {
@@ -142,7 +142,8 @@ impl ActiveInputStateTracker {
                 if is_neutral {
                     self.active_gamepads.remove(controller_idx);
                 } else {
-                    self.active_gamepads.insert(*controller_idx, *buttons_bitmask);
+                    self.active_gamepads
+                        .insert(*controller_idx, *buttons_bitmask);
                 }
             }
             _ => {}

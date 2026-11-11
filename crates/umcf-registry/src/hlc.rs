@@ -146,12 +146,18 @@ impl HybridLogicalClock {
     /// Returns the current latest timestamp snapshot without advancing it.
     #[must_use]
     pub fn now(&self) -> HlcTimestamp {
-        *self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+        *self
+            .state
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
     /// Updates internal state to ensure it is at least `ts`.
     pub fn update_floor(&self, ts: HlcTimestamp) {
-        let mut cur = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut cur = self
+            .state
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         if ts > *cur {
             *cur = ts;
             cur.node_hash = self.node_hash;
@@ -165,7 +171,10 @@ impl HybridLogicalClock {
 
     /// Advances the clock for a local event with an explicit physical clock (for deterministic testing).
     pub fn tick_with_physical_time(&self, phys_now_ms: u64) -> Result<HlcTimestamp, HlcError> {
-        let mut cur = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut cur = self
+            .state
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         if phys_now_ms > cur.wall_ms {
             cur.wall_ms = phys_now_ms;
             cur.logical = 0;
@@ -173,7 +182,9 @@ impl HybridLogicalClock {
             cur.logical = cur
                 .logical
                 .checked_add(1)
-                .ok_or(HlcError::LogicalOverflow { wall_ms: cur.wall_ms })?;
+                .ok_or(HlcError::LogicalOverflow {
+                    wall_ms: cur.wall_ms,
+                })?;
         }
         cur.node_hash = self.node_hash;
         Ok(*cur)
@@ -199,7 +210,10 @@ impl HybridLogicalClock {
             });
         }
 
-        let mut cur = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut cur = self
+            .state
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let max_wall = cur.wall_ms.max(remote.wall_ms).max(phys_now_ms);
 
         if max_wall == cur.wall_ms && max_wall == remote.wall_ms {

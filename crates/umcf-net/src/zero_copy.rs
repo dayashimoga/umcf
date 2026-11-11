@@ -12,7 +12,11 @@ use umcf_core::buffer_pool::AlignedSlabBufferPool;
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ZeroCopyError {
     #[error("Slice range {start}..{end} exceeds backing buffer length {length}")]
-    OutOfBounds { start: usize, end: usize, length: usize },
+    OutOfBounds {
+        start: usize,
+        end: usize,
+        length: usize,
+    },
 
     #[error("Underlying buffer guard is closed or unmapped")]
     BufferClosed,
@@ -30,7 +34,9 @@ pub struct MmapSliceGuard {
 impl MmapSliceGuard {
     /// Constructs a new zero-copy slice guard wrapping a `Bytes` backing buffer.
     pub fn new(backing: Bytes) -> Self {
-        Self { base_bytes: backing }
+        Self {
+            base_bytes: backing,
+        }
     }
 
     /// From static slice.
@@ -145,11 +151,7 @@ impl ZeroCopyShardStreamer {
     }
 
     /// Stream Path 3: Remote Streaming Video Frame -> FEC Sub-slice views.
-    pub fn packetize_frame_fec(
-        &mut self,
-        frame_bytes: &Bytes,
-        mtu: usize,
-    ) -> Vec<Bytes> {
+    pub fn packetize_frame_fec(&mut self, frame_bytes: &Bytes, mtu: usize) -> Vec<Bytes> {
         let total_len = frame_bytes.len();
         let mut packets = Vec::with_capacity(total_len.div_ceil(mtu));
         let mut offset = 0;

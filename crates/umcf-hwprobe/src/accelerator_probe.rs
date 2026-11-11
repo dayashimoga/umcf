@@ -19,7 +19,8 @@ pub const PCI_VENDOR_ARM: u32 = 0x13B5;
 pub const PCI_VENDOR_GOOGLE: u32 = 0x1AE0;
 pub const PCI_VENDOR_GOOGLE_ALT: u32 = 0x1A00;
 
-static CACHED_ACCELERATORS: std::sync::OnceLock<Vec<AcceleratorCapability>> = std::sync::OnceLock::new();
+static CACHED_ACCELERATORS: std::sync::OnceLock<Vec<AcceleratorCapability>> =
+    std::sync::OnceLock::new();
 
 /// Accelerator and GPU prober orchestrator.
 #[derive(Debug, Clone, Copy, Default)]
@@ -63,12 +64,18 @@ impl AcceleratorProber {
 
         // 2. CUDA / ROCm driver prober
         if let Some(cuda_acc) = CudaRocmProber::probe_cuda() {
-            if !accelerators.iter().any(|a| a.backend == ComputeBackend::Cuda) {
+            if !accelerators
+                .iter()
+                .any(|a| a.backend == ComputeBackend::Cuda)
+            {
                 accelerators.push(cuda_acc);
             }
         }
         if let Some(rocm_acc) = CudaRocmProber::probe_rocm() {
-            if !accelerators.iter().any(|a| a.backend == ComputeBackend::Rocm) {
+            if !accelerators
+                .iter()
+                .any(|a| a.backend == ComputeBackend::Rocm)
+            {
                 accelerators.push(rocm_acc);
             }
         }
@@ -90,7 +97,8 @@ impl AcceleratorProber {
     ///
     /// # Errors
     /// Returns `HwProbeError` if enumeration fails.
-    pub fn enumerate_with_duration() -> Result<(Vec<AcceleratorCapability>, std::time::Duration), HwProbeError> {
+    pub fn enumerate_with_duration(
+    ) -> Result<(Vec<AcceleratorCapability>, std::time::Duration), HwProbeError> {
         let start = Instant::now();
         let list = Self::enumerate()?;
         let elapsed = start.elapsed();
@@ -136,11 +144,17 @@ impl AcceleratorProber {
     /// Determines whether the device architecture uses unified host-device memory.
     #[must_use]
     pub fn is_unified_memory_architecture(vendor_id: u32, kind: AcceleratorKind) -> bool {
-        if vendor_id == PCI_VENDOR_APPLE || vendor_id == PCI_VENDOR_QUALCOMM || vendor_id == PCI_VENDOR_ARM {
+        if vendor_id == PCI_VENDOR_APPLE
+            || vendor_id == PCI_VENDOR_QUALCOMM
+            || vendor_id == PCI_VENDOR_ARM
+        {
             return true;
         }
         match kind {
-            AcceleratorKind::IntegratedGpu | AcceleratorKind::MobileGpu | AcceleratorKind::Npu | AcceleratorKind::Cpu => true,
+            AcceleratorKind::IntegratedGpu
+            | AcceleratorKind::MobileGpu
+            | AcceleratorKind::Npu
+            | AcceleratorKind::Cpu => true,
             AcceleratorKind::DiscreteGpu => false,
         }
     }
@@ -167,7 +181,9 @@ impl GpuEnumerator {
                 wgpu::DeviceType::DiscreteGpu => AcceleratorKind::DiscreteGpu,
                 wgpu::DeviceType::IntegratedGpu => AcceleratorKind::IntegratedGpu,
                 wgpu::DeviceType::Cpu => AcceleratorKind::Cpu,
-                wgpu::DeviceType::VirtualGpu | wgpu::DeviceType::Other => AcceleratorKind::DiscreteGpu,
+                wgpu::DeviceType::VirtualGpu | wgpu::DeviceType::Other => {
+                    AcceleratorKind::DiscreteGpu
+                }
             };
 
             let backend = match info.backend {
@@ -184,11 +200,7 @@ impl GpuEnumerator {
             let supports_fp16 = features.contains(wgpu::Features::SHADER_F16);
 
             // Estimate memory based on architecture and type
-            let (dedicated_mb, shared_mb) = if is_unified {
-                (0, 4096)
-            } else {
-                (8192, 0)
-            };
+            let (dedicated_mb, shared_mb) = if is_unified { (0, 4096) } else { (8192, 0) };
 
             let vram_bytes = if dedicated_mb > 0 {
                 ByteSize::from_mib(dedicated_mb)
@@ -198,7 +210,10 @@ impl GpuEnumerator {
 
             let vendor_name = AcceleratorProber::classify_pci_vendor(info.vendor);
             let adapter_name = if info.name.is_empty() {
-                format!("{vendor_name} GPU ({:04x}:{:04x})", info.vendor, info.device)
+                format!(
+                    "{vendor_name} GPU ({:04x}:{:04x})",
+                    info.vendor, info.device
+                )
             } else {
                 info.name
             };
@@ -313,7 +328,8 @@ impl NpuEnumerator {
         // 1. Android NNAPI / Qualcomm QNN
         if cfg!(target_os = "android") {
             let has_nnapi = Path::new("/system/lib64/libneuralnetworks.so").exists();
-            let has_qnn = Path::new("/vendor/lib64/libQnnHtp.so").exists() || Path::new("/dev/qce").exists();
+            let has_qnn =
+                Path::new("/vendor/lib64/libQnnHtp.so").exists() || Path::new("/dev/qce").exists();
             if has_nnapi || has_qnn {
                 let name = if has_qnn {
                     "Qualcomm Hexagon HTP NPU"

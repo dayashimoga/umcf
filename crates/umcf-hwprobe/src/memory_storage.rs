@@ -60,25 +60,23 @@ impl MemoryStorageProber {
         let host_available = sys.available_memory();
 
         // Check cgroup v2 memory limits (e.g. Podman / Docker container limit)
-        let (total_ram, available_ram) = if let Ok(Some(cgroup_limit)) = Self::read_cgroup_memory_limit() {
-            let effective_total = host_total.min(cgroup_limit);
-            let cgroup_usage = Self::read_cgroup_memory_usage().unwrap_or(0);
-            let cgroup_avail = cgroup_limit.saturating_sub(cgroup_usage);
-            let effective_avail = host_available.min(cgroup_avail);
-            (effective_total, effective_avail)
-        } else {
-            (host_total, host_available)
-        };
+        let (total_ram, available_ram) =
+            if let Ok(Some(cgroup_limit)) = Self::read_cgroup_memory_limit() {
+                let effective_total = host_total.min(cgroup_limit);
+                let cgroup_usage = Self::read_cgroup_memory_usage().unwrap_or(0);
+                let cgroup_avail = cgroup_limit.saturating_sub(cgroup_usage);
+                let effective_avail = host_available.min(cgroup_avail);
+                (effective_total, effective_avail)
+            } else {
+                (host_total, host_available)
+            };
 
         // Detect unified memory (e.g. Apple Silicon)
-        let is_unified_memory = cfg!(target_arch = "aarch64") && (cfg!(target_os = "macos") || cfg!(target_os = "ios"));
+        let is_unified_memory =
+            cfg!(target_arch = "aarch64") && (cfg!(target_os = "macos") || cfg!(target_os = "ios"));
 
         // Estimate memory bandwidth: Apple Silicon / LPDDR5 ~68,000 MB/s, Standard DDR4/DDR5 ~34,000 MB/s
-        let bandwidth_mbps = if is_unified_memory {
-            68_000
-        } else {
-            34_000
-        };
+        let bandwidth_mbps = if is_unified_memory { 68_000 } else { 34_000 };
 
         Ok(MemoryCapability {
             total_ram: ByteSize(total_ram),
@@ -115,7 +113,10 @@ impl MemoryStorageProber {
 
         // Find the disk matching target_path or select the first available disk
         let selected_disk = if let Some(path) = target_path {
-            disks.iter().find(|d| path.starts_with(d.mount_point())).or_else(|| disks.first())
+            disks
+                .iter()
+                .find(|d| path.starts_with(d.mount_point()))
+                .or_else(|| disks.first())
         } else {
             disks.first()
         };

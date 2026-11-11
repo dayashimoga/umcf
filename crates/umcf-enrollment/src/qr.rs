@@ -48,7 +48,8 @@ impl QrRenderer {
             std::fs::create_dir_all(parent)
                 .map_err(|e| EnrollmentError::SerializationError(e.to_string()))?;
         }
-        std::fs::write(path, svg).map_err(|e| EnrollmentError::SerializationError(e.to_string()))?;
+        std::fs::write(path, svg)
+            .map_err(|e| EnrollmentError::SerializationError(e.to_string()))?;
         Ok(())
     }
 }

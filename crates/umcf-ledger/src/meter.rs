@@ -1,7 +1,7 @@
 //! Multi-dimensional resource metering collector and physical plausibility sanity guards.
 
-use serde::{Deserialize, Serialize};
 use crate::error::LedgerError;
+use serde::{Deserialize, Serialize};
 
 /// Multi-dimensional vector of metered physical and compute resources.
 /// All fields are strictly integer units (`u64`)—never floating point.
@@ -92,19 +92,43 @@ impl MeteredResourceVector {
     #[must_use]
     pub fn saturating_add(&self, other: &Self) -> Self {
         Self {
-            cpu_thread_time_us: self.cpu_thread_time_us.saturating_add(other.cpu_thread_time_us),
-            wasm_fuel_consumed: self.wasm_fuel_consumed.saturating_add(other.wasm_fuel_consumed),
-            gpu_compute_time_us: self.gpu_compute_time_us.saturating_add(other.gpu_compute_time_us),
-            npu_compute_time_us: self.npu_compute_time_us.saturating_add(other.npu_compute_time_us),
-            vram_peak_byte_seconds: self.vram_peak_byte_seconds.saturating_add(other.vram_peak_byte_seconds),
+            cpu_thread_time_us: self
+                .cpu_thread_time_us
+                .saturating_add(other.cpu_thread_time_us),
+            wasm_fuel_consumed: self
+                .wasm_fuel_consumed
+                .saturating_add(other.wasm_fuel_consumed),
+            gpu_compute_time_us: self
+                .gpu_compute_time_us
+                .saturating_add(other.gpu_compute_time_us),
+            npu_compute_time_us: self
+                .npu_compute_time_us
+                .saturating_add(other.npu_compute_time_us),
+            vram_peak_byte_seconds: self
+                .vram_peak_byte_seconds
+                .saturating_add(other.vram_peak_byte_seconds),
             ai_prompt_tokens: self.ai_prompt_tokens.saturating_add(other.ai_prompt_tokens),
-            ai_generated_tokens: self.ai_generated_tokens.saturating_add(other.ai_generated_tokens),
-            ai_layer_activations_transferred: self.ai_layer_activations_transferred.saturating_add(other.ai_layer_activations_transferred),
-            media_frames_encoded: self.media_frames_encoded.saturating_add(other.media_frames_encoded),
-            render_pixels_completed: self.render_pixels_completed.saturating_add(other.render_pixels_completed),
-            network_egress_bytes: self.network_egress_bytes.saturating_add(other.network_egress_bytes),
-            network_ingress_bytes: self.network_ingress_bytes.saturating_add(other.network_ingress_bytes),
-            storage_byte_seconds: self.storage_byte_seconds.saturating_add(other.storage_byte_seconds),
+            ai_generated_tokens: self
+                .ai_generated_tokens
+                .saturating_add(other.ai_generated_tokens),
+            ai_layer_activations_transferred: self
+                .ai_layer_activations_transferred
+                .saturating_add(other.ai_layer_activations_transferred),
+            media_frames_encoded: self
+                .media_frames_encoded
+                .saturating_add(other.media_frames_encoded),
+            render_pixels_completed: self
+                .render_pixels_completed
+                .saturating_add(other.render_pixels_completed),
+            network_egress_bytes: self
+                .network_egress_bytes
+                .saturating_add(other.network_egress_bytes),
+            network_ingress_bytes: self
+                .network_ingress_bytes
+                .saturating_add(other.network_ingress_bytes),
+            storage_byte_seconds: self
+                .storage_byte_seconds
+                .saturating_add(other.storage_byte_seconds),
         }
     }
 }
@@ -124,7 +148,10 @@ impl ResourceMeteringCollector {
 
     /// Records CPU execution time.
     pub fn record_cpu(&mut self, thread_time_us: u64) {
-        self.current.cpu_thread_time_us = self.current.cpu_thread_time_us.saturating_add(thread_time_us);
+        self.current.cpu_thread_time_us = self
+            .current
+            .cpu_thread_time_us
+            .saturating_add(thread_time_us);
     }
 
     /// Records WASM fuel consumed.
@@ -134,37 +161,63 @@ impl ResourceMeteringCollector {
 
     /// Records GPU shader compute time and VRAM allocation.
     pub fn record_gpu(&mut self, compute_time_us: u64, vram_bytes: u64, duration_sec: u64) {
-        self.current.gpu_compute_time_us = self.current.gpu_compute_time_us.saturating_add(compute_time_us);
+        self.current.gpu_compute_time_us = self
+            .current
+            .gpu_compute_time_us
+            .saturating_add(compute_time_us);
         let byte_sec = vram_bytes.saturating_mul(duration_sec);
-        self.current.vram_peak_byte_seconds = self.current.vram_peak_byte_seconds.saturating_add(byte_sec);
+        self.current.vram_peak_byte_seconds =
+            self.current.vram_peak_byte_seconds.saturating_add(byte_sec);
     }
 
     /// Records AI token counts and layer activation transfer.
-    pub fn record_ai_tokens(&mut self, prompt_tokens: u64, generated_tokens: u64, activations_transferred: u64) {
+    pub fn record_ai_tokens(
+        &mut self,
+        prompt_tokens: u64,
+        generated_tokens: u64,
+        activations_transferred: u64,
+    ) {
         self.current.ai_prompt_tokens = self.current.ai_prompt_tokens.saturating_add(prompt_tokens);
-        self.current.ai_generated_tokens = self.current.ai_generated_tokens.saturating_add(generated_tokens);
-        self.current.ai_layer_activations_transferred = self.current.ai_layer_activations_transferred.saturating_add(activations_transferred);
+        self.current.ai_generated_tokens = self
+            .current
+            .ai_generated_tokens
+            .saturating_add(generated_tokens);
+        self.current.ai_layer_activations_transferred = self
+            .current
+            .ai_layer_activations_transferred
+            .saturating_add(activations_transferred);
     }
 
     /// Records 3D render pixels completed.
     pub fn record_render_pixels(&mut self, pixels: u64) {
-        self.current.render_pixels_completed = self.current.render_pixels_completed.saturating_add(pixels);
+        self.current.render_pixels_completed =
+            self.current.render_pixels_completed.saturating_add(pixels);
     }
 
     /// Records media frames encoded.
     pub fn record_media_frames(&mut self, frames: u64) {
-        self.current.media_frames_encoded = self.current.media_frames_encoded.saturating_add(frames);
+        self.current.media_frames_encoded =
+            self.current.media_frames_encoded.saturating_add(frames);
     }
 
     /// Records network I/O bytes.
     pub fn record_network(&mut self, ingress_bytes: u64, egress_bytes: u64) {
-        self.current.network_ingress_bytes = self.current.network_ingress_bytes.saturating_add(ingress_bytes);
-        self.current.network_egress_bytes = self.current.network_egress_bytes.saturating_add(egress_bytes);
+        self.current.network_ingress_bytes = self
+            .current
+            .network_ingress_bytes
+            .saturating_add(ingress_bytes);
+        self.current.network_egress_bytes = self
+            .current
+            .network_egress_bytes
+            .saturating_add(egress_bytes);
     }
 
     /// Records storage footprint residency.
     pub fn record_storage(&mut self, byte_seconds: u64) {
-        self.current.storage_byte_seconds = self.current.storage_byte_seconds.saturating_add(byte_seconds);
+        self.current.storage_byte_seconds = self
+            .current
+            .storage_byte_seconds
+            .saturating_add(byte_seconds);
     }
 
     /// Snapshot the current resource vector.
@@ -248,7 +301,10 @@ impl SanityBoundsChecker {
         fps: u32,
     ) -> Result<(), LedgerError> {
         // Multi-pass encoding may process at most 2x the total frame count
-        let max_possible = duration_sec.saturating_mul(fps as u64).saturating_mul(2).max(120);
+        let max_possible = duration_sec
+            .saturating_mul(fps as u64)
+            .saturating_mul(2)
+            .max(120);
 
         if claimed_frames > max_possible {
             return Err(LedgerError::InflatedResourceClaim {
@@ -282,4 +338,3 @@ impl SanityBoundsChecker {
         Ok(())
     }
 }
-

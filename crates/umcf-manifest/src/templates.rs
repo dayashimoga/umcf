@@ -1,8 +1,8 @@
 //! Built-in reproducible job templates catalog for UMCF.
 
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 
 use crate::error::ManifestError;
 use crate::schema::WorkloadManifest;
@@ -82,8 +82,10 @@ impl TemplateCatalog {
 
     /// Initializes a template into the specified target directory.
     pub fn init_template(name: &str, target_dir: &Path) -> Result<PathBuf, ManifestError> {
-        let yaml_content = Self::get_template(name)
-            .ok_or_else(|| ManifestError::TemplateNotFound { name: name.to_string() })?;
+        let yaml_content =
+            Self::get_template(name).ok_or_else(|| ManifestError::TemplateNotFound {
+                name: name.to_string(),
+            })?;
 
         // Verify that template parses and validates cleanly before writing
         let manifest = WorkloadManifest::from_yaml_str(yaml_content)?;

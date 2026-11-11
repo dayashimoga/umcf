@@ -20,8 +20,8 @@ use umcf_storage::erasure::{
     ReedSolomonErasureEngine,
 };
 use umcf_storage::placement::{
-    DurabilityState, FailureDomainPlacementEngine, ObjectPlacementRecord,
-    ShardHealthRepairWorker, StorageNodeDescriptor,
+    DurabilityState, FailureDomainPlacementEngine, ObjectPlacementRecord, ShardHealthRepairWorker,
+    StorageNodeDescriptor,
 };
 
 // ===========================================================================
@@ -32,7 +32,8 @@ use umcf_storage::placement::{
 fn test_convergent_xchacha20poly1305_encryption_dedup_and_wrong_namespace_isolation() {
     let namespace_a = [0x42u8; 32];
     let namespace_b = [0x99u8; 32];
-    let plaintext = b"Universal Mobile Compute Fabric: Convergent Deduplicating Cipher Test Payload 2026";
+    let plaintext =
+        b"Universal Mobile Compute Fabric: Convergent Deduplicating Cipher Test Payload 2026";
 
     // 1. Encrypt identical plaintext twice within Namespace A
     let (ct1, hash1) = ConvergentChunkCipher::encrypt(&namespace_a, plaintext)
@@ -40,8 +41,14 @@ fn test_convergent_xchacha20poly1305_encryption_dedup_and_wrong_namespace_isolat
     let (ct2, hash2) = ConvergentChunkCipher::encrypt(&namespace_a, plaintext)
         .expect("second encrypt under namespace A should succeed");
 
-    assert_eq!(hash1, hash2, "Identical plaintext must yield identical BLAKE3 hashes");
-    assert_eq!(ct1, ct2, "Convergent cipher must produce identical ciphertext within same namespace");
+    assert_eq!(
+        hash1, hash2,
+        "Identical plaintext must yield identical BLAKE3 hashes"
+    );
+    assert_eq!(
+        ct1, ct2,
+        "Convergent cipher must produce identical ciphertext within same namespace"
+    );
 
     // 2. High Shannon entropy verification (> 7.99 bits/byte for realistic payload)
     let large_plaintext = vec![0xABu8; 16384];
@@ -63,13 +70,19 @@ fn test_convergent_xchacha20poly1305_encryption_dedup_and_wrong_namespace_isolat
     // 3. Successful decryption within Namespace A
     let decrypted = ConvergentChunkCipher::decrypt(&namespace_a, &ct1, &hash1)
         .expect("decryption within namespace A must succeed");
-    assert_eq!(decrypted, plaintext, "Decrypted plaintext must match original byte-for-byte");
+    assert_eq!(
+        decrypted, plaintext,
+        "Decrypted plaintext must match original byte-for-byte"
+    );
 
     // 4. Encrypt identical plaintext within Namespace B
     let (ct_b, hash_b) = ConvergentChunkCipher::encrypt(&namespace_b, plaintext)
         .expect("encrypt under namespace B should succeed");
     assert_eq!(hash_b, hash1, "Plaintext BLAKE3 hash is namespace-agnostic");
-    assert_ne!(ct_b, ct1, "Different namespaces must produce distinct ciphertexts");
+    assert_ne!(
+        ct_b, ct1,
+        "Different namespaces must produce distinct ciphertexts"
+    );
 
     // 5. Attempt decryption of Ciphertext A using Namespace B secret (Must FAIL with authentication tag mismatch)
     let bad_decrypt = ConvergentChunkCipher::decrypt(&namespace_b, &ct1, &hash1);
@@ -101,7 +114,10 @@ fn test_rs_4_2_and_6_3_all_combinations_of_missing_shards_reconstruct_exact() {
         let mut slot = full.clone();
         slot[drop1] = None;
         let rec = engine_4_2.decode(&slot).expect("1 missing decode");
-        assert_eq!(rec, payload, "Failed RS(4,2) recovery with dropped shard {drop1}");
+        assert_eq!(
+            rec, payload,
+            "Failed RS(4,2) recovery with dropped shard {drop1}"
+        );
     }
 
     // 2 missing: 15 combinations
@@ -112,7 +128,10 @@ fn test_rs_4_2_and_6_3_all_combinations_of_missing_shards_reconstruct_exact() {
             slot[drop1] = None;
             slot[drop2] = None;
             let rec = engine_4_2.decode(&slot).expect("2 missing decode");
-            assert_eq!(rec, payload, "Failed RS(4,2) recovery with dropped shards ({drop1}, {drop2})");
+            assert_eq!(
+                rec, payload,
+                "Failed RS(4,2) recovery with dropped shards ({drop1}, {drop2})"
+            );
             combo_count_4_2 += 1;
         }
     }
@@ -124,14 +143,18 @@ fn test_rs_4_2_and_6_3_all_combinations_of_missing_shards_reconstruct_exact() {
     let shards_6_3 = engine_6_3.encode(payload).expect("RS(6,3) encode");
     assert_eq!(shards_6_3.len(), 9);
 
-    let full_6_3: Vec<Option<EncryptedShard>> = shards_6_3.iter().map(|s| Some(s.clone())).collect();
+    let full_6_3: Vec<Option<EncryptedShard>> =
+        shards_6_3.iter().map(|s| Some(s.clone())).collect();
 
     // Test dropping 1 shard: 9 combinations
     for drop1 in 0..9 {
         let mut slot = full_6_3.clone();
         slot[drop1] = None;
         let rec = engine_6_3.decode(&slot).expect("1 missing decode");
-        assert_eq!(rec, payload, "Failed RS(6,3) recovery with dropped shard {drop1}");
+        assert_eq!(
+            rec, payload,
+            "Failed RS(6,3) recovery with dropped shard {drop1}"
+        );
     }
 
     // Test dropping 2 shards: 36 combinations
@@ -141,7 +164,10 @@ fn test_rs_4_2_and_6_3_all_combinations_of_missing_shards_reconstruct_exact() {
             slot[drop1] = None;
             slot[drop2] = None;
             let rec = engine_6_3.decode(&slot).expect("2 missing decode");
-            assert_eq!(rec, payload, "Failed RS(6,3) recovery with dropped shards ({drop1}, {drop2})");
+            assert_eq!(
+                rec, payload,
+                "Failed RS(6,3) recovery with dropped shards ({drop1}, {drop2})"
+            );
         }
     }
 
@@ -155,7 +181,10 @@ fn test_rs_4_2_and_6_3_all_combinations_of_missing_shards_reconstruct_exact() {
                 slot[drop2] = None;
                 slot[drop3] = None;
                 let rec = engine_6_3.decode(&slot).expect("3 missing decode");
-                assert_eq!(rec, payload, "Failed RS(6,3) recovery with dropped shards ({drop1}, {drop2}, {drop3})");
+                assert_eq!(
+                    rec, payload,
+                    "Failed RS(6,3) recovery with dropped shards ({drop1}, {drop2}, {drop3})"
+                );
                 combo_count_6_3 += 1;
             }
         }
@@ -165,7 +194,8 @@ fn test_rs_4_2_and_6_3_all_combinations_of_missing_shards_reconstruct_exact() {
 
 #[test]
 fn test_corrupted_shard_detected_by_blake3_before_rs_matrix_inversion() {
-    let payload = b"Zero Trust Storage Guard: Corrupted shards must be rejected before RS decoding!";
+    let payload =
+        b"Zero Trust Storage Guard: Corrupted shards must be rejected before RS decoding!";
     let profile = RedundancyProfile::balanced_rs42();
     let engine = ReedSolomonErasureEngine::new(profile).expect("engine init");
     let shards = engine.encode(payload).expect("encode");
@@ -179,23 +209,35 @@ fn test_corrupted_shard_detected_by_blake3_before_rs_matrix_inversion() {
 
     // Since shards 1..5 (5 shards) are valid, and RS(4,2) only needs 4 shards:
     // The engine must detect shard 0 corruption via BLAKE3, reject it, and reconstruct from valid shards!
-    let recovered = engine.decode(&slots).expect("should recover despite 1 corrupted shard");
-    assert_eq!(recovered, payload, "Reconstructed payload must match original despite corruption");
+    let recovered = engine
+        .decode(&slots)
+        .expect("should recover despite 1 corrupted shard");
+    assert_eq!(
+        recovered, payload,
+        "Reconstructed payload must match original despite corruption"
+    );
 
     // Now corrupt shard 1 as well (now 2 corrupt shards: 0 and 1, leaving 4 valid shards: 2, 3, 4, 5)
     if let Some(ref mut shard1) = slots[1] {
         shard1.payload[1] ^= 0xAA;
     }
-    let recovered2 = engine.decode(&slots).expect("should recover with 2 corrupt and 4 valid shards");
+    let recovered2 = engine
+        .decode(&slots)
+        .expect("should recover with 2 corrupt and 4 valid shards");
     assert_eq!(recovered2, payload);
 
     // Corrupt shard 2 as well (now 3 corrupt shards, only 3 valid shards remain, but K = 4)
     if let Some(ref mut shard2) = slots[2] {
         shard2.payload[0] ^= 0x55;
     }
-    let err = engine.decode(&slots).expect_err("should fail when valid shards < K");
+    let err = engine
+        .decode(&slots)
+        .expect_err("should fail when valid shards < K");
     match err {
-        umcf_storage::StorageError::InsufficientShards { required, available } => {
+        umcf_storage::StorageError::InsufficientShards {
+            required,
+            available,
+        } => {
             assert_eq!(required, 4);
             assert_eq!(available, 3);
         }
@@ -265,13 +307,20 @@ fn test_failure_domain_placement_prefers_ac_power_and_distinct_subnets() {
     assert_eq!(selected.len(), 3);
     // Guarantees each node holds at most 1 shard when candidates >= total_shards
     let unique: HashSet<&NodeId> = selected.iter().collect();
-    assert_eq!(unique.len(), 3, "No node may receive duplicate shards when candidates >= shards");
+    assert_eq!(
+        unique.len(),
+        3,
+        "No node may receive duplicate shards when candidates >= shards"
+    );
 
     // All 3 selected nodes should span distinct failure domains and prefer AC nodes
     assert!(selected.contains(&node_ac_sub1.node_id));
     assert!(selected.contains(&node_ac_sub2.node_id));
     assert!(selected.contains(&node_ac_sub3.node_id));
-    assert!(!selected.contains(&node_bat_sub1.node_id), "Lower fitness battery phone in subnet 1 should not be selected");
+    assert!(
+        !selected.contains(&node_bat_sub1.node_id),
+        "Lower fitness battery phone in subnet 1 should not be selected"
+    );
 }
 
 // ===========================================================================
@@ -281,11 +330,12 @@ fn test_failure_domain_placement_prefers_ac_power_and_distinct_subnets() {
 #[test]
 fn test_6_node_rs_4_2_upload_kill_2_nodes_download_and_self_heal_to_7th_node() {
     let namespace = [0x55u8; 32];
-    let secret_data = b"Highly Confidential Research Shard: UMCF Self-Healing Erasure Verification 2026!";
+    let secret_data =
+        b"Highly Confidential Research Shard: UMCF Self-Healing Erasure Verification 2026!";
 
     // 1. Convergent client-side encryption
-    let (ciphertext, plaintext_blake3) = ConvergentChunkCipher::encrypt(&namespace, secret_data)
-        .expect("encrypt");
+    let (ciphertext, plaintext_blake3) =
+        ConvergentChunkCipher::encrypt(&namespace, secret_data).expect("encrypt");
 
     // 2. RS(4, 2) encoding into 6 shards (D0..D3, P0..P1)
     let profile = RedundancyProfile::balanced_rs42();
@@ -333,7 +383,8 @@ fn test_6_node_rs_4_2_upload_kill_2_nodes_download_and_self_heal_to_7th_node() {
 
     // 4. Initial audit: All 7 nodes online
     let mut active_nodes: HashSet<NodeId> = nodes.iter().map(|n| n.node_id.clone()).collect();
-    let initial_health = repair_worker.audit_object_health(object_cid, &active_nodes)
+    let initial_health = repair_worker
+        .audit_object_health(object_cid, &active_nodes)
         .expect("initial health");
     assert_eq!(initial_health.state, DurabilityState::Healthy);
     assert_eq!(initial_health.active_shards, 6);
@@ -345,7 +396,8 @@ fn test_6_node_rs_4_2_upload_kill_2_nodes_download_and_self_heal_to_7th_node() {
     active_nodes.remove(&killed_node_0);
     active_nodes.remove(&killed_node_1);
 
-    let degraded_health = repair_worker.audit_object_health(object_cid, &active_nodes)
+    let degraded_health = repair_worker
+        .audit_object_health(object_cid, &active_nodes)
         .expect("degraded health");
     assert_eq!(degraded_health.state, DurabilityState::Degraded);
     assert_eq!(degraded_health.active_shards, 4);
@@ -355,28 +407,38 @@ fn test_6_node_rs_4_2_upload_kill_2_nodes_download_and_self_heal_to_7th_node() {
     let stored_record = repair_worker.get_object(object_cid).expect("stored record");
     let mut available_slots = vec![None; 6];
     for (i, shard) in stored_record.shards.iter().enumerate() {
-        let assigned = stored_record.node_placements.get(&(i as u8)).expect("node assigned");
+        let assigned = stored_record
+            .node_placements
+            .get(&(i as u8))
+            .expect("node assigned");
         if active_nodes.contains(assigned) {
             available_slots[i] = Some(shard.clone());
         }
     }
-    let reconstructed_ct = engine.decode(&available_slots).expect("decode under 2 node outages");
+    let reconstructed_ct = engine
+        .decode(&available_slots)
+        .expect("decode under 2 node outages");
     assert_eq!(reconstructed_ct, ciphertext);
 
-    let decrypted_pt = ConvergentChunkCipher::decrypt(&namespace, &reconstructed_ct, &plaintext_blake3)
-        .expect("decrypt");
+    let decrypted_pt =
+        ConvergentChunkCipher::decrypt(&namespace, &reconstructed_ct, &plaintext_blake3)
+            .expect("decrypt");
     assert_eq!(decrypted_pt, secret_data);
 
     // 7. Trigger self-healing repair: Reconstructs shards and migrates to 7th spare node
-    let repair_events = repair_worker.audit_and_repair_all(&active_nodes, &nodes)
+    let repair_events = repair_worker
+        .audit_and_repair_all(&active_nodes, &nodes)
         .expect("self-healing repair");
     assert_eq!(repair_events.len(), 1);
     let event = &repair_events[0];
     assert_eq!(event.object_cid, object_cid);
-    assert!(event.transition_summary.contains("Degraded (4/6 Shards) -> Healing -> Healthy (6/6)"));
+    assert!(event
+        .transition_summary
+        .contains("Degraded (4/6 Shards) -> Healing -> Healthy (6/6)"));
 
     // Verify post-repair health is restored to Healthy (6/6)
-    let post_repair_health = repair_worker.audit_object_health(object_cid, &active_nodes)
+    let post_repair_health = repair_worker
+        .audit_object_health(object_cid, &active_nodes)
         .expect("post-repair health");
     assert_eq!(post_repair_health.state, DurabilityState::Healthy);
     assert_eq!(post_repair_health.active_shards, 6);
@@ -413,12 +475,13 @@ fn test_20_node_cluster_churn_simulation_zero_data_loss_100_objects() {
     // Store 100 objects
     let mut objects_meta = Vec::new();
     for obj_idx in 0..100 {
-        let data = format!("UMCF Object Payload #{obj_idx:04} - Resilient Churn Simulation Data").into_bytes();
+        let data = format!("UMCF Object Payload #{obj_idx:04} - Resilient Churn Simulation Data")
+            .into_bytes();
         let (ct, hash) = ConvergentChunkCipher::encrypt(&namespace, &data).expect("encrypt");
         let shards = engine.encode(&ct).expect("encode");
 
-        let placements = FailureDomainPlacementEngine::select_target_nodes(6, 2, &all_nodes)
-            .expect("placement");
+        let placements =
+            FailureDomainPlacementEngine::select_target_nodes(6, 2, &all_nodes).expect("placement");
         let mut placement_map = HashMap::new();
         for (idx, node_id) in placements.iter().enumerate() {
             placement_map.insert(idx as u8, node_id.clone());
@@ -445,7 +508,8 @@ fn test_20_node_cluster_churn_simulation_zero_data_loss_100_objects() {
         active_nodes.remove(&drop_node_b);
 
         // Run self-healing repair
-        let _events = repair_worker.audit_and_repair_all(&active_nodes, &all_nodes)
+        let _events = repair_worker
+            .audit_and_repair_all(&active_nodes, &all_nodes)
             .expect("repair during churn");
 
         // Re-add nodes
@@ -466,7 +530,10 @@ fn test_20_node_cluster_churn_simulation_zero_data_loss_100_objects() {
         let recovered_ct = engine.decode(&slots).expect("decode object after churn");
         let recovered_pt = ConvergentChunkCipher::decrypt(&namespace, &recovered_ct, expected_hash)
             .expect("decrypt object");
-        assert_eq!(&recovered_pt, expected_pt, "Object {cid} suffered corruption during churn simulation");
+        assert_eq!(
+            &recovered_pt, expected_pt,
+            "Object {cid} suffered corruption during churn simulation"
+        );
     }
 }
 

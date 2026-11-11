@@ -25,17 +25,29 @@ pub struct StreamResolution {
 impl StreamResolution {
     #[must_use]
     pub fn r1080p60() -> Self {
-        Self { width: 1920, height: 1080, fps: 60 }
+        Self {
+            width: 1920,
+            height: 1080,
+            fps: 60,
+        }
     }
 
     #[must_use]
     pub fn r720p60() -> Self {
-        Self { width: 1280, height: 720, fps: 60 }
+        Self {
+            width: 1280,
+            height: 720,
+            fps: 60,
+        }
     }
 
     #[must_use]
     pub fn r1080p30() -> Self {
-        Self { width: 1920, height: 1080, fps: 30 }
+        Self {
+            width: 1920,
+            height: 1080,
+            fps: 30,
+        }
     }
 }
 
@@ -79,7 +91,10 @@ impl DelayGradientAbrController {
         loss_fraction: f32,
         now_ms: u64,
     ) -> (u32, StreamResolution, AbrState) {
-        if self.prev_send_time_us > 0 && self.prev_recv_time_us > 0 && recv_time_us >= self.prev_recv_time_us {
+        if self.prev_send_time_us > 0
+            && self.prev_recv_time_us > 0
+            && recv_time_us >= self.prev_recv_time_us
+        {
             let send_delta = (send_time_us as f64 - self.prev_send_time_us as f64) / 1000.0;
             let recv_delta = (recv_time_us as f64 - self.prev_recv_time_us as f64) / 1000.0;
             let raw_gradient = recv_delta - send_delta;
@@ -114,19 +129,27 @@ impl DelayGradientAbrController {
             // Clean link with queuing delay gradient <= 2ms -> RampUp
             self.stable_headroom_duration_ms += 100;
 
-            if matches!(self.current_state, AbrState::PreemptiveBackoff | AbrState::ResolutionDownshift) {
+            if matches!(
+                self.current_state,
+                AbrState::PreemptiveBackoff | AbrState::ResolutionDownshift
+            ) {
                 self.current_state = AbrState::Hold;
-            } else if self.current_state == AbrState::Hold && self.stable_headroom_duration_ms > 500 {
+            } else if self.current_state == AbrState::Hold && self.stable_headroom_duration_ms > 500
+            {
                 self.current_state = AbrState::RampUp;
             }
 
             if self.current_state == AbrState::RampUp {
                 // Smooth ramp up: +8% per second (+0.8% per 100ms sample)
-                let increment = ((self.current_bitrate_kbps as f64) * 0.008).max(50.0).round() as u32;
-                self.current_bitrate_kbps = (self.current_bitrate_kbps + increment).min(self.max_bitrate_kbps);
+                let increment = ((self.current_bitrate_kbps as f64) * 0.008)
+                    .max(50.0)
+                    .round() as u32;
+                self.current_bitrate_kbps =
+                    (self.current_bitrate_kbps + increment).min(self.max_bitrate_kbps);
 
                 // Step resolution back up after 5.0s (5000 ms) of stable headroom
-                if self.stable_headroom_duration_ms >= 5000 && self.current_resolution.height == 720 {
+                if self.stable_headroom_duration_ms >= 5000 && self.current_resolution.height == 720
+                {
                     self.current_resolution = StreamResolution::r1080p60();
                 }
             }
@@ -135,6 +158,10 @@ impl DelayGradientAbrController {
             self.current_state = AbrState::Hold;
         }
 
-        (self.current_bitrate_kbps, self.current_resolution, self.current_state)
+        (
+            self.current_bitrate_kbps,
+            self.current_resolution,
+            self.current_state,
+        )
     }
 }

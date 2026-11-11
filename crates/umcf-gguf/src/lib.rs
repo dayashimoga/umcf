@@ -11,8 +11,8 @@
 pub mod error;
 pub mod estimator;
 pub mod license;
-pub mod parser;
 pub mod p2p_sync;
+pub mod parser;
 pub mod security;
 pub mod store;
 
@@ -22,17 +22,15 @@ pub use estimator::{
     CompatibilityVerdict, DeviceCapabilities, HardwareCompatibilityValidator, InferenceParams,
     LayerMemoryBreakdown, MemoryFootprintReport, ModelFootprintEstimator, OsPlatform,
 };
-pub use license::{
-    LicenseAcceptanceReceipt, LicenseCategory, LicensePolicyEngine,
-};
+pub use license::{LicenseAcceptanceReceipt, LicenseCategory, LicensePolicyEngine};
 pub use p2p_sync::{
     Bitfield, DownloadScope, MockPeerProvider, PeerChunkProvider, PeerScore,
     ResumableShardDownloader, SyncProgress, SyncStatus,
 };
 pub use parser::{
     create_test_gguf_bytes, GgmlType, GgufMetadataValue, GgufParser, GgufTensorInfo,
-    LayerWeightProfile, ModelArchitectureMetadata, ModelInspection, GGUF_MAGIC,
-    GGUF_VERSION_V2, GGUF_VERSION_V3,
+    LayerWeightProfile, ModelArchitectureMetadata, ModelInspection, GGUF_MAGIC, GGUF_VERSION_V2,
+    GGUF_VERSION_V3,
 };
 pub use security::{
     Ed25519PublicKey, ModelAccessPolicy, ModelIntegrityVerifier, ModelQuarantineManager,

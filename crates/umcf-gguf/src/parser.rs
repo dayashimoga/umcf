@@ -106,11 +106,35 @@ impl GgmlType {
     #[must_use]
     pub const fn block_size(&self) -> u64 {
         match self {
-            Self::F32 | Self::I32 | Self::I16 | Self::I8 | Self::I64 | Self::F64 | Self::F16 | Self::BF16 => 1,
-            Self::Q4_0 | Self::Q4_1 | Self::Q5_0 | Self::Q5_1 | Self::Q8_0 | Self::Q8_1 | Self::IQ4_NL => 32,
-            Self::Q2_K | Self::Q3_K | Self::Q4_K | Self::Q5_K | Self::Q6_K | Self::Q8_K
-            | Self::IQ2_XXS | Self::IQ2_XS | Self::IQ3_XXS | Self::IQ1_S | Self::IQ3_S | Self::IQ2_S
-            | Self::IQ4_XS | Self::IQ1_M => 256,
+            Self::F32
+            | Self::I32
+            | Self::I16
+            | Self::I8
+            | Self::I64
+            | Self::F64
+            | Self::F16
+            | Self::BF16 => 1,
+            Self::Q4_0
+            | Self::Q4_1
+            | Self::Q5_0
+            | Self::Q5_1
+            | Self::Q8_0
+            | Self::Q8_1
+            | Self::IQ4_NL => 32,
+            Self::Q2_K
+            | Self::Q3_K
+            | Self::Q4_K
+            | Self::Q5_K
+            | Self::Q6_K
+            | Self::Q8_K
+            | Self::IQ2_XXS
+            | Self::IQ2_XS
+            | Self::IQ3_XXS
+            | Self::IQ1_S
+            | Self::IQ3_S
+            | Self::IQ2_S
+            | Self::IQ4_XS
+            | Self::IQ1_M => 256,
         }
     }
 
@@ -156,9 +180,9 @@ impl GgmlType {
             return Ok(0);
         }
         let num_blocks = n_elements.div_ceil(blk);
-        num_blocks
-            .checked_mul(t_sz)
-            .ok_or_else(|| StoreError::CorruptedFile("tensor size byte calculation overflowed".into()))
+        num_blocks.checked_mul(t_sz).ok_or_else(|| {
+            StoreError::CorruptedFile("tensor size byte calculation overflowed".into())
+        })
     }
 
     #[must_use]
@@ -634,9 +658,9 @@ impl GgufParser {
             }
 
             let size_bytes = ggml_type.tensor_size_bytes(total_elements)?;
-            total_weight_bytes = total_weight_bytes
-                .checked_add(size_bytes)
-                .ok_or_else(|| StoreError::CorruptedFile("total model weight overflowed u64".into()))?;
+            total_weight_bytes = total_weight_bytes.checked_add(size_bytes).ok_or_else(|| {
+                StoreError::CorruptedFile("total model weight overflowed u64".into())
+            })?;
 
             let layer_index = parse_tensor_layer_index(&name);
 
@@ -792,7 +816,9 @@ pub fn create_test_gguf_bytes(
     buf.extend_from_slice(&(u64::from(embedding_len)).to_le_bytes());
     buf.extend_from_slice(&(quant_type as u32).to_le_bytes());
     buf.extend_from_slice(&current_offset.to_le_bytes());
-    let embd_size = quant_type.tensor_size_bytes(vocab_size * u64::from(embedding_len)).unwrap_or(0);
+    let embd_size = quant_type
+        .tensor_size_bytes(vocab_size * u64::from(embedding_len))
+        .unwrap_or(0);
     current_offset += embd_size;
 
     // Layer tensors
@@ -804,7 +830,9 @@ pub fn create_test_gguf_bytes(
         buf.extend_from_slice(&(u64::from(embedding_len)).to_le_bytes());
         buf.extend_from_slice(&(quant_type as u32).to_le_bytes());
         buf.extend_from_slice(&current_offset.to_le_bytes());
-        let q_size = quant_type.tensor_size_bytes(u64::from(embedding_len) * u64::from(embedding_len)).unwrap_or(0);
+        let q_size = quant_type
+            .tensor_size_bytes(u64::from(embedding_len) * u64::from(embedding_len))
+            .unwrap_or(0);
         current_offset += q_size;
 
         let v_name = format!("blk.{i}.attn_v.weight");
@@ -814,7 +842,9 @@ pub fn create_test_gguf_bytes(
         buf.extend_from_slice(&(u64::from(embedding_len)).to_le_bytes());
         buf.extend_from_slice(&(quant_type as u32).to_le_bytes());
         buf.extend_from_slice(&current_offset.to_le_bytes());
-        let v_size = quant_type.tensor_size_bytes(u64::from(embedding_len) * u64::from(embedding_len)).unwrap_or(0);
+        let v_size = quant_type
+            .tensor_size_bytes(u64::from(embedding_len) * u64::from(embedding_len))
+            .unwrap_or(0);
         current_offset += v_size;
     }
 
@@ -825,7 +855,9 @@ pub fn create_test_gguf_bytes(
     buf.extend_from_slice(&vocab_size.to_le_bytes());
     buf.extend_from_slice(&(quant_type as u32).to_le_bytes());
     buf.extend_from_slice(&current_offset.to_le_bytes());
-    let out_size = quant_type.tensor_size_bytes(u64::from(embedding_len) * vocab_size).unwrap_or(0);
+    let out_size = quant_type
+        .tensor_size_bytes(u64::from(embedding_len) * vocab_size)
+        .unwrap_or(0);
     current_offset += out_size;
 
     // Pad buffer to 32-byte alignment for data_offset

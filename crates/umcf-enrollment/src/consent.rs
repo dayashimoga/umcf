@@ -174,7 +174,11 @@ impl ResourceConsentPolicy {
         hasher.update(&self.max_vram_bytes.as_bytes().to_be_bytes());
         hasher.update(&self.max_storage_bytes.as_bytes().to_be_bytes());
 
-        let mut kinds: Vec<u8> = self.allowed_workload_kinds.iter().map(|k| *k as u8).collect();
+        let mut kinds: Vec<u8> = self
+            .allowed_workload_kinds
+            .iter()
+            .map(|k| *k as u8)
+            .collect();
         kinds.sort_unstable();
         hasher.update(&kinds);
 
@@ -199,16 +203,18 @@ impl ResourceConsentPolicy {
 
     /// Verifies the cryptographic Ed25519 signature on this policy against the owner public key.
     pub fn verify_signature(&self, owner_public_key: &[u8; 32]) -> Result<(), EnrollmentError> {
-        let verifying_key = VerifyingKey::from_bytes(owner_public_key)
-            .map_err(|_| EnrollmentError::ForgedConsentPolicy {
+        let verifying_key = VerifyingKey::from_bytes(owner_public_key).map_err(|_| {
+            EnrollmentError::ForgedConsentPolicy {
                 owner_did: self.owner_did.clone(),
-            })?;
+            }
+        })?;
 
         let digest = self.compute_digest();
-        NodeKeypair::verify_with_key(&verifying_key, &digest, &self.owner_signature)
-            .map_err(|_| EnrollmentError::ForgedConsentPolicy {
+        NodeKeypair::verify_with_key(&verifying_key, &digest, &self.owner_signature).map_err(|_| {
+            EnrollmentError::ForgedConsentPolicy {
                 owner_did: self.owner_did.clone(),
-            })
+            }
+        })
     }
 }
 

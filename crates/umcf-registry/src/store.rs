@@ -110,16 +110,17 @@ impl LocalRegistryStore {
                 let iter = nodes_table.iter()?;
                 for item in iter {
                     let (k, v) = item?;
-                    let node_id = NodeId::parse(k.value())
-                        .map_err(|e| RegistryError::CorruptedEntry {
+                    let node_id =
+                        NodeId::parse(k.value()).map_err(|e| RegistryError::CorruptedEntry {
                             table: "nodes_v1",
                             details: format!("invalid node DID '{}': {e}", k.value()),
                         })?;
-                    let entry: NodeCrdtEntry = bincode::deserialize(v.value())
-                        .map_err(|e| RegistryError::CorruptedEntry {
+                    let entry: NodeCrdtEntry = bincode::deserialize(v.value()).map_err(|e| {
+                        RegistryError::CorruptedEntry {
                             table: "nodes_v1",
                             details: format!("failed to deserialize NodeCrdtEntry: {e}"),
-                        })?;
+                        }
+                    })?;
                     max_persisted_hlc = max_persisted_hlc.max(entry.add_hlc);
                     if let Some(rem) = entry.remove_hlc {
                         max_persisted_hlc = max_persisted_hlc.max(rem);
@@ -134,15 +135,17 @@ impl LocalRegistryStore {
                 let iter = caps_table.iter()?;
                 for item in iter {
                     let (k, v) = item?;
-                    let node_id = NodeId::parse(k.value())
-                        .map_err(|e| RegistryError::CorruptedEntry {
+                    let node_id =
+                        NodeId::parse(k.value()).map_err(|e| RegistryError::CorruptedEntry {
                             table: "capabilities_v1",
                             details: format!("invalid node DID '{}': {e}", k.value()),
                         })?;
-                    let entry: CapabilityCrdtEntry = bincode::deserialize(v.value())
-                        .map_err(|e| RegistryError::CorruptedEntry {
-                            table: "capabilities_v1",
-                            details: format!("failed to deserialize CapabilityCrdtEntry: {e}"),
+                    let entry: CapabilityCrdtEntry =
+                        bincode::deserialize(v.value()).map_err(|e| {
+                            RegistryError::CorruptedEntry {
+                                table: "capabilities_v1",
+                                details: format!("failed to deserialize CapabilityCrdtEntry: {e}"),
+                            }
                         })?;
                     max_persisted_hlc = max_persisted_hlc.max(entry.hlc);
                     in_memory_state.capabilities.insert(node_id, entry);
@@ -155,16 +158,17 @@ impl LocalRegistryStore {
                 let iter = consent_table.iter()?;
                 for item in iter {
                     let (k, v) = item?;
-                    let node_id = NodeId::parse(k.value())
-                        .map_err(|e| RegistryError::CorruptedEntry {
+                    let node_id =
+                        NodeId::parse(k.value()).map_err(|e| RegistryError::CorruptedEntry {
                             table: "consent_v1",
                             details: format!("invalid node DID '{}': {e}", k.value()),
                         })?;
-                    let entry: ConsentCrdtEntry = bincode::deserialize(v.value())
-                        .map_err(|e| RegistryError::CorruptedEntry {
+                    let entry: ConsentCrdtEntry = bincode::deserialize(v.value()).map_err(|e| {
+                        RegistryError::CorruptedEntry {
                             table: "consent_v1",
                             details: format!("failed to deserialize ConsentCrdtEntry: {e}"),
-                        })?;
+                        }
+                    })?;
                     max_persisted_hlc = max_persisted_hlc.max(entry.hlc);
                     in_memory_state.consent.insert(node_id, entry);
                 }
@@ -177,11 +181,12 @@ impl LocalRegistryStore {
                 for item in iter {
                     let (k, v) = item?;
                     let serial = k.value().to_string();
-                    let entry: CrlCrdtEntry = bincode::deserialize(v.value())
-                        .map_err(|e| RegistryError::CorruptedEntry {
+                    let entry: CrlCrdtEntry = bincode::deserialize(v.value()).map_err(|e| {
+                        RegistryError::CorruptedEntry {
                             table: "cert_crl_v1",
                             details: format!("failed to deserialize CrlCrdtEntry: {e}"),
-                        })?;
+                        }
+                    })?;
                     max_persisted_hlc = max_persisted_hlc.max(entry.hlc);
                     in_memory_state.crl_entries.insert(serial, entry);
                 }
@@ -541,9 +546,7 @@ impl LocalRegistryStore {
                         if merged == *existing {
                             summary.ignored_stale += 1;
                         } else {
-                            state_guard
-                                .consent
-                                .insert(node_id.clone(), merged.clone());
+                            state_guard.consent.insert(node_id.clone(), merged.clone());
                             summary.consent_updated += 1;
                             consent_to_persist.push(merged);
                         }
@@ -666,7 +669,10 @@ impl LocalRegistryStore {
     }
 
     /// Generates a causal delta for synchronizing with peers.
-    pub fn generate_delta(&self, since: Option<HlcTimestamp>) -> Result<RegistryDelta, RegistryError> {
+    pub fn generate_delta(
+        &self,
+        since: Option<HlcTimestamp>,
+    ) -> Result<RegistryDelta, RegistryError> {
         let ts = self.hlc.tick()?;
         let state_guard = self.state.read().unwrap_or_else(|p| p.into_inner());
         Ok(state_guard.generate_delta(since, self.local_node_id.clone(), ts))

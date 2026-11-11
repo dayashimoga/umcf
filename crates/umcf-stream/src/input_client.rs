@@ -6,9 +6,7 @@
 use std::collections::VecDeque;
 
 use crate::error::StreamError;
-use crate::input_protocol::{
-    CursorShapeType, HostFeedbackEvent, InputEvent, InputEventPacket,
-};
+use crate::input_protocol::{CursorShapeType, HostFeedbackEvent, InputEvent, InputEventPacket};
 
 /// Active controller rumble motor intensities and duration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -192,4 +190,3 @@ impl InputReturnClient {
                 || rumble.right_trigger_motor > 0)
     }
 }
-

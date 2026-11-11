@@ -4,8 +4,8 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use e2e_cluster::{
-    CaseCollisionDetector, MultiOsClusterHarness, PageAlignmentValidator,
-    PlatformError, TargetArch, TargetOs, VirtualPathNormalizer, PAGE_SIZE_16KB,
+    CaseCollisionDetector, MultiOsClusterHarness, PageAlignmentValidator, PlatformError,
+    TargetArch, TargetOs, VirtualPathNormalizer, PAGE_SIZE_16KB,
 };
 
 // ============================================================================
@@ -25,7 +25,8 @@ fn test_virtual_path_normalizer_rejects_windows_backslashes_and_drive_letters_on
     assert_eq!(p3, "a/b/c");
 
     // 2. Windows backslash path MUST be rejected
-    let err1 = VirtualPathNormalizer::normalize_wire_path("models\\llama3\\model.gguf").unwrap_err();
+    let err1 =
+        VirtualPathNormalizer::normalize_wire_path("models\\llama3\\model.gguf").unwrap_err();
     assert!(
         matches!(err1, PlatformError::InvalidWirePath { .. }),
         "Expected InvalidWirePath for backslashes, got {err1:?}"
@@ -64,7 +65,13 @@ fn test_16kb_page_size_mmap_alignment_for_android15_and_apple_silicon() {
     // 4 KiB aligned offset (unaligned to 16 KiB) MUST fail
     let err = PageAlignmentValidator::validate_16kb_alignment(4096).unwrap_err();
     assert!(
-        matches!(err, PlatformError::PageAlignmentViolation { required_page_size_bytes: 16384, .. }),
+        matches!(
+            err,
+            PlatformError::PageAlignmentViolation {
+                required_page_size_bytes: 16384,
+                ..
+            }
+        ),
         "Expected 16 KiB PageAlignmentViolation, got {err:?}"
     );
 
@@ -74,8 +81,14 @@ fn test_16kb_page_size_mmap_alignment_for_android15_and_apple_silicon() {
     // Padding helper round-trips
     assert_eq!(PageAlignmentValidator::pad_to_16kb(0), 0);
     assert_eq!(PageAlignmentValidator::pad_to_16kb(100), PAGE_SIZE_16KB);
-    assert_eq!(PageAlignmentValidator::pad_to_16kb(PAGE_SIZE_16KB), PAGE_SIZE_16KB);
-    assert_eq!(PageAlignmentValidator::pad_to_16kb(PAGE_SIZE_16KB + 1), PAGE_SIZE_16KB * 2);
+    assert_eq!(
+        PageAlignmentValidator::pad_to_16kb(PAGE_SIZE_16KB),
+        PAGE_SIZE_16KB
+    );
+    assert_eq!(
+        PageAlignmentValidator::pad_to_16kb(PAGE_SIZE_16KB + 1),
+        PAGE_SIZE_16KB * 2
+    );
 }
 
 #[test]
@@ -90,10 +103,7 @@ fn test_case_collision_detector_for_cross_os_storage_manifests() {
     assert!(CaseCollisionDetector::detect_collisions(&valid_paths).is_ok());
 
     // Colliding paths MUST be detected (e.g., README.md and readme.md)
-    let colliding_paths = vec![
-        "docs/README.md",
-        "docs/readme.md",
-    ];
+    let colliding_paths = vec!["docs/README.md", "docs/readme.md"];
     let err1 = CaseCollisionDetector::detect_collisions(&colliding_paths).unwrap_err();
     assert!(
         matches!(err1, PlatformError::CaseCollisionDetected { .. }),
@@ -101,10 +111,7 @@ fn test_case_collision_detector_for_cross_os_storage_manifests() {
     );
 
     // Deep path collision
-    let deep_collision = vec![
-        "assets/textures/Wood.png",
-        "assets/textures/wood.png",
-    ];
+    let deep_collision = vec!["assets/textures/Wood.png", "assets/textures/wood.png"];
     let err2 = CaseCollisionDetector::detect_collisions(&deep_collision).unwrap_err();
     assert!(matches!(err2, PlatformError::CaseCollisionDetected { .. }));
 }
@@ -185,7 +192,10 @@ fn test_hardware_host_os_interop_telemetry_receipt() {
     let is_linux = cfg!(target_os = "linux");
     let is_macos = cfg!(target_os = "macos");
 
-    assert!(is_windows || is_linux || is_macos, "Unknown host operating system");
+    assert!(
+        is_windows || is_linux || is_macos,
+        "Unknown host operating system"
+    );
 
     // Generate local host attestation telemetry
     let host_os = if is_windows {

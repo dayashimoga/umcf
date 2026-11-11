@@ -119,10 +119,18 @@ impl GpuBackend {
     #[must_use]
     pub fn free_vram_bytes(&self) -> usize {
         match self {
-            Self::Cuda { free_vram_bytes, .. }
-            | Self::Rocm { free_vram_bytes, .. }
-            | Self::Vulkan { free_vram_bytes, .. } => *free_vram_bytes,
-            Self::Metal { free_memory_bytes, .. } => *free_memory_bytes,
+            Self::Cuda {
+                free_vram_bytes, ..
+            }
+            | Self::Rocm {
+                free_vram_bytes, ..
+            }
+            | Self::Vulkan {
+                free_vram_bytes, ..
+            } => *free_vram_bytes,
+            Self::Metal {
+                free_memory_bytes, ..
+            } => *free_memory_bytes,
         }
     }
 
@@ -527,7 +535,8 @@ impl FallbackExecutor {
                 Ok(model) => match SafeLlamaContext::new(Arc::clone(&model), &ctx_params) {
                     Ok(ctx) => return Ok((model, ctx)),
                     Err(e) => {
-                        let reason = format!("Context creation failed on {}: {e}", self.current_tier);
+                        let reason =
+                            format!("Context creation failed on {}: {e}", self.current_tier);
                         if attempts >= max_attempts || !self.step_down(&reason) {
                             return Err(e);
                         }

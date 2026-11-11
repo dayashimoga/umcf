@@ -62,7 +62,10 @@ impl ModelRegistryService {
     }
 
     /// Retrieves a model manifest by ID.
-    pub fn get_model_manifest(&self, model_id: &ModelId) -> Result<ModelManifest, ModelRegistryError> {
+    pub fn get_model_manifest(
+        &self,
+        model_id: &ModelId,
+    ) -> Result<ModelManifest, ModelRegistryError> {
         let manifest = self.store.get_manifest(model_id)?;
         Ok(manifest)
     }
@@ -86,9 +89,13 @@ impl ModelRegistryService {
         scope: DownloadScope,
         peers: &[Arc<dyn PeerChunkProvider>],
     ) -> Result<String, ModelRegistryError> {
-        let session_id = format!("sync-{}-{}", manifest.model_id.to_hex(), std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_or(0, |d| d.as_millis()));
+        let session_id = format!(
+            "sync-{}-{}",
+            manifest.model_id.to_hex(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_millis())
+        );
 
         let mut downloader = ResumableShardDownloader::new((*self.store).clone(), manifest, scope)?;
         let _ = downloader.sync(peers);
@@ -137,7 +144,10 @@ impl ModelRegistryService {
     }
 
     /// Retrieves current progress for a sync session.
-    pub fn subscribe_sync_progress(&self, session_id: &str) -> Result<SyncProgress, ModelRegistryError> {
+    pub fn subscribe_sync_progress(
+        &self,
+        session_id: &str,
+    ) -> Result<SyncProgress, ModelRegistryError> {
         let sessions = self
             .active_sessions
             .read()
@@ -152,4 +162,3 @@ impl ModelRegistryService {
         Ok(downloader.progress())
     }
 }
-

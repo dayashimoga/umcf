@@ -61,7 +61,9 @@ fn test_unit_activation_packet_serialization_and_blake3_checksum_validation() {
 
     // Tamper payload byte
     packet.payload[0] ^= 0xFF;
-    let err = packet.verify_checksum().expect_err("tampered packet must fail checksum");
+    let err = packet
+        .verify_checksum()
+        .expect_err("tampered packet must fail checksum");
     match err {
         EngineError::RpcChecksumMismatch { .. } => {}
         other => panic!("expected RpcChecksumMismatch, got {other:?}"),
@@ -80,10 +82,14 @@ fn test_unit_fp16_and_q8_activation_codec_roundtrip_snr() {
     // 1. FP16 Codec
     let fp16_bytes = ActivationCodec::encode_f32_to_f16(&original);
     assert_eq!(fp16_bytes.len(), 512 * 2);
-    let fp16_recon = ActivationCodec::decode_f16_to_f32(&fp16_bytes).expect("FP16 decode must succeed");
+    let fp16_recon =
+        ActivationCodec::decode_f16_to_f32(&fp16_bytes).expect("FP16 decode must succeed");
     let snr_fp16 = ActivationCodec::compute_snr_db(&original, &fp16_recon);
     println!("FP16 SNR: {snr_fp16:.2} dB");
-    assert!(snr_fp16 > 60.0, "FP16 SNR ({snr_fp16:.2} dB) must be > 60 dB");
+    assert!(
+        snr_fp16 > 60.0,
+        "FP16 SNR ({snr_fp16:.2} dB) must be > 60 dB"
+    );
 
     // 2. Q8_0 Codec
     let q8_bytes = ActivationCodec::encode_f32_to_q8_0(&original);
@@ -141,7 +147,11 @@ fn test_unit_kv_step_commit_and_rollback_state_consistency() {
     assert_eq!(worker.cached_tokens, vec![101, 102]);
 
     worker.rollback_step(2);
-    assert_eq!(worker.cached_tokens, vec![101], "rollback must restore committed state");
+    assert_eq!(
+        worker.cached_tokens,
+        vec![101],
+        "rollback must restore committed state"
+    );
     assert_eq!(worker.uncommitted_step_idx, None);
 }
 
@@ -212,7 +222,10 @@ fn test_integration_worker_disconnect_mid_generation_seamless_failover() {
     let stage2 = create_test_stage(2, "did:umcf:stage-2", 16, 23, false, true);
 
     let mut failover_map = HashMap::new();
-    failover_map.insert("did:umcf:stage-1".to_string(), "did:umcf:standby-node".to_string());
+    failover_map.insert(
+        "did:umcf:stage-1".to_string(),
+        "did:umcf:standby-node".to_string(),
+    );
 
     let mut coord = DistributedPipelineCoordinator::new(
         "session-failover".to_string(),
@@ -239,7 +252,10 @@ fn test_integration_worker_disconnect_mid_generation_seamless_failover() {
         .expect("failover trigger");
 
     println!("Failover recovered in {recovery_ms} ms (SLA <= 1500 ms)");
-    assert!(recovery_ms < 1500, "recovery took {recovery_ms} ms, exceeding 1500 ms SLA");
+    assert!(
+        recovery_ms < 1500,
+        "recovery took {recovery_ms} ms, exceeding 1500 ms SLA"
+    );
     assert!(coord.is_fault_recovered);
 
     // Resume tokens 16..=25 seamlessly without dropping stream
@@ -279,7 +295,10 @@ fn test_integration_unauthenticated_rpc_connection_rejected_by_mtls_guard() {
     );
 
     let err = worker
-        .process_forward(&packet, Some((&expired_token, &caller_node, current_time_s)))
+        .process_forward(
+            &packet,
+            Some((&expired_token, &caller_node, current_time_s)),
+        )
         .expect_err("expired token must be rejected");
 
     match err {
@@ -312,7 +331,10 @@ fn test_simulation_link_jitter_and_packet_loss_recovery() {
         assert!(jitter_ms <= 20);
 
         let res = coord.forward_token_step(&input, step as i32, ActivationDtype::fp16_or_f32(step));
-        assert!(res.is_ok(), "forward step {step} failed under simulated jitter");
+        assert!(
+            res.is_ok(),
+            "forward step {step} failed under simulated jitter"
+        );
     }
 
     assert_eq!(coord.current_step_idx, 50);
@@ -345,7 +367,10 @@ fn test_hardware_distributed_inference_latency_benchmark() {
     let elapsed = start.elapsed();
     let per_token_ms = elapsed.as_secs_f64() * 1000.0 / 10.0;
     println!("Distributed forward latency on hardware: {per_token_ms:.2} ms/token");
-    assert!(per_token_ms < 100.0, "latency must be reasonable on hardware");
+    assert!(
+        per_token_ms < 100.0,
+        "latency must be reasonable on hardware"
+    );
 }
 
 // ---------------------------------------------------------------------------

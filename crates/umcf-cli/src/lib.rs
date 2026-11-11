@@ -46,7 +46,11 @@ impl Default for CliOptions {
 
 /// Core CLI command runner returning `(exit_code, output_text, is_json)`.
 pub fn run_cli(args: &[String]) -> (CliExitCode, String, bool) {
-    if args.is_empty() || args.iter().any(|a| a == "--help" || a == "-h" || a == "help") {
+    if args.is_empty()
+        || args
+            .iter()
+            .any(|a| a == "--help" || a == "-h" || a == "help")
+    {
         return (CliExitCode::Ok, usage_text(), false);
     }
 
@@ -211,7 +215,11 @@ fn dispatch_command(tokens: &[&str], opts: &CliOptions) -> (CliExitCode, String,
         }
 
         "cluster" | "top" => {
-            let sub = if root_cmd == "top" { "top" } else { tokens.get(1).copied().unwrap_or("nodes") };
+            let sub = if root_cmd == "top" {
+                "top"
+            } else {
+                tokens.get(1).copied().unwrap_or("nodes")
+            };
             match sub {
                 "nodes" => {
                     let nodes = vec![
@@ -403,15 +411,26 @@ fn dispatch_command(tokens: &[&str], opts: &CliOptions) -> (CliExitCode, String,
                             }
                         }
                         "pull" => {
-                            let m = tokens.get(3).copied().unwrap_or("llama-3-8b-instruct.Q4_K_M.gguf");
+                            let m = tokens
+                                .get(3)
+                                .copied()
+                                .unwrap_or("llama-3-8b-instruct.Q4_K_M.gguf");
                             let res = json!({ "status": "PULLED", "model": m, "size_mb": 4920 });
                             if opts.format_json {
                                 (CliExitCode::Ok, res.to_string(), true)
                             } else {
-                                (CliExitCode::Ok, format!("Pulled model '{m}' (4,920 MB) into local cache."), false)
+                                (
+                                    CliExitCode::Ok,
+                                    format!("Pulled model '{m}' (4,920 MB) into local cache."),
+                                    false,
+                                )
                             }
                         }
-                        _ => (CliExitCode::UsageError, "Usage: umcf ai models <list|pull|inspect|rm>".to_string(), false),
+                        _ => (
+                            CliExitCode::UsageError,
+                            "Usage: umcf ai models <list|pull|inspect|rm>".to_string(),
+                            false,
+                        ),
                     }
                 }
                 "run" | "chat" => {
@@ -449,7 +468,9 @@ fn dispatch_command(tokens: &[&str], opts: &CliOptions) -> (CliExitCode, String,
                 }
                 unknown => (
                     CliExitCode::UsageError,
-                    format!("Unknown ai subcommand '{unknown}'. Available: models, run, chat, serve"),
+                    format!(
+                        "Unknown ai subcommand '{unknown}'. Available: models, run, chat, serve"
+                    ),
                     false,
                 ),
             }
@@ -532,7 +553,12 @@ fn dispatch_command(tokens: &[&str], opts: &CliOptions) -> (CliExitCode, String,
             if opts.format_json {
                 (CliExitCode::Ok, res.to_string(), true)
             } else {
-                (CliExitCode::Ok, "Submitted distributed GPU tile rendering job (3840x2160, 16 tiles).".to_string(), false)
+                (
+                    CliExitCode::Ok,
+                    "Submitted distributed GPU tile rendering job (3840x2160, 16 tiles)."
+                        .to_string(),
+                    false,
+                )
             }
         }
 
@@ -541,7 +567,12 @@ fn dispatch_command(tokens: &[&str], opts: &CliOptions) -> (CliExitCode, String,
             if opts.format_json {
                 (CliExitCode::Ok, res.to_string(), true)
             } else {
-                (CliExitCode::Ok, "Submitted segment-parallel media transcoding job (AV1, 8 segments).".to_string(), false)
+                (
+                    CliExitCode::Ok,
+                    "Submitted segment-parallel media transcoding job (AV1, 8 segments)."
+                        .to_string(),
+                    false,
+                )
             }
         }
 
@@ -550,7 +581,11 @@ fn dispatch_command(tokens: &[&str], opts: &CliOptions) -> (CliExitCode, String,
             if opts.format_json {
                 (CliExitCode::Ok, res.to_string(), true)
             } else {
-                (CliExitCode::Ok, "Remote streaming session active (AV1 60fps, 12 Mbps).".to_string(), false)
+                (
+                    CliExitCode::Ok,
+                    "Remote streaming session active (AV1 60fps, 12 Mbps).".to_string(),
+                    false,
+                )
             }
         }
 
@@ -559,7 +594,11 @@ fn dispatch_command(tokens: &[&str], opts: &CliOptions) -> (CliExitCode, String,
             if opts.format_json {
                 (CliExitCode::Ok, res.to_string(), true)
             } else {
-                (CliExitCode::Ok, "Compute Credits Balance: 1,420.50 UMCF (Reputation: 98.5%)".to_string(), false)
+                (
+                    CliExitCode::Ok,
+                    "Compute Credits Balance: 1,420.50 UMCF (Reputation: 98.5%)".to_string(),
+                    false,
+                )
             }
         }
 
@@ -580,7 +619,11 @@ fn execute_doctor(opts: &CliOptions) -> (CliExitCode, String, bool) {
         out.push_str("=== UMCF SYSTEM DIAGNOSTICS & DOCTOR PRE-FLIGHT ===\n");
         out.push_str(&format!(
             "Status: {} (Passed: {}/{} | Warnings: {} | Failures: {})\n\n",
-            report.overall_status, report.passed, report.total_checks, report.warnings, report.failures
+            report.overall_status,
+            report.passed,
+            report.total_checks,
+            report.warnings,
+            report.failures
         ));
         for check in &report.checks {
             out.push_str(&format!(

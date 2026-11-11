@@ -113,4 +113,3 @@ pub struct PinResponse {
     pub mode: String,
     pub hydration_status: String,
 }
-

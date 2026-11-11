@@ -1,9 +1,9 @@
 //! Multi-OS Cluster Integration Suite orchestrating scenarios across Android, iOS, Windows, Linux, macOS, and Web.
 
-use std::collections::HashMap;
 use ed25519_dalek::SigningKey;
 use rand_core::OsRng;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use umcf_ledger::{
     DoubleEntryCreditLedger, MeteredResourceVector, PricingSchedule, ReceiptBody,
@@ -199,7 +199,8 @@ impl MultiOsClusterHarness {
             passed: true,
             duration_ms: 45,
             evidence_hash: node_fingerprints[0].1.clone(),
-            details: "All 6 OS nodes (Win, Linux, Mac, Android, iOS, Web) converged via mTLS 1.3".to_string(),
+            details: "All 6 OS nodes (Win, Linux, Mac, Android, iOS, Web) converged via mTLS 1.3"
+                .to_string(),
         })
     }
 
@@ -287,7 +288,9 @@ impl MultiOsClusterHarness {
         }
 
         // Restitched Annex-B segment verification
-        let composite_hash = blake3::hash(tile_digests[0].as_bytes()).to_hex().to_string();
+        let composite_hash = blake3::hash(tile_digests[0].as_bytes())
+            .to_hex()
+            .to_string();
 
         Ok(ScenarioResult {
             scenario_name: "Scenario 4: Cross-OS GPU Tile Render & Video Transcode".to_string(),
@@ -334,21 +337,21 @@ impl MultiOsClusterHarness {
         let worker = "node-mac-m3";
         let job_id = "job-cross-os-01";
 
-        self.ledger.mint_initial_credits(requester, 50_000_000, "Seed").map_err(|e| {
-            PlatformError::ScenarioFailed {
+        self.ledger
+            .mint_initial_credits(requester, 50_000_000, "Seed")
+            .map_err(|e| PlatformError::ScenarioFailed {
                 scenario: "Scenario 6".to_string(),
                 target_os: "all".to_string(),
                 reason: format!("Mint error: {e}"),
-            }
-        })?;
+            })?;
 
-        self.ledger.lock_job_escrow(requester, job_id, 10_000_000).map_err(|e| {
-            PlatformError::ScenarioFailed {
+        self.ledger
+            .lock_job_escrow(requester, job_id, 10_000_000)
+            .map_err(|e| PlatformError::ScenarioFailed {
                 scenario: "Scenario 6".to_string(),
                 target_os: "all".to_string(),
                 reason: format!("Escrow error: {e}"),
-            }
-        })?;
+            })?;
 
         // 3. Create and Dual-Sign Receipt
         let worker_sk = SigningKey::generate(&mut OsRng);
@@ -387,22 +390,23 @@ impl MultiOsClusterHarness {
             },
             &worker_sk,
         );
-        receipt.countersign(&requester_sk, &worker_vk, output_bytes).map_err(|e| {
-            PlatformError::ScenarioFailed {
+        receipt
+            .countersign(&requester_sk, &worker_vk, output_bytes)
+            .map_err(|e| PlatformError::ScenarioFailed {
                 scenario: "Scenario 6".to_string(),
                 target_os: "all".to_string(),
                 reason: format!("Countersign error: {e}"),
-            }
-        })?;
+            })?;
 
         let pricing = PricingSchedule::default();
-        let payout = self.ledger.settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk).map_err(|e| {
-            PlatformError::ScenarioFailed {
+        let payout = self
+            .ledger
+            .settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk)
+            .map_err(|e| PlatformError::ScenarioFailed {
                 scenario: "Scenario 6".to_string(),
                 target_os: "all".to_string(),
                 reason: format!("Settle error: {e}"),
-            }
-        })?;
+            })?;
 
         assert!(payout > 0);
         assert!(self.ledger.verify_global_zero_sum_invariant());

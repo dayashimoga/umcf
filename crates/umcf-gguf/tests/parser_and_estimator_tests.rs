@@ -82,8 +82,14 @@ fn test_unit_ggml_quantization_block_size_and_byte_math_all_types() {
 
     assert_eq!(GgmlType::Q4_K.block_size(), 256);
     assert_eq!(GgmlType::Q4_K.type_size(), 144);
-    assert_eq!(GgmlType::Q4_K.tensor_size_bytes(256).expect("q4_k size"), 144);
-    assert_eq!(GgmlType::Q4_K.tensor_size_bytes(512).expect("q4_k size"), 288);
+    assert_eq!(
+        GgmlType::Q4_K.tensor_size_bytes(256).expect("q4_k size"),
+        144
+    );
+    assert_eq!(
+        GgmlType::Q4_K.tensor_size_bytes(512).expect("q4_k size"),
+        288
+    );
 
     assert_eq!(GgmlType::Q5_K.block_size(), 256);
     assert_eq!(GgmlType::Q5_K.type_size(), 176);
@@ -257,14 +263,22 @@ fn test_hardware_compatibility_validator_real_device_profiles() {
     // Android reserves 1.5 GiB safety headroom -> Safe free memory = 3.0 GiB
     // Required memory is > 3.0 GiB -> Must recommend cluster split to prevent LMK kill!
     let android_caps = DeviceCapabilities::mock_android_phone();
-    let android_verdict = HardwareCompatibilityValidator::validate(&report, &android_caps, &inspection);
+    let android_verdict =
+        HardwareCompatibilityValidator::validate(&report, &android_caps, &inspection);
     match android_verdict {
-        CompatibilityVerdict::RequiresClusterSplit { min_nodes_needed, bottleneck_reason, suggested_layer_splits } => {
+        CompatibilityVerdict::RequiresClusterSplit {
+            min_nodes_needed,
+            bottleneck_reason,
+            suggested_layer_splits,
+        } => {
             assert!(min_nodes_needed >= 2);
             assert!(bottleneck_reason.contains("exceeds node safe available headroom"));
             assert!(!suggested_layer_splits.is_empty());
         }
-        other => panic!("Expected Android phone to require cluster split, got: {:?}", other),
+        other => panic!(
+            "Expected Android phone to require cluster split, got: {:?}",
+            other
+        ),
     }
 
     // Profile 2: Apple Silicon Mac (16 GB unified, 12 GB available)
@@ -273,7 +287,12 @@ fn test_hardware_compatibility_validator_real_device_profiles() {
     let mac_caps = DeviceCapabilities::mock_apple_silicon_mac();
     let mac_verdict = HardwareCompatibilityValidator::validate(&report, &mac_caps, &inspection);
     match mac_verdict {
-        CompatibilityVerdict::FitsSingleNode { backend, recommended_gpu_layers, max_safe_ctx, estimated_headroom_bytes } => {
+        CompatibilityVerdict::FitsSingleNode {
+            backend,
+            recommended_gpu_layers,
+            max_safe_ctx,
+            estimated_headroom_bytes,
+        } => {
             assert_eq!(backend, "Metal");
             assert_eq!(recommended_gpu_layers, 32);
             assert!(max_safe_ctx >= 4096);
@@ -285,9 +304,14 @@ fn test_hardware_compatibility_validator_real_device_profiles() {
     // Profile 3: High-end RTX 4090 Desktop (24 GB VRAM)
     // Model easily fits! Must recommend single node with CUDA backend!
     let desktop_caps = DeviceCapabilities::mock_desktop_gpu();
-    let desktop_verdict = HardwareCompatibilityValidator::validate(&report, &desktop_caps, &inspection);
+    let desktop_verdict =
+        HardwareCompatibilityValidator::validate(&report, &desktop_caps, &inspection);
     match desktop_verdict {
-        CompatibilityVerdict::FitsSingleNode { backend, recommended_gpu_layers, .. } => {
+        CompatibilityVerdict::FitsSingleNode {
+            backend,
+            recommended_gpu_layers,
+            ..
+        } => {
             assert_eq!(backend, "CUDA");
             assert_eq!(recommended_gpu_layers, 32);
         }
@@ -297,12 +321,16 @@ fn test_hardware_compatibility_validator_real_device_profiles() {
     // Profile 4: Incompatible Quantization Type
     let mut restricted_caps = desktop_caps.clone();
     restricted_caps.supported_quantizations = vec![GgmlType::F16, GgmlType::F32]; // No Q4_K
-    let incompat_verdict = HardwareCompatibilityValidator::validate(&report, &restricted_caps, &inspection);
+    let incompat_verdict =
+        HardwareCompatibilityValidator::validate(&report, &restricted_caps, &inspection);
     match incompat_verdict {
         CompatibilityVerdict::IncompatibleQuantization { unsupported_types } => {
             assert!(unsupported_types.contains(&GgmlType::Q4_K));
         }
-        other => panic!("Expected IncompatibleQuantization verdict, got: {:?}", other),
+        other => panic!(
+            "Expected IncompatibleQuantization verdict, got: {:?}",
+            other
+        ),
     }
 }
 
@@ -329,13 +357,19 @@ fn test_manual_context_length_slider_transitions() {
         };
 
         let report = ModelFootprintEstimator::estimate(&inspection, &params);
-        assert!(report.kv_cache_bytes > prev_kv, "KV cache must strictly increase with context");
+        assert!(
+            report.kv_cache_bytes > prev_kv,
+            "KV cache must strictly increase with context"
+        );
         prev_kv = report.kv_cache_bytes;
 
         // Verify linearity: doubling context doubles KV cache
         let per_token = report.kv_cache_per_token_bytes;
         let expected = (per_token * ctx as f64).round() as u64;
         let diff = (report.kv_cache_bytes as i64 - expected as i64).abs();
-        assert!(diff <= 16, "KV cache scaling must be linear within quantization block boundary");
+        assert!(
+            diff <= 16,
+            "KV cache scaling must be linear within quantization block boundary"
+        );
     }
 }

@@ -38,7 +38,11 @@ fn test_deeply_nested_gguf_array_and_json_schema_recursion_limit_enforced() {
     let result = check_nesting_depth(&deep_brackets, MAX_RECURSION_DEPTH);
     assert!(matches!(
         result,
-        Err(FuzzError::RecursionDepthExceeded { depth: 33, limit: 32, .. })
+        Err(FuzzError::RecursionDepthExceeded {
+            depth: 33,
+            limit: 32,
+            ..
+        })
     ));
 
     // Safe 16 nested levels passes
@@ -174,4 +178,3 @@ fn test_manual_fuzz_summary_report_and_coverage_schema() {
     assert_eq!(json_val["panics_detected"], 0);
     assert_eq!(json_val["crashes_detected"], 0);
 }
-

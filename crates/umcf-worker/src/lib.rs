@@ -17,8 +17,8 @@ pub use runtime::{
     ChaosEvent, ChaosKind, ClusterNodeRuntime, DistributedJobResult, NodeRuntimeConfig,
 };
 pub use sandbox::{
-    ArtifactStager, EphemeralScratchDir, ExecutionReceipt, NativeEngineRegistry, NativeKernelRunner,
-    WasmSandboxConfig, WasmSandboxRunner,
+    ArtifactStager, EphemeralScratchDir, ExecutionReceipt, NativeEngineRegistry,
+    NativeKernelRunner, WasmSandboxConfig, WasmSandboxRunner,
 };
 
 use umcf_core::{CpuArch, HardwareProfile, NodeId, PlatformKind, ResourceConsentPolicy};

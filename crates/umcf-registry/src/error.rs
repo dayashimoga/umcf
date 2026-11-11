@@ -46,10 +46,7 @@ pub enum RegistryError {
     ClockDrift(u64),
 
     #[error("Cloud sync HTTP error: {status} - {message}")]
-    CloudHttp {
-        status: u16,
-        message: String,
-    },
+    CloudHttp { status: u16, message: String },
 
     #[error("Network error during cloud sync: {0}")]
     Network(String),

@@ -117,7 +117,9 @@ impl StunMessage {
     /// Returns `NetError::InvalidStun` if header length, magic cookie, or attribute framing is malformed.
     pub fn parse(buf: &[u8]) -> Result<Self, NetError> {
         if buf.len() < 20 {
-            return Err(NetError::InvalidStun("STUN message shorter than 20-byte header".into()));
+            return Err(NetError::InvalidStun(
+                "STUN message shorter than 20-byte header".into(),
+            ));
         }
 
         let msg_type = u16::from_be_bytes([buf[0], buf[1]]);
@@ -150,14 +152,17 @@ impl StunMessage {
             offset += 4;
 
             if offset + attr_len > end {
-                return Err(NetError::InvalidStun("STUN attribute extends beyond payload".into()));
+                return Err(NetError::InvalidStun(
+                    "STUN attribute extends beyond payload".into(),
+                ));
             }
 
             let attr_data = &buf[offset..offset + attr_len];
 
             match attr_type {
                 ATTR_XOR_MAPPED_ADDRESS => {
-                    xor_mapped_address = Some(decode_xor_mapped_address(attr_data, &transaction_id)?);
+                    xor_mapped_address =
+                        Some(decode_xor_mapped_address(attr_data, &transaction_id)?);
                 }
                 ATTR_MAPPED_ADDRESS => {
                     if xor_mapped_address.is_none() {
@@ -168,10 +173,17 @@ impl StunMessage {
                     software = String::from_utf8(attr_data.to_vec()).ok();
                 }
                 ATTR_FINGERPRINT if attr_data.len() == 4 => {
-                    let expected_fp = u32::from_be_bytes([attr_data[0], attr_data[1], attr_data[2], attr_data[3]]);
+                    let expected_fp = u32::from_be_bytes([
+                        attr_data[0],
+                        attr_data[1],
+                        attr_data[2],
+                        attr_data[3],
+                    ]);
                     let crc = crc32_ieee(&buf[..offset - 4]);
                     if (crc ^ FINGERPRINT_XOR_MASK) != expected_fp {
-                        return Err(NetError::InvalidStun("STUN FINGERPRINT CRC32 mismatch".into()));
+                        return Err(NetError::InvalidStun(
+                            "STUN FINGERPRINT CRC32 mismatch".into(),
+                        ));
                     }
                 }
                 _ => {
@@ -233,9 +245,14 @@ fn encode_xor_mapped_address(addr: SocketAddr, transaction_id: &[u8; 12]) -> Vec
 }
 
 /// Decodes an `XOR-MAPPED-ADDRESS` attribute payload conforming to RFC 8489 §14.5.
-fn decode_xor_mapped_address(data: &[u8], transaction_id: &[u8; 12]) -> Result<SocketAddr, NetError> {
+fn decode_xor_mapped_address(
+    data: &[u8],
+    transaction_id: &[u8; 12],
+) -> Result<SocketAddr, NetError> {
     if data.len() < 4 {
-        return Err(NetError::InvalidStun("XOR-MAPPED-ADDRESS attribute too short".into()));
+        return Err(NetError::InvalidStun(
+            "XOR-MAPPED-ADDRESS attribute too short".into(),
+        ));
     }
 
     let family = data[1];
@@ -245,7 +262,9 @@ fn decode_xor_mapped_address(data: &[u8], transaction_id: &[u8; 12]) -> Result<S
     match family {
         0x01 => {
             if data.len() < 8 {
-                return Err(NetError::InvalidStun("Truncated IPv4 XOR-MAPPED-ADDRESS".into()));
+                return Err(NetError::InvalidStun(
+                    "Truncated IPv4 XOR-MAPPED-ADDRESS".into(),
+                ));
             }
             let x_ip = u32::from_be_bytes([data[4], data[5], data[6], data[7]]);
             let raw_ip = x_ip ^ STUN_MAGIC_COOKIE;
@@ -253,7 +272,9 @@ fn decode_xor_mapped_address(data: &[u8], transaction_id: &[u8; 12]) -> Result<S
         }
         0x02 => {
             if data.len() < 20 {
-                return Err(NetError::InvalidStun("Truncated IPv6 XOR-MAPPED-ADDRESS".into()));
+                return Err(NetError::InvalidStun(
+                    "Truncated IPv6 XOR-MAPPED-ADDRESS".into(),
+                ));
             }
             let mut xor_key = [0u8; 16];
             xor_key[0..4].copy_from_slice(&STUN_MAGIC_COOKIE.to_be_bytes());
@@ -282,20 +303,26 @@ fn decode_mapped_address(data: &[u8]) -> Result<SocketAddr, NetError> {
     match family {
         0x01 => {
             if data.len() < 8 {
-                return Err(NetError::InvalidStun("Truncated IPv4 MAPPED-ADDRESS".into()));
+                return Err(NetError::InvalidStun(
+                    "Truncated IPv4 MAPPED-ADDRESS".into(),
+                ));
             }
             let ip = Ipv4Addr::new(data[4], data[5], data[6], data[7]);
             Ok(SocketAddr::new(IpAddr::V4(ip), port))
         }
         0x02 => {
             if data.len() < 20 {
-                return Err(NetError::InvalidStun("Truncated IPv6 MAPPED-ADDRESS".into()));
+                return Err(NetError::InvalidStun(
+                    "Truncated IPv6 MAPPED-ADDRESS".into(),
+                ));
             }
             let mut octets = [0u8; 16];
             octets.copy_from_slice(&data[4..20]);
             Ok(SocketAddr::new(IpAddr::V6(Ipv6Addr::from(octets)), port))
         }
-        other => Err(NetError::InvalidStun(format!("Unknown family 0x{other:02X}"))),
+        other => Err(NetError::InvalidStun(format!(
+            "Unknown family 0x{other:02X}"
+        ))),
     }
 }
 

@@ -110,7 +110,9 @@ impl AdaptiveFecCodec {
         let count_available = available_shards.iter().filter(|s| s.is_some()).count();
         if count_available < k {
             return Err(StreamError::EncoderFailed {
-                reason: format!("insufficient shards for FEC recovery: need {k}, have {count_available}"),
+                reason: format!(
+                    "insufficient shards for FEC recovery: need {k}, have {count_available}"
+                ),
             });
         }
 
@@ -273,7 +275,8 @@ impl FramePacketizer {
         encoded: &EncodedFrameMetadata,
         now_us: u64,
     ) -> Result<Vec<MediaShardPacket>, StreamError> {
-        let mut complete_bytes = Vec::with_capacity(encoded.header_annexb.len() + encoded.payload_annexb.len());
+        let mut complete_bytes =
+            Vec::with_capacity(encoded.header_annexb.len() + encoded.payload_annexb.len());
         complete_bytes.extend_from_slice(&encoded.header_annexb);
         complete_bytes.extend_from_slice(&encoded.payload_annexb);
 
@@ -345,7 +348,8 @@ impl ZeroDelayJitterBuffer {
         packet: MediaShardPacket,
     ) -> Result<Option<Vec<u8>>, StreamError> {
         let seq = packet.header.frame_seq;
-        let total_shards = (packet.header.data_shards_count + packet.header.parity_shards_count) as usize;
+        let total_shards =
+            (packet.header.data_shards_count + packet.header.parity_shards_count) as usize;
         let k = packet.header.data_shards_count as usize;
 
         let shards_slot = self
@@ -395,7 +399,11 @@ impl ZeroDelayJitterBuffer {
         if let Some(header) = self.frame_headers.get(&frame_seq) {
             let shards_slot = self.incomplete_frames.get(&frame_seq);
             let missing_count = if let Some(shards) = shards_slot {
-                shards.iter().take(header.data_shards_count as usize).filter(|s| s.is_none()).count()
+                shards
+                    .iter()
+                    .take(header.data_shards_count as usize)
+                    .filter(|s| s.is_none())
+                    .count()
             } else {
                 header.data_shards_count as usize
             };
@@ -404,7 +412,11 @@ impl ZeroDelayJitterBuffer {
             if current_rtt_ms < 15.0 && missing_count <= 2 {
                 let mut missing_indices = Vec::new();
                 if let Some(shards) = shards_slot {
-                    for (i, s) in shards.iter().enumerate().take(header.data_shards_count as usize) {
+                    for (i, s) in shards
+                        .iter()
+                        .enumerate()
+                        .take(header.data_shards_count as usize)
+                    {
                         if s.is_none() {
                             missing_indices.push(i as u16);
                         }

@@ -231,7 +231,10 @@ mod tests {
 
         let elapsed = start.elapsed();
         let elapsed_ms = elapsed.as_millis();
-        println!("Full enrollment handshake latency: {} ms (target < 50 ms)", elapsed_ms);
+        println!(
+            "Full enrollment handshake latency: {} ms (target < 50 ms)",
+            elapsed_ms
+        );
 
         // Verify issued certificate
         assert_eq!(node_cert.did(), candidate.did_key());
@@ -287,13 +290,9 @@ mod tests {
         assert!(cert_alice.is_ok(), "First redemption by Alice must succeed");
 
         // 2. Candidate Bob attempts to redeem the same single-use token (Replay Attack)
-        let req_bob = CandidateEnroller::prepare_join_request(
-            &candidate_bob,
-            &token,
-            hardware_caps,
-            now_ms,
-        )
-        .expect("bob prepare join");
+        let req_bob =
+            CandidateEnroller::prepare_join_request(&candidate_bob, &token, hardware_caps, now_ms)
+                .expect("bob prepare join");
 
         let cert_bob = coordinator.process_join_request(&token, &req_bob, now_ms);
         assert!(
@@ -328,7 +327,12 @@ mod tests {
 
         // Verify ObserverGuest only has ReadClusterState
         assert!(rbac
-            .authorize(actor, Role::ObserverGuest, Permission::ReadClusterState, &scope)
+            .authorize(
+                actor,
+                Role::ObserverGuest,
+                Permission::ReadClusterState,
+                &scope
+            )
             .is_ok());
         for p in [
             Permission::SubmitJob,
@@ -458,7 +462,10 @@ mod tests {
 
         let reject_res = enforcer.evaluate_task_assignment(&gpu_request, &current_env);
         assert!(
-            matches!(reject_res, Err(EnrollmentError::WorkloadNotPermitted { .. })),
+            matches!(
+                reject_res,
+                Err(EnrollmentError::WorkloadNotPermitted { .. })
+            ),
             "Expected WorkloadNotPermitted error for GPU inference, got: {:?}",
             reject_res
         );
@@ -486,7 +493,9 @@ mod tests {
         )
         .expect("sign updated policy");
 
-        let update_event = enforcer.update_policy(updated_policy).expect("update policy");
+        let update_event = enforcer
+            .update_policy(updated_policy)
+            .expect("update policy");
         let update_elapsed = update_start.elapsed();
         let update_ms = update_elapsed.as_millis();
         println!("Policy update latency: {} ms (target < 10 ms)", update_ms);
@@ -969,11 +978,8 @@ mod tests {
                 if i != j {
                     let drop = ((i * 13 + j * 7) % 100) < 15;
                     if !drop {
-                        let resp = coords[j].handle_request_vote(
-                            &vote_requests[i],
-                            &profiles[j],
-                            now_ms,
-                        );
+                        let resp =
+                            coords[j].handle_request_vote(&vote_requests[i], &profiles[j], now_ms);
                         let _ = coords[i].handle_vote_response(&resp, now_ms);
                     }
                 }

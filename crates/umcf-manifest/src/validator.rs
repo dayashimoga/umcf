@@ -1,7 +1,7 @@
 //! Strict static validator and DAG analyzer for UMCF workload manifests.
 
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use serde_json::Value;
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 use crate::error::ManifestError;
 use crate::schema::{ParameterType, WorkloadManifest, SUPPORTED_API_VERSION, WORKFLOW_KIND};

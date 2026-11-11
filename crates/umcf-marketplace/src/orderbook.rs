@@ -1,8 +1,8 @@
 //! Compute marketplace order book, constraint-aware matching engine, and lease contracts.
 
-use std::collections::HashMap;
 use ed25519_dalek::{Signer, SigningKey, VerifyingKey};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use umcf_ledger::PricingSchedule;
 
 use crate::error::MarketError;
@@ -313,7 +313,8 @@ impl MarketplaceMatchingEngine {
         score += hw_bonus.min(10_000);
 
         // Cost inverse factor (lower base fee = higher score)
-        let cost_bonus = 5000_u64.saturating_sub((offer.pricing.base_task_fee_micro as u64).min(5000));
+        let cost_bonus =
+            5000_u64.saturating_sub((offer.pricing.base_task_fee_micro as u64).min(5000));
         score += cost_bonus;
 
         score
@@ -379,4 +380,3 @@ impl MarketplaceMatchingEngine {
         Ok(contract)
     }
 }
-

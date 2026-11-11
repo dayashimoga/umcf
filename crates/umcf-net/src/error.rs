@@ -16,27 +16,16 @@ pub enum NetError {
     InvalidBeacon(String),
 
     #[error("Beacon rejected: cluster mismatch (expected '{expected}', got '{actual}')")]
-    ClusterMismatch {
-        expected: String,
-        actual: String,
-    },
+    ClusterMismatch { expected: String, actual: String },
 
     #[error("Cryptographic signature verification failed for node '{node_id}'")]
-    SignatureVerificationFailed {
-        node_id: String,
-    },
+    SignatureVerificationFailed { node_id: String },
 
     #[error("Replay protection: beacon with timestamp {timestamp} or seq {seq} already processed")]
-    ReplayDetected {
-        timestamp: u64,
-        seq: u64,
-    },
+    ReplayDetected { timestamp: u64, seq: u64 },
 
     #[error("Rate limit exceeded for peer '{addr}': {count} beacons received")]
-    RateLimited {
-        addr: String,
-        count: usize,
-    },
+    RateLimited { addr: String, count: usize },
 
     #[error("QUIC connection error: {0}")]
     QuicConnection(String),
@@ -51,10 +40,7 @@ pub enum NetError {
     InvalidCertificate(String),
 
     #[error("Certificate revoked by ClusterCrl: serial '{serial}', did '{did}'")]
-    CertificateRevoked {
-        serial: String,
-        did: String,
-    },
+    CertificateRevoked { serial: String, did: String },
 
     #[error("Mutual attestation failed: {0}")]
     AttestationFailed(String),
@@ -86,4 +72,3 @@ pub enum NetError {
     #[error("Network engine shutdown")]
     Shutdown,
 }
-

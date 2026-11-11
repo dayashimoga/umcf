@@ -952,8 +952,12 @@ fn test_s4_p2_sp1_manually_verified_explain_json_audit() {
     ))
     .expect("add task 3");
 
-    dag.add_edge("preprocess_data", "heavy_neural_inference", 10 * 1024 * 1024)
-        .expect("edge 1->2");
+    dag.add_edge(
+        "preprocess_data",
+        "heavy_neural_inference",
+        10 * 1024 * 1024,
+    )
+    .expect("edge 1->2");
     dag.add_edge("heavy_neural_inference", "render_output", 1024 * 1024)
         .expect("edge 2->3");
 
@@ -963,7 +967,8 @@ fn test_s4_p2_sp1_manually_verified_explain_json_audit() {
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let explain_path = workspace_root.join("artifacts/evidence/stage-04/scheduler_placement_explain.json");
+    let explain_path =
+        workspace_root.join("artifacts/evidence/stage-04/scheduler_placement_explain.json");
 
     if let Some(parent) = explain_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -1045,7 +1050,12 @@ fn test_s4_p2_sp2_unit_water_filling_partition_ratio() {
 
     let partitioner = AdaptivePartitioner::new();
     let plan = partitioner
-        .partition_workload(&workload, &nodes, &desktop_id, PartitionScheme::DataParallel)
+        .partition_workload(
+            &workload,
+            &nodes,
+            &desktop_id,
+            PartitionScheme::DataParallel,
+        )
         .expect("partition plan");
 
     assert_eq!(plan.total_units, 10_000);
@@ -1137,7 +1147,12 @@ fn test_s4_p2_sp2_integration_speedup_over_desktop_and_uniform() {
 
     let partitioner = AdaptivePartitioner::new();
     let plan = partitioner
-        .partition_workload(&workload, &nodes, &desktop_id, PartitionScheme::DataParallel)
+        .partition_workload(
+            &workload,
+            &nodes,
+            &desktop_id,
+            PartitionScheme::DataParallel,
+        )
         .expect("partition plan");
 
     println!(
@@ -1180,7 +1195,10 @@ fn test_s4_p2_sp2_integration_speedup_over_desktop_and_uniform() {
         .map(|s| s.estimated_wall_clock_ms)
         .fold(f64::INFINITY, f64::min);
     let skew_percent = ((max_time - min_time) / max_time) * 100.0;
-    println!("[Integration Skew] Wall-clock skew: {:.2}% (< 10% target)", skew_percent);
+    println!(
+        "[Integration Skew] Wall-clock skew: {:.2}% (< 10% target)",
+        skew_percent
+    );
     assert!(
         skew_percent < 10.0,
         "Wall-clock skew across slices must be < 10% (was {:.2}%)",
@@ -1405,12 +1423,18 @@ fn test_s4_p2_sp2_manually_verified_speedup_evidence_export() {
 
     let partitioner = AdaptivePartitioner::new();
     let plan = partitioner
-        .partition_workload(&workload, &nodes, &desktop_id, PartitionScheme::DataParallel)
+        .partition_workload(
+            &workload,
+            &nodes,
+            &desktop_id,
+            PartitionScheme::DataParallel,
+        )
         .expect("partition plan");
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let speedup_path = workspace_root.join("artifacts/evidence/stage-04/heterogeneous_partition_speedup.json");
+    let speedup_path =
+        workspace_root.join("artifacts/evidence/stage-04/heterogeneous_partition_speedup.json");
 
     if let Some(parent) = speedup_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -1467,9 +1491,14 @@ fn test_s4_p2_sp3_unit_drr_fairness_aging_and_admission_rejection() {
         10 * 1024 * 1024,
         1_000_000,
     );
-    let reject_err = queue.enqueue(overflow_job).expect_err("must reject over-quota requester");
+    let reject_err = queue
+        .enqueue(overflow_job)
+        .expect_err("must reject over-quota requester");
     match reject_err {
-        SchedulingError::ClusterOverloaded { retry_after_secs, reason } => {
+        SchedulingError::ClusterOverloaded {
+            retry_after_secs,
+            reason,
+        } => {
             assert_eq!(retry_after_secs, 15);
             assert!(reason.contains("Per-requester"));
         }
@@ -1485,9 +1514,14 @@ fn test_s4_p2_sp3_unit_drr_fairness_aging_and_admission_rejection() {
         80 * 1024 * 1024, // 30MB + 80MB = 110MB > 100MB limit
         1_000_000,
     );
-    let mem_err = queue.enqueue(memory_hog).expect_err("must reject memory overflow");
+    let mem_err = queue
+        .enqueue(memory_hog)
+        .expect_err("must reject memory overflow");
     match mem_err {
-        SchedulingError::ClusterOverloaded { retry_after_secs, reason } => {
+        SchedulingError::ClusterOverloaded {
+            retry_after_secs,
+            reason,
+        } => {
             assert_eq!(retry_after_secs, 10);
             assert!(reason.contains("memory quota"));
         }
@@ -1551,7 +1585,9 @@ fn test_s4_p2_sp3_integration_interactive_bypass_under_15ms() {
             1024 * 1024,
             interactive_submit_t,
         );
-        queue.enqueue(interactive_job).expect("enqueue interactive job");
+        queue
+            .enqueue(interactive_job)
+            .expect("enqueue interactive job");
     }
 
     // Dispatch time: t = 1,005_000 µs (3 ms after interactive arrival)
@@ -1595,7 +1631,12 @@ fn test_s4_p2_sp3_simulation_deadlock_free_gang_scheduling() {
     let node_c = make_node_id(30);
     let node_d = make_node_id(40);
 
-    let all_nodes = [node_a.clone(), node_b.clone(), node_c.clone(), node_d.clone()];
+    let all_nodes = [
+        node_a.clone(),
+        node_b.clone(),
+        node_c.clone(),
+        node_d.clone(),
+    ];
 
     // 1,000 randomized concurrent gang reservation attempts across contending subsets
     let mut rng_state: u64 = 0x12345678abcdef01;
@@ -1718,7 +1759,8 @@ fn test_s4_p2_sp3_manually_verified_queue_fairness_json_audit() {
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let report_path = workspace_root.join("artifacts/evidence/stage-04/queue_fairness_and_backpressure.json");
+    let report_path =
+        workspace_root.join("artifacts/evidence/stage-04/queue_fairness_and_backpressure.json");
 
     if let Some(parent) = report_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -1734,5 +1776,3 @@ fn test_s4_p2_sp3_manually_verified_queue_fairness_json_audit() {
     assert!(report_path.exists());
     assert!(!report_json.is_empty());
 }
-
-

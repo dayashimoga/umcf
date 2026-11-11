@@ -28,7 +28,10 @@ pub enum LedgerError {
 
     /// The computed output hash does not match the receipt's claimed output digest.
     #[error("Output hash mismatch: reported {reported_hash}, verified {actual_hash}")]
-    OutputHashMismatch { reported_hash: String, actual_hash: String },
+    OutputHashMismatch {
+        reported_hash: String,
+        actual_hash: String,
+    },
 
     /// Finalized receipt requires requester countersignature.
     #[error("Missing requester countersignature on finalized receipt {receipt_id}")]
@@ -51,7 +54,9 @@ pub enum LedgerError {
     StorageError(String),
 
     /// Double-entry journal legs do not balance (sum of debits != sum of credits).
-    #[error("Unbalanced ledger transaction: sum of debits ({debits}) != sum of credits ({credits})")]
+    #[error(
+        "Unbalanced ledger transaction: sum of debits ({debits}) != sum of credits ({credits})"
+    )]
     UnbalancedTransaction { debits: u128, credits: u128 },
 
     /// An account does not have sufficient balance to perform debit.

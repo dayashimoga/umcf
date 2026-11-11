@@ -7,8 +7,8 @@
 
 #![forbid(unsafe_code)]
 
-use crate::error::StorageError;
 use crate::erasure::{EncryptedShard, RedundancyProfile, ReedSolomonErasureEngine};
+use crate::error::StorageError;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use umcf_core::types::NodeId;
@@ -105,7 +105,10 @@ impl FailureDomainPlacementEngine {
         // Group candidates by failure domain
         let mut domain_map: HashMap<String, Vec<&StorageNodeDescriptor>> = HashMap::new();
         for node in candidates {
-            domain_map.entry(node.failure_domain.clone()).or_default().push(node);
+            domain_map
+                .entry(node.failure_domain.clone())
+                .or_default()
+                .push(node);
         }
 
         // Sort candidates within each failure domain by descending fitness score
@@ -140,10 +143,15 @@ impl FailureDomainPlacementEngine {
                 if let Some(nodes) = domain_map.get(domain) {
                     // Find highest scoring node in this domain that has not exceeded quota
                     for candidate in nodes {
-                        let current_count = node_allocation_counts.get(&candidate.node_id).copied().unwrap_or(0);
+                        let current_count = node_allocation_counts
+                            .get(&candidate.node_id)
+                            .copied()
+                            .unwrap_or(0);
                         if current_count < max_shards_per_node {
                             assignments.push(candidate.node_id.clone());
-                            *node_allocation_counts.entry(candidate.node_id.clone()).or_default() += 1;
+                            *node_allocation_counts
+                                .entry(candidate.node_id.clone())
+                                .or_default() += 1;
                             placed_in_round = true;
                             break;
                         }
@@ -159,10 +167,16 @@ impl FailureDomainPlacementEngine {
                 // If round-robin domain rotation cannot find a free slot, greedy search any node
                 let mut best_candidate: Option<(&StorageNodeDescriptor, f64)> = None;
                 for candidate in candidates {
-                    let current_count = node_allocation_counts.get(&candidate.node_id).copied().unwrap_or(0);
+                    let current_count = node_allocation_counts
+                        .get(&candidate.node_id)
+                        .copied()
+                        .unwrap_or(0);
                     if current_count < max_shards_per_node {
                         let score = candidate.compute_fitness_score();
-                        if best_candidate.as_ref().map_or(true, |(_, best_s)| score > *best_s) {
+                        if best_candidate
+                            .as_ref()
+                            .map_or(true, |(_, best_s)| score > *best_s)
+                        {
                             best_candidate = Some((candidate, score));
                         }
                     }
@@ -170,7 +184,9 @@ impl FailureDomainPlacementEngine {
 
                 if let Some((best, _)) = best_candidate {
                     assignments.push(best.node_id.clone());
-                    *node_allocation_counts.entry(best.node_id.clone()).or_default() += 1;
+                    *node_allocation_counts
+                        .entry(best.node_id.clone())
+                        .or_default() += 1;
                 } else {
                     return Err(StorageError::PlacementError {
                         reason: "exhausted all eligible candidate node placements".to_string(),
@@ -269,9 +285,12 @@ impl ShardHealthRepairWorker {
         object_cid: &str,
         active_nodes: &HashSet<NodeId>,
     ) -> Result<ShardHealthReport, StorageError> {
-        let record = self.objects.get(object_cid).ok_or_else(|| StorageError::ManifestNotFound {
-            root_cid: object_cid.to_string(),
-        })?;
+        let record =
+            self.objects
+                .get(object_cid)
+                .ok_or_else(|| StorageError::ManifestNotFound {
+                    root_cid: object_cid.to_string(),
+                })?;
 
         let k = record.redundancy_profile.data_shards_k();
         let total = record.redundancy_profile.total_shards();
@@ -294,13 +313,17 @@ impl ShardHealthRepairWorker {
         let tolerates = active_count.saturating_sub(k);
         let status_badge = match state {
             DurabilityState::Healthy => {
-                format!("{active_count}/{total} Shards Healthy — Tolerates {tolerates} Node Outages")
+                format!(
+                    "{active_count}/{total} Shards Healthy — Tolerates {tolerates} Node Outages"
+                )
             }
             DurabilityState::Degraded => {
                 format!("Degraded ({active_count}/{total} Shards) — Tolerates {tolerates} Outages (Repair Required)")
             }
             DurabilityState::Unrecoverable => {
-                format!("Unrecoverable ({active_count}/{total} Shards) — Data Loss Threshold Exceeded")
+                format!(
+                    "Unrecoverable ({active_count}/{total} Shards) — Data Loss Threshold Exceeded"
+                )
             }
         };
 
@@ -344,9 +367,12 @@ impl ShardHealthRepairWorker {
         active_nodes: &HashSet<NodeId>,
         candidates: &[StorageNodeDescriptor],
     ) -> Result<RepairEvent, StorageError> {
-        let record = self.objects.get_mut(object_cid).ok_or_else(|| StorageError::ManifestNotFound {
-            root_cid: object_cid.to_string(),
-        })?;
+        let record =
+            self.objects
+                .get_mut(object_cid)
+                .ok_or_else(|| StorageError::ManifestNotFound {
+                    root_cid: object_cid.to_string(),
+                })?;
 
         let k = record.redundancy_profile.data_shards_k();
         let total = record.redundancy_profile.total_shards();
@@ -384,13 +410,16 @@ impl ShardHealthRepairWorker {
         // Filter candidate nodes to find spare nodes not currently holding any shard of this object
         let spare_candidates: Vec<StorageNodeDescriptor> = candidates
             .iter()
-            .filter(|c| active_nodes.contains(&c.node_id) && !currently_used_nodes.contains(&c.node_id))
+            .filter(|c| {
+                active_nodes.contains(&c.node_id) && !currently_used_nodes.contains(&c.node_id)
+            })
             .cloned()
             .collect();
 
         if spare_candidates.is_empty() {
             return Err(StorageError::RepairError {
-                reason: "no eligible spare candidate nodes available for shard placement".to_string(),
+                reason: "no eligible spare candidate nodes available for shard placement"
+                    .to_string(),
             });
         }
 
@@ -398,12 +427,15 @@ impl ShardHealthRepairWorker {
         let mut new_nodes = Vec::new();
 
         for (spare_idx, &missing_idx) in missing_indices.iter().enumerate() {
-            let reconstructed = engine.reconstruct_missing_shard(&available_shards_slot, missing_idx)?;
+            let reconstructed =
+                engine.reconstruct_missing_shard(&available_shards_slot, missing_idx)?;
             // Verify integrity of reconstructed shard
             reconstructed.verify_integrity()?;
 
             // Select spare node
-            let target_node = spare_candidates[spare_idx % spare_candidates.len()].node_id.clone();
+            let target_node = spare_candidates[spare_idx % spare_candidates.len()]
+                .node_id
+                .clone();
 
             // Update in-memory record
             if (missing_idx as usize) < record.shards.len() {
@@ -411,7 +443,9 @@ impl ShardHealthRepairWorker {
             } else {
                 record.shards.push(reconstructed.clone());
             }
-            record.node_placements.insert(missing_idx, target_node.clone());
+            record
+                .node_placements
+                .insert(missing_idx, target_node.clone());
             available_shards_slot[missing_idx as usize] = Some(reconstructed);
 
             new_nodes.push(target_node);

@@ -11,7 +11,9 @@ use crate::dag::JobDag;
 use crate::error::SchedulingError;
 
 /// Priority bands for job scheduling and resource allocation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 pub enum PriorityBand {
     /// Latency-critical realtime tasks (interactive remote desktop, live inference streaming).
     InteractiveRealtime = 0,
@@ -40,8 +42,14 @@ impl PriorityBand {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum BackpressureStatus {
     Normal,
-    Throttled { queue_depth: usize, load_percent: f64 },
-    Saturated { queue_depth: usize, retry_after_ms: u64 },
+    Throttled {
+        queue_depth: usize,
+        load_percent: f64,
+    },
+    Saturated {
+        queue_depth: usize,
+        retry_after_ms: u64,
+    },
 }
 
 /// A queued job waiting for cluster execution.
@@ -168,7 +176,9 @@ impl AdmissionController {
                 retry_after_secs: 10,
                 reason: format!(
                     "Cluster memory quota saturated (requested {} bytes, committed {}/{} bytes)",
-                    job.memory_bytes, self.current_committed_memory_bytes, self.config.max_cluster_memory_bytes
+                    job.memory_bytes,
+                    self.current_committed_memory_bytes,
+                    self.config.max_cluster_memory_bytes
                 ),
             });
         }
@@ -291,10 +301,7 @@ impl DeadlockFreeGangCoordinator {
 
     /// Returns count of avoided deadlocks.
     pub fn deadlocks_avoided(&self) -> u64 {
-        self.deadlocks_avoided_count
-            .lock()
-            .map(|g| *g)
-            .unwrap_or(0)
+        self.deadlocks_avoided_count.lock().map(|g| *g).unwrap_or(0)
     }
 }
 
@@ -498,4 +505,3 @@ impl PriorityJobQueue {
         }
     }
 }
-

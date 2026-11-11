@@ -1,7 +1,7 @@
 //! Cross-platform wire and path normalization, 16 KiB page alignment, and case-collision detection.
 
-use std::collections::HashMap;
 use crate::error::PlatformError;
+use std::collections::HashMap;
 
 /// Standard 16 KiB page size mandated by Apple Silicon (macOS/iOS) and Android 15+ kernels.
 pub const PAGE_SIZE_16KB: usize = 16 * 1024; // 16,384 bytes
@@ -27,7 +27,8 @@ impl VirtualPathNormalizer {
         if raw_path.contains('\\') {
             return Err(PlatformError::InvalidWirePath {
                 path: raw_path.to_string(),
-                reason: "Windows backslashes ('\\') are strictly prohibited on the wire; use '/'".to_string(),
+                reason: "Windows backslashes ('\\') are strictly prohibited on the wire; use '/'"
+                    .to_string(),
             });
         }
 
@@ -37,7 +38,8 @@ impl VirtualPathNormalizer {
             if bytes[0].is_ascii_alphabetic() && bytes[1] == b':' {
                 return Err(PlatformError::InvalidWirePath {
                     path: raw_path.to_string(),
-                    reason: "Drive letters (e.g., 'C:') are strictly prohibited on the wire".to_string(),
+                    reason: "Drive letters (e.g., 'C:') are strictly prohibited on the wire"
+                        .to_string(),
                 });
             }
         }
@@ -46,7 +48,8 @@ impl VirtualPathNormalizer {
         if raw_path.starts_with('/') {
             return Err(PlatformError::InvalidWirePath {
                 path: raw_path.to_string(),
-                reason: "Absolute paths starting with '/' are strictly prohibited on the wire".to_string(),
+                reason: "Absolute paths starting with '/' are strictly prohibited on the wire"
+                    .to_string(),
             });
         }
 
@@ -140,4 +143,3 @@ impl PageAlignmentValidator {
         }
     }
 }
-

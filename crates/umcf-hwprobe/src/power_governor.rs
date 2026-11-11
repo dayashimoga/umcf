@@ -162,7 +162,8 @@ impl MobilePowerGovernor {
         };
 
         self.coalescer = TimerCoalescer::new(window_secs);
-        self.coalescer.register_task("gossip_heartbeat", window_secs);
+        self.coalescer
+            .register_task("gossip_heartbeat", window_secs);
         self.coalescer.register_task("telemetry_pulse", window_secs);
     }
 
@@ -171,18 +172,22 @@ impl MobilePowerGovernor {
         match self.current_state {
             PowerState::AcPoweredUnrestricted => Ok(()),
             PowerState::BatteryActiveInteractive => match task {
-                TaskKind::StorageScrubRepair => {
-                    Err(PowerGovernorError::TaskRejectedPowerSaving(self.current_state))
-                }
+                TaskKind::StorageScrubRepair => Err(PowerGovernorError::TaskRejectedPowerSaving(
+                    self.current_state,
+                )),
                 _ => Ok(()),
             },
             PowerState::BatteryBackgroundEco => match task {
                 TaskKind::LightweightMetadata | TaskKind::LocalUserRequest => Ok(()),
-                _ => Err(PowerGovernorError::TaskRejectedPowerSaving(self.current_state)),
+                _ => Err(PowerGovernorError::TaskRejectedPowerSaving(
+                    self.current_state,
+                )),
             },
             PowerState::BatteryDeepSaver => match task {
                 TaskKind::LocalUserRequest => Ok(()),
-                _ => Err(PowerGovernorError::TaskRejectedPowerSaving(self.current_state)),
+                _ => Err(PowerGovernorError::TaskRejectedPowerSaving(
+                    self.current_state,
+                )),
             },
         }
     }

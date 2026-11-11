@@ -26,7 +26,7 @@ impl Default for ShaderResourceLimits {
             max_workgroup_size: [1024, 1024, 64],
             max_total_workgroup_invocations: 1024,
             max_storage_buffers: 8,
-            max_uniform_buffer_size: 64 * 1024,         // 64 KiB
+            max_uniform_buffer_size: 64 * 1024,           // 64 KiB
             max_shared_workgroup_memory_bytes: 32 * 1024, // 32 KiB
             default_loop_fuel: 100_000,
         }
@@ -93,7 +93,10 @@ pub struct ShaderSandbox {
 
 impl Default for ShaderSandbox {
     fn default() -> Self {
-        Self::new(ShaderResourceLimits::default(), BoundsCheckPolicy::default())
+        Self::new(
+            ShaderResourceLimits::default(),
+            BoundsCheckPolicy::default(),
+        )
     }
 }
 
@@ -120,7 +123,8 @@ impl ShaderSandbox {
         }
 
         // 1. Extract entry point and workgroup size
-        let (entry_point, workgroup_size) = self.parse_entry_point_and_workgroup_size(wgsl_source)?;
+        let (entry_point, workgroup_size) =
+            self.parse_entry_point_and_workgroup_size(wgsl_source)?;
 
         let total_invocations = workgroup_size[0] * workgroup_size[1] * workgroup_size[2];
         if total_invocations > self.limits.max_total_workgroup_invocations {
@@ -137,7 +141,9 @@ impl ShaderSandbox {
         {
             return Err(GpuError::ShaderResourceLimitExceeded {
                 limit: "workgroup_dimension".to_string(),
-                requested: workgroup_size[0].max(workgroup_size[1]).max(workgroup_size[2]) as usize,
+                requested: workgroup_size[0]
+                    .max(workgroup_size[1])
+                    .max(workgroup_size[2]) as usize,
                 max_allowed: self.limits.max_workgroup_size[0] as usize,
             });
         }
@@ -247,14 +253,7 @@ impl ShaderSandbox {
     fn parse_buffer_bindings(
         &self,
         source: &str,
-    ) -> Result<
-        (
-            Vec<StorageBufferBinding>,
-            Vec<UniformBufferBinding>,
-            usize,
-        ),
-        GpuError,
-    > {
+    ) -> Result<(Vec<StorageBufferBinding>, Vec<UniformBufferBinding>, usize), GpuError> {
         let mut storage_buffers = Vec::new();
         let mut uniform_buffers = Vec::new();
         let mut shared_bytes = 0usize;
@@ -323,10 +322,7 @@ impl ShaderSandbox {
             let trimmed = line.trim();
             // Check for compute function entry to initialize thread-local fuel
             if trimmed.starts_with("fn ") && trimmed.contains('{') {
-                instrumented.push_str(&format!(
-                    "    var _umcf_loop_fuel: u32 = {}u;\n",
-                    fuel
-                ));
+                instrumented.push_str(&format!("    var _umcf_loop_fuel: u32 = {}u;\n", fuel));
             } else if trimmed.starts_with("fn ") {
                 // Opening brace might be on next line
                 if let Some(&next_line) = lines.peek() {
@@ -334,10 +330,8 @@ impl ShaderSandbox {
                         let brace_line = lines.next().unwrap();
                         instrumented.push_str(brace_line);
                         instrumented.push('\n');
-                        instrumented.push_str(&format!(
-                            "    var _umcf_loop_fuel: u32 = {}u;\n",
-                            fuel
-                        ));
+                        instrumented
+                            .push_str(&format!("    var _umcf_loop_fuel: u32 = {}u;\n", fuel));
                     }
                 }
             }
@@ -388,4 +382,3 @@ fn extract_var_name(line: &str) -> String {
     }
     "unnamed_buffer".to_string()
 }
-

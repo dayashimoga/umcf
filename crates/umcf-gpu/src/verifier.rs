@@ -5,8 +5,8 @@
 //! (NaN/Inf detection, all-zero energy checks), and secret canary spot-checking
 //! to catch Byzantine or corrupted worker outputs.
 
-use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 use crate::compositor::CompletedTilePacket;
 use crate::error::GpuError;
@@ -182,7 +182,12 @@ pub struct SubtileCropBox {
 impl SubtileCropBox {
     #[must_use]
     pub fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
-        Self { x, y, width, height }
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 }
 
@@ -258,36 +263,30 @@ pub fn select_canary_crop(
 /// Convert pixel bytes into normalized F32 samples (0.0 to 1.0) for perceptual comparison.
 fn pixels_to_f32(bytes: &[u8], format: RenderPixelFormat) -> Vec<f32> {
     match format {
-        RenderPixelFormat::Rgba8UnormSrgb => {
-            bytes.iter().map(|&b| f32::from(b) / 255.0).collect()
-        }
-        RenderPixelFormat::Rgba16Float => {
-            bytes
-                .chunks_exact(2)
-                .map(|c| {
-                    let bits = u16::from_le_bytes([c[0], c[1]]);
-                    let sign = (bits >> 15) & 1;
-                    let exp = ((bits >> 10) & 0x1f) as i32;
-                    let mant = (bits & 0x3ff) as u32;
-                    if exp == 0 {
-                        0.0f32
-                    } else if exp == 31 {
-                        1.0f32
-                    } else {
-                        let f_exp = ((exp - 15 + 127) as u32) << 23;
-                        let f_mant = mant << 13;
-                        let f_sign = (sign as u32) << 31;
-                        f32::from_bits(f_sign | f_exp | f_mant)
-                    }
-                })
-                .collect()
-        }
-        RenderPixelFormat::Rgba32Float => {
-            bytes
-                .chunks_exact(4)
-                .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-                .collect()
-        }
+        RenderPixelFormat::Rgba8UnormSrgb => bytes.iter().map(|&b| f32::from(b) / 255.0).collect(),
+        RenderPixelFormat::Rgba16Float => bytes
+            .chunks_exact(2)
+            .map(|c| {
+                let bits = u16::from_le_bytes([c[0], c[1]]);
+                let sign = (bits >> 15) & 1;
+                let exp = ((bits >> 10) & 0x1f) as i32;
+                let mant = (bits & 0x3ff) as u32;
+                if exp == 0 {
+                    0.0f32
+                } else if exp == 31 {
+                    1.0f32
+                } else {
+                    let f_exp = ((exp - 15 + 127) as u32) << 23;
+                    let f_mant = mant << 13;
+                    let f_sign = (sign as u32) << 31;
+                    f32::from_bits(f_sign | f_exp | f_mant)
+                }
+            })
+            .collect(),
+        RenderPixelFormat::Rgba32Float => bytes
+            .chunks_exact(4)
+            .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+            .collect(),
     }
 }
 
@@ -367,14 +366,21 @@ impl RenderOutputVerifier {
             return Err(VerificationFailureEvidence {
                 worker_id: tile.worker_id.clone(),
                 tile_id: tile.tile_id,
-                reason: format!("invalid byte length: expected {expected_len}, got {}", tile.pixels.len()),
+                reason: format!(
+                    "invalid byte length: expected {expected_len}, got {}",
+                    tile.pixels.len()
+                ),
                 measured_metric: tile.pixels.len() as f64,
                 threshold_metric: expected_len as f64,
                 evidence_digest: tile_digest,
             });
         }
 
-        if let VerificationPolicy::FloatingPointPerceptual { reject_nan_inf: true, .. } = policy {
+        if let VerificationPolicy::FloatingPointPerceptual {
+            reject_nan_inf: true,
+            ..
+        } = policy
+        {
             if has_nan_or_inf_pixels(&tile.pixels, tile.pixel_format) {
                 self.failed_tiles_count += 1;
                 self.ban_worker(&tile.worker_id);
@@ -398,14 +404,11 @@ impl RenderOutputVerifier {
         let mut passed_canary = true;
 
         if let Some(gt_bytes) = canary_ground_truth {
-            let crop_box = select_canary_crop(tile.tile_id, tile.width, tile.height, &self.secret_seed);
-            let extracted_crop = extract_subtile_crop(
-                &tile.pixels,
-                tile.width,
-                tile.height,
-                crop_box,
-                bpp,
-            ).unwrap_or_default();
+            let crop_box =
+                select_canary_crop(tile.tile_id, tile.width, tile.height, &self.secret_seed);
+            let extracted_crop =
+                extract_subtile_crop(&tile.pixels, tile.width, tile.height, crop_box, bpp)
+                    .unwrap_or_default();
 
             match policy {
                 VerificationPolicy::DeterministicBitExact => {
@@ -443,7 +446,9 @@ impl RenderOutputVerifier {
                         return Err(VerificationFailureEvidence {
                             worker_id: tile.worker_id.clone(),
                             tile_id: tile.tile_id,
-                            reason: format!("SSIM below threshold: measured {ssim:.5}, required {min_ssim:.5}"),
+                            reason: format!(
+                                "SSIM below threshold: measured {ssim:.5}, required {min_ssim:.5}"
+                            ),
                             measured_metric: ssim,
                             threshold_metric: *min_ssim,
                             evidence_digest: tile_digest,

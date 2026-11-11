@@ -154,10 +154,7 @@ struct ProgressCallbackPayload {
     callback: Arc<dyn Fn(f32) -> bool + Send + Sync + 'static>,
 }
 
-unsafe extern "C" fn progress_callback_trampoline(
-    progress: f32,
-    user_data: *mut c_void,
-) -> bool {
+unsafe extern "C" fn progress_callback_trampoline(progress: f32, user_data: *mut c_void) -> bool {
     if user_data.is_null() {
         return true;
     }
@@ -193,12 +190,11 @@ impl SafeLlamaModel {
         let path = guard.path();
         let path_str = path.to_string_lossy().to_string();
 
-        let c_path = CString::new(path_str.as_bytes()).map_err(|e| {
-            EngineError::ModelLoadFailed {
+        let c_path =
+            CString::new(path_str.as_bytes()).map_err(|e| EngineError::ModelLoadFailed {
                 path: path_str.clone(),
                 reason: format!("invalid null byte in model path: {e}"),
-            }
-        })?;
+            })?;
 
         // SAFETY: llama_model_default_params returns pure value struct
         let mut c_params = unsafe { llama_model_default_params() };
@@ -210,11 +206,15 @@ impl SafeLlamaModel {
         c_params.check_tensors = params.check_tensors;
         c_params.vocab_only = params.vocab_only;
 
-        let payload_opt = params.progress_callback.clone().map(|cb| ProgressCallbackPayload { callback: cb });
+        let payload_opt = params
+            .progress_callback
+            .clone()
+            .map(|cb| ProgressCallbackPayload { callback: cb });
 
         if let Some(ref payload) = payload_opt {
             c_params.progress_callback = Some(progress_callback_trampoline);
-            c_params.progress_callback_user_data = (payload as *const ProgressCallbackPayload) as *mut c_void;
+            c_params.progress_callback_user_data =
+                (payload as *const ProgressCallbackPayload) as *mut c_void;
         }
 
         // SAFETY: c_path is a valid CString, c_params contains initialized fields

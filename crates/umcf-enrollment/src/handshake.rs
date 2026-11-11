@@ -12,7 +12,9 @@ use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use umcf_core::{HardwareCapabilityDescriptor, NodeRole};
-use umcf_identity::{ClusterCa, DidDocument, NodeCertificate, NodeKeypair, DOMAIN_SEPARATION_PREFIX};
+use umcf_identity::{
+    ClusterCa, DidDocument, NodeCertificate, NodeKeypair, DOMAIN_SEPARATION_PREFIX,
+};
 use x25519_dalek::{PublicKey as X25519Public, StaticSecret as X25519Secret};
 
 /// Single-use nonce cache defending against token replay attacks.
@@ -188,8 +190,7 @@ impl EnrollmentCoordinator {
         let verifying_key = VerifyingKey::from_bytes(&request.candidate_public_key)
             .map_err(|_| EnrollmentError::InvalidSignature)?;
 
-        let mut signed_payload =
-            Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + digest.len());
+        let mut signed_payload = Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + digest.len());
         signed_payload.extend_from_slice(DOMAIN_SEPARATION_PREFIX);
         signed_payload.extend_from_slice(&digest);
 
@@ -209,7 +210,9 @@ impl EnrollmentCoordinator {
         let nonce = XNonce::from_slice(&request.encryption_nonce);
         let decrypted_bytes = cipher
             .decrypt(nonce, request.encrypted_payload.as_slice())
-            .map_err(|e| EnrollmentError::HandshakeFailed(format!("AEAD decryption failed: {e}")))?;
+            .map_err(|e| {
+                EnrollmentError::HandshakeFailed(format!("AEAD decryption failed: {e}"))
+            })?;
 
         if decrypted_bytes != request.token_nonce {
             return Err(EnrollmentError::HandshakeFailed(

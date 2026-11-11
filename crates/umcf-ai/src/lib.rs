@@ -4,13 +4,13 @@
 
 pub mod backend_loader;
 pub mod backend_selector;
+pub mod distributed_rpc;
 pub mod engine;
 pub mod error;
 pub mod ffi_bridge;
 pub mod kv_cache;
-pub mod partitioner;
-pub mod distributed_rpc;
 pub mod openai_api;
+pub mod partitioner;
 pub mod private_enclave;
 
 pub use backend_loader::{DynamicBackendLoader, GgmlBackendDescriptor};

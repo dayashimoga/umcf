@@ -217,9 +217,8 @@ impl ClusterCa {
             .as_millis() as u64;
 
         // Reconstruct CA certificate reference with identical parameters to sign the leaf
-        let mut ca_params =
-            CertificateParams::new(vec![format!("{}.umcf.local", self.cluster_id)])
-                .map_err(|e| IdentityError::CertificateInvalid(e.to_string()))?;
+        let mut ca_params = CertificateParams::new(vec![format!("{}.umcf.local", self.cluster_id)])
+            .map_err(|e| IdentityError::CertificateInvalid(e.to_string()))?;
         ca_params.serial_number = Some(SerialNumber::from_slice(&self.ca_serial_bytes));
         ca_params.distinguished_name = DistinguishedName::new();
         ca_params.distinguished_name.push(

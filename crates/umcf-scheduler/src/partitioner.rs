@@ -137,7 +137,8 @@ impl AdaptivePartitioner {
             .iter()
             .map(|p| {
                 let compute = p.compute_sec_per_unit * workload.total_units as f64;
-                let xfer = p.transfer_sec_per_unit * workload.total_units as f64 + p.fixed_latency_sec;
+                let xfer =
+                    p.transfer_sec_per_unit * workload.total_units as f64 + p.fixed_latency_sec;
                 compute + xfer
             })
             .fold(f64::INFINITY, f64::min);
@@ -180,7 +181,9 @@ impl AdaptivePartitioner {
             }
 
             let prev_count = eligible.len();
-            eligible.retain(|p| p.fixed_latency_sec < target_t && target_t < single_fastest_time_sec * 1.05);
+            eligible.retain(|p| {
+                p.fixed_latency_sec < target_t && target_t < single_fastest_time_sec * 1.05
+            });
             if eligible.len() == prev_count || eligible.is_empty() {
                 break;
             }
@@ -312,7 +315,9 @@ impl DataLocalityOptimizer {
     pub fn select_aggregation_node(slices: &[WorkSlice]) -> Option<NodeId> {
         let mut volumes_by_node: HashMap<NodeId, u64> = HashMap::new();
         for slice in slices {
-            let entry = volumes_by_node.entry(slice.assigned_node_id.clone()).or_insert(0);
+            let entry = volumes_by_node
+                .entry(slice.assigned_node_id.clone())
+                .or_insert(0);
             *entry = entry.saturating_add(slice.unit_count);
         }
 

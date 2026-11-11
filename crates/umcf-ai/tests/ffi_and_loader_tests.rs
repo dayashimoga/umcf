@@ -171,7 +171,10 @@ fn test_unit_model_load_abort_via_progress_callback() {
     );
 
     let history = progress_history.lock().unwrap().clone();
-    assert!(!history.is_empty(), "progress callback must have been invoked");
+    assert!(
+        !history.is_empty(),
+        "progress callback must have been invoked"
+    );
     assert!(history.contains(&0.25f32));
     assert!(history.contains(&0.50f32));
 }
@@ -201,7 +204,10 @@ fn test_unit_sampler_chain_creation_and_greedy_sample() {
     chain.add(SafeSamplerChain::new_greedy());
 
     let token_chain = chain.sample(&ctx, 0);
-    assert!(token_chain > 0, "chained sampler must return valid token id");
+    assert!(
+        token_chain > 0,
+        "chained sampler must return valid token id"
+    );
 }
 
 // =========================================================================
@@ -301,8 +307,7 @@ fn test_integration_dynamic_backend_loader_blake3_signature_verification() {
     let wrong_blake3 = "0000000000000000000000000000000000000000000000000000000000000000";
 
     // 3. Verify signature mismatch is rejected
-    let mismatch_err =
-        DynamicBackendLoader::load_plugin_verified(&fake_plugin_path, wrong_blake3);
+    let mismatch_err = DynamicBackendLoader::load_plugin_verified(&fake_plugin_path, wrong_blake3);
     assert!(mismatch_err.is_err());
     match mismatch_err {
         Err(EngineError::BackendPluginSignatureMismatch {
@@ -315,8 +320,7 @@ fn test_integration_dynamic_backend_loader_blake3_signature_verification() {
     }
 
     // 4. Verify valid signature succeeds and probes devices
-    let success =
-        DynamicBackendLoader::load_plugin_verified(&fake_plugin_path, &actual_blake3);
+    let success = DynamicBackendLoader::load_plugin_verified(&fake_plugin_path, &actual_blake3);
     assert!(success.is_ok(), "verified plugin load must succeed");
 }
 
@@ -345,8 +349,8 @@ fn test_simulation_multithread_16_threads_shared_model_stress() {
                 n_batch: 64,
                 ..Default::default()
             };
-            let mut ctx = SafeLlamaContext::new(model_clone, &ctx_params)
-                .expect("thread context creation");
+            let mut ctx =
+                SafeLlamaContext::new(model_clone, &ctx_params).expect("thread context creation");
 
             let mut batch = SafeLlamaBatch::new(16, 0, 1);
             for step in 0..16i32 {
@@ -436,8 +440,14 @@ fn test_hardware_native_ffi_smoke_and_latency_benchmark() {
 
     let avg_decode_ms: f64 = latencies_ms.iter().sum::<f64>() / latencies_ms.len() as f64;
 
-    assert!(load_ms < 500.0, "model load time must be < 500 ms, got {load_ms:.2} ms");
-    assert!(ctx_ms < 100.0, "context creation time must be < 100 ms, got {ctx_ms:.2} ms");
+    assert!(
+        load_ms < 500.0,
+        "model load time must be < 500 ms, got {load_ms:.2} ms"
+    );
+    assert!(
+        ctx_ms < 100.0,
+        "context creation time must be < 100 ms, got {ctx_ms:.2} ms"
+    );
     assert!(
         avg_decode_ms < 25.0,
         "average single-token decode latency must be < 25 ms, got {avg_decode_ms:.3} ms"

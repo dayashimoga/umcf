@@ -55,25 +55,37 @@ fn test_unit_nan_and_inf_pixel_detection_in_rgba16f_and_rgba32f() {
     for _ in 0..16 {
         clean_f32.extend_from_slice(&0.75f32.to_le_bytes());
     }
-    assert!(!has_nan_or_inf_pixels(&clean_f32, RenderPixelFormat::Rgba32Float));
+    assert!(!has_nan_or_inf_pixels(
+        &clean_f32,
+        RenderPixelFormat::Rgba32Float
+    ));
 
     // 2. RGBA32F with NaN -> true
     let mut nan_f32 = clean_f32.clone();
     let nan_bytes = f32::NAN.to_le_bytes();
     nan_f32[0..4].copy_from_slice(&nan_bytes);
-    assert!(has_nan_or_inf_pixels(&nan_f32, RenderPixelFormat::Rgba32Float));
+    assert!(has_nan_or_inf_pixels(
+        &nan_f32,
+        RenderPixelFormat::Rgba32Float
+    ));
 
     // 3. RGBA32F with Infinity -> true
     let mut inf_f32 = clean_f32.clone();
     let inf_bytes = f32::INFINITY.to_le_bytes();
     inf_f32[8..12].copy_from_slice(&inf_bytes);
-    assert!(has_nan_or_inf_pixels(&inf_f32, RenderPixelFormat::Rgba32Float));
+    assert!(has_nan_or_inf_pixels(
+        &inf_f32,
+        RenderPixelFormat::Rgba32Float
+    ));
 
     // 4. RGBA16F with FP16 NaN exponent (bits 10..14 all 1s = 0x7E00) -> true
     let mut nan_f16 = vec![0u8; 16 * 2];
     nan_f16[0] = 0x00;
     nan_f16[1] = 0x7E; // FP16 NaN
-    assert!(has_nan_or_inf_pixels(&nan_f16, RenderPixelFormat::Rgba16Float));
+    assert!(has_nan_or_inf_pixels(
+        &nan_f16,
+        RenderPixelFormat::Rgba16Float
+    ));
 }
 
 #[test]
@@ -107,13 +119,8 @@ fn test_unit_secret_canary_subtile_coordinate_extraction_and_comparison() {
     }
 
     // Extract an 8x8 crop at (4, 4)
-    let crop = extract_subtile_crop(
-        &tile_pixels,
-        16,
-        16,
-        SubtileCropBox::new(4, 4, 8, 8),
-        bpp,
-    ).expect("crop extraction");
+    let crop = extract_subtile_crop(&tile_pixels, 16, 16, SubtileCropBox::new(4, 4, 8, 8), bpp)
+        .expect("crop extraction");
     assert_eq!(crop.len(), 8 * 8 * bpp);
     // Check first pixel in crop (should correspond to x=4, y=4)
     assert_eq!(crop[0], 4);
@@ -211,10 +218,14 @@ fn test_integration_byzantine_worker_injecting_corrupted_tile_detected_and_reren
         render_time_ms: 10.0,
     };
 
-    let v0 = verifier.verify_tile(&packet0, Some(&gt_crop0), &policy).expect("honest tile 0");
+    let v0 = verifier
+        .verify_tile(&packet0, Some(&gt_crop0), &policy)
+        .expect("honest tile 0");
     assert!(v0.passed_canary_audit);
     compositor.blit_tile(&packet0).expect("blit honest 0");
-    coordinator.record_tile_completion(t0.tile_id, "w-honest-1", 10.0).expect("commit 0");
+    coordinator
+        .record_tile_completion(t0.tile_id, "w-honest-1", 10.0)
+        .expect("commit 0");
 
     // Dispatch tile 1 to Byzantine worker 2
     let byz_batch = coordinator.dispatch_next_batch("w-byzantine-2");
@@ -223,7 +234,8 @@ fn test_integration_byzantine_worker_injecting_corrupted_tile_detected_and_reren
     let corrupt_pixels = vec![0u8; 128 * 128 * 4];
     let clean_pixels_t1 = make_clean_tile(120);
     let crop_box1 = select_canary_crop(t1.tile_id, t1.width, t1.height, &verifier.secret_seed);
-    let gt_crop1 = extract_subtile_crop(&clean_pixels_t1, t1.width, t1.height, crop_box1, 4).unwrap();
+    let gt_crop1 =
+        extract_subtile_crop(&clean_pixels_t1, t1.width, t1.height, crop_box1, 4).unwrap();
 
     let packet1 = CompletedTilePacket {
         tile_id: t1.tile_id,
@@ -239,7 +251,9 @@ fn test_integration_byzantine_worker_injecting_corrupted_tile_detected_and_reren
     };
 
     // Verifier catches Byzantine worker!
-    let err = verifier.verify_tile(&packet1, Some(&gt_crop1), &policy).expect_err("must catch byzantine");
+    let err = verifier
+        .verify_tile(&packet1, Some(&gt_crop1), &policy)
+        .expect_err("must catch byzantine");
     assert_eq!(err.worker_id, "w-byzantine-2");
     assert!(verifier.is_worker_banned("w-byzantine-2"));
 
@@ -263,10 +277,14 @@ fn test_integration_byzantine_worker_injecting_corrupted_tile_detected_and_reren
         render_time_ms: 10.0,
     };
 
-    let v1 = verifier.verify_tile(&packet1_clean, Some(&gt_crop1), &policy).expect("rerun tile 1");
+    let v1 = verifier
+        .verify_tile(&packet1_clean, Some(&gt_crop1), &policy)
+        .expect("rerun tile 1");
     assert!(v1.passed_canary_audit);
     compositor.blit_tile(&packet1_clean).expect("blit clean 1");
-    coordinator.record_tile_completion(t1.tile_id, "w-honest-3", 10.0).expect("commit 1");
+    coordinator
+        .record_tile_completion(t1.tile_id, "w-honest-3", 10.0)
+        .expect("commit 1");
 
     // Frame buffer at (t1.x, t1.y) contains real non-zero clean pixels, not zeros
     assert_eq!(compositor.get_pixel_rgba8(t1.x, t1.y).unwrap()[0], 120);
@@ -304,7 +322,10 @@ fn test_simulation_cross_vendor_ulp_drift_vs_byzantine_lazy_worker() {
         };
 
         let res = verifier.verify_tile(&tile, Some(&gt), &policy);
-        assert!(res.is_ok(), "legitimate ULP drift should pass perceptual check");
+        assert!(
+            res.is_ok(),
+            "legitimate ULP drift should pass perceptual check"
+        );
     }
 
     assert!(verifier.average_ssim() > 0.999);
@@ -324,7 +345,9 @@ fn test_simulation_cross_vendor_ulp_drift_vs_byzantine_lazy_worker() {
         render_time_ms: 1.0,
     };
 
-    let lazy_err = verifier.verify_tile(&lazy_tile, Some(&gt), &policy).expect_err("lazy worker caught");
+    let lazy_err = verifier
+        .verify_tile(&lazy_tile, Some(&gt), &policy)
+        .expect_err("lazy worker caught");
     assert_eq!(lazy_err.worker_id, "lazy-worker");
     assert!(verifier.is_worker_banned("lazy-worker"));
 }

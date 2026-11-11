@@ -141,7 +141,8 @@ impl LanDiscoveryEngine {
 
         tokio::spawn(async move {
             let mut seq = 0_u64;
-            let mut interval = tokio::time::interval(Duration::from_millis(b_config.beacon_interval_ms));
+            let mut interval =
+                tokio::time::interval(Duration::from_millis(b_config.beacon_interval_ms));
 
             while !b_cancel.is_cancelled() {
                 tokio::select! {
@@ -273,7 +274,8 @@ impl LanDiscoveryEngine {
         let p_cancel = cancel_token.clone();
 
         tokio::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_millis(p_config.peer_timeout_ms / 2));
+            let mut interval =
+                tokio::time::interval(Duration::from_millis(p_config.peer_timeout_ms / 2));
             while !p_cancel.is_cancelled() {
                 tokio::select! {
                     _ = p_cancel.cancelled() => break,
@@ -341,7 +343,8 @@ impl LanDiscoveryEngine {
         }
 
         // 5. Anti-replay check (< 50 ns)
-        if let Err(e) = replay.check_and_update(&beacon.sender_did, beacon.sequence_number, now_ms) {
+        if let Err(e) = replay.check_and_update(&beacon.sender_did, beacon.sequence_number, now_ms)
+        {
             return (Err(e), t0.elapsed());
         }
 

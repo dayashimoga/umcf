@@ -67,11 +67,7 @@ impl TaskFailoverCoordinator {
     }
 
     /// Registers a newly scheduled task with its initial worker assignment.
-    pub fn register_initial_task(
-        &self,
-        task_id: impl Into<String>,
-        worker_node_id: NodeId,
-    ) {
+    pub fn register_initial_task(&self, task_id: impl Into<String>, worker_node_id: NodeId) {
         let task_id = task_id.into();
         let initial_attempt = TaskAttempt {
             attempt_id: 1,
@@ -209,10 +205,11 @@ impl TaskFailoverCoordinator {
             return Ok(None);
         }
 
-        let feasible = match self
-            .solver
-            .filter_feasible_nodes(task, &available_candidates, &self.local_node_id)
-        {
+        let feasible = match self.solver.filter_feasible_nodes(
+            task,
+            &available_candidates,
+            &self.local_node_id,
+        ) {
             Ok(f) => f,
             Err(_) => return Ok(None),
         };

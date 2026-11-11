@@ -1,8 +1,8 @@
 //! Hash-chained, dual-signed cryptographic receipts (`SignedResourceReceipt`).
 
-use std::collections::HashMap;
 use ed25519_dalek::{Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::error::LedgerError;
 use crate::meter::MeteredResourceVector;
@@ -96,10 +96,7 @@ pub struct SignedResourceReceipt {
 
 impl SignedResourceReceipt {
     /// Creates a new receipt signed by the executing worker.
-    pub fn create_by_worker(
-        body: ReceiptBody,
-        worker_signing_key: &SigningKey,
-    ) -> Self {
+    pub fn create_by_worker(body: ReceiptBody, worker_signing_key: &SigningKey) -> Self {
         let receipt_id = body.canonical_digest();
         let sig = worker_signing_key.sign(&receipt_id);
         Self {
@@ -122,8 +119,9 @@ impl SignedResourceReceipt {
             ));
         }
 
-        let sig_bytes = hex::decode(&self.worker_signature)
-            .map_err(|e| LedgerError::SignatureVerificationFailed(format!("Malformed worker signature: {e}")))?;
+        let sig_bytes = hex::decode(&self.worker_signature).map_err(|e| {
+            LedgerError::SignatureVerificationFailed(format!("Malformed worker signature: {e}"))
+        })?;
         if sig_bytes.len() != 64 {
             return Err(LedgerError::SignatureVerificationFailed(
                 "Invalid worker signature length".to_string(),
@@ -133,9 +131,9 @@ impl SignedResourceReceipt {
         sig_arr.copy_from_slice(&sig_bytes);
         let sig = ed25519_dalek::Signature::from_bytes(&sig_arr);
 
-        worker_verifying_key
-            .verify(&digest, &sig)
-            .map_err(|e| LedgerError::SignatureVerificationFailed(format!("Worker signature invalid: {e}")))?;
+        worker_verifying_key.verify(&digest, &sig).map_err(|e| {
+            LedgerError::SignatureVerificationFailed(format!("Worker signature invalid: {e}"))
+        })?;
 
         Ok(())
     }
@@ -171,15 +169,15 @@ impl SignedResourceReceipt {
         &self,
         requester_verifying_key: &VerifyingKey,
     ) -> Result<(), LedgerError> {
-        let sig_hex = self
-            .requester_countersignature
-            .as_deref()
-            .ok_or_else(|| LedgerError::MissingCountersignature {
+        let sig_hex = self.requester_countersignature.as_deref().ok_or_else(|| {
+            LedgerError::MissingCountersignature {
                 receipt_id: hex::encode(self.receipt_id),
-            })?;
+            }
+        })?;
 
-        let sig_bytes = hex::decode(sig_hex)
-            .map_err(|e| LedgerError::SignatureVerificationFailed(format!("Malformed requester signature: {e}")))?;
+        let sig_bytes = hex::decode(sig_hex).map_err(|e| {
+            LedgerError::SignatureVerificationFailed(format!("Malformed requester signature: {e}"))
+        })?;
         if sig_bytes.len() != 64 {
             return Err(LedgerError::SignatureVerificationFailed(
                 "Invalid requester countersignature length".to_string(),
@@ -191,7 +189,11 @@ impl SignedResourceReceipt {
 
         requester_verifying_key
             .verify(&self.receipt_id, &sig)
-            .map_err(|e| LedgerError::SignatureVerificationFailed(format!("Requester countersignature invalid: {e}")))?;
+            .map_err(|e| {
+                LedgerError::SignatureVerificationFailed(format!(
+                    "Requester countersignature invalid: {e}"
+                ))
+            })?;
 
         Ok(())
     }
@@ -262,10 +264,8 @@ impl ReceiptChainVerifier {
         }
 
         // Commit to state
-        self.chains.insert(
-            pair_key,
-            (receipt.body.sequence_number, receipt.receipt_id),
-        );
+        self.chains
+            .insert(pair_key, (receipt.body.sequence_number, receipt.receipt_id));
 
         Ok(())
     }
@@ -273,7 +273,9 @@ impl ReceiptChainVerifier {
     /// Queries the latest sequence number and receipt ID for a given node pair.
     #[must_use]
     pub fn get_chain_head(&self, worker: &str, requester: &str) -> Option<(u64, [u8; 32])> {
-        self.chains.get(&(worker.to_string(), requester.to_string())).copied()
+        self.chains
+            .get(&(worker.to_string(), requester.to_string()))
+            .copied()
     }
 }
 

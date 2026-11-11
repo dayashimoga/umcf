@@ -215,9 +215,12 @@ impl KvCacheManager {
         key: &[u8; 32],
         path: &Path,
     ) -> Result<(), EngineError> {
-        let slot = self.slots.get(slot_idx).ok_or_else(|| EngineError::InvalidInput {
-            reason: format!("slot index {slot_idx} out of bounds"),
-        })?;
+        let slot = self
+            .slots
+            .get(slot_idx)
+            .ok_or_else(|| EngineError::InvalidInput {
+                reason: format!("slot index {slot_idx} out of bounds"),
+            })?;
 
         let serializable = SerializedKvSlot {
             slot_id: slot.slot_id,
@@ -225,9 +228,10 @@ impl KvCacheManager {
             timestamp_unix_ms: current_unix_ms(),
         };
 
-        let plaintext = serde_json::to_vec(&serializable).map_err(|e| EngineError::InvalidInput {
-            reason: format!("failed to serialize KV slot: {e}"),
-        })?;
+        let plaintext =
+            serde_json::to_vec(&serializable).map_err(|e| EngineError::InvalidInput {
+                reason: format!("failed to serialize KV slot: {e}"),
+            })?;
 
         // 12-byte deterministic or random nonce derived from slot and timestamp
         let mut nonce_bytes = [0u8; 12];
@@ -236,11 +240,12 @@ impl KvCacheManager {
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let cipher = ChaCha20Poly1305::new(key.into());
-        let ciphertext = cipher
-            .encrypt(nonce, plaintext.as_ref())
-            .map_err(|e| EngineError::InvalidInput {
-                reason: format!("encryption failure: {e}"),
-            })?;
+        let ciphertext =
+            cipher
+                .encrypt(nonce, plaintext.as_ref())
+                .map_err(|e| EngineError::InvalidInput {
+                    reason: format!("encryption failure: {e}"),
+                })?;
 
         let temp_path = path.with_extension("tmp");
         let mut f = File::create(&temp_path)?;
@@ -274,11 +279,12 @@ impl KvCacheManager {
         let nonce = Nonce::from_slice(nonce_bytes);
 
         let cipher = ChaCha20Poly1305::new(key.into());
-        let plaintext = cipher
-            .decrypt(nonce, ciphertext)
-            .map_err(|e| EngineError::InvalidInput {
-                reason: format!("decryption failure / authentication tag mismatch: {e}"),
-            })?;
+        let plaintext =
+            cipher
+                .decrypt(nonce, ciphertext)
+                .map_err(|e| EngineError::InvalidInput {
+                    reason: format!("decryption failure / authentication tag mismatch: {e}"),
+                })?;
 
         let payload: SerializedKvSlot =
             serde_json::from_slice(&plaintext).map_err(|e| EngineError::InvalidInput {
@@ -297,4 +303,3 @@ fn current_unix_ms() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map_or(0, |d| d.as_millis() as u64)
 }
-

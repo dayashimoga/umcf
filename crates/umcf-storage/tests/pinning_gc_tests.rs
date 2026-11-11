@@ -24,9 +24,7 @@ use umcf_core::types::NodeId;
 use umcf_storage::chunk_store::{ChunkId, ContentAddressedChunkStore};
 use umcf_storage::erasure::{RedundancyProfile, ReedSolomonErasureEngine};
 use umcf_storage::gc::{ConcurrentGarbageCollector, GcConfig};
-use umcf_storage::pinning::{
-    HydrationState, PinManager, PinMode, WTinyLfuChunkCache,
-};
+use umcf_storage::pinning::{HydrationState, PinManager, PinMode, WTinyLfuChunkCache};
 use umcf_storage::quota::StrictQuotaEnforcer;
 
 // ===========================================================================
@@ -126,7 +124,8 @@ fn test_w_tinylfu_admission_filter_protects_hot_chunks_against_one_hit_wonders()
 
     // Simulate streaming a massive 100-chunk sequential scan ("one-hit wonders")
     for i in 0..100 {
-        let one_hit_chunk = ChunkId::from_bytes(format!("Streamed Video Frame Segment #{i:04}").as_bytes());
+        let one_hit_chunk =
+            ChunkId::from_bytes(format!("Streamed Video Frame Segment #{i:04}").as_bytes());
         cache.put(one_hit_chunk, vec![0xFFu8; 1024]);
     }
 
@@ -156,7 +155,9 @@ async fn test_lease_with_ttl_expiration_makes_chunks_eligible_for_gc() {
     pin_manager
         .pin_object(
             cid,
-            PinMode::LeaseWithTtl { expires_at_ms: expires_at },
+            PinMode::LeaseWithTtl {
+                expires_at_ms: expires_at,
+            },
             "temporary_lease.bin",
             node,
             vec![chunk],
@@ -206,9 +207,15 @@ async fn test_gc_grace_window_protects_in_flight_uncommitted_chunks() {
 
     // Assert: Chunk was created just now (< 5 min ago), so grace window MUST RETAIN IT!
     assert_eq!(report.total_chunks_scanned, 1);
-    assert_eq!(report.live_chunks_retained, 1, "Grace window must retain newly created chunk");
+    assert_eq!(
+        report.live_chunks_retained, 1,
+        "Grace window must retain newly created chunk"
+    );
     assert_eq!(report.garbage_chunks_swept, 0);
-    assert!(store.has_chunk(&chunk_id), "Chunk must remain present in store");
+    assert!(
+        store.has_chunk(&chunk_id),
+        "Chunk must remain present in store"
+    );
 }
 
 // ===========================================================================
@@ -296,7 +303,10 @@ async fn test_pin_hydrate_from_erasure_shards_disconnect_network_and_read_offlin
     let offline_read = store.read_chunk(&obj_chunk_id).expect("read offline");
     let read_latency = offline_start.elapsed();
 
-    assert_eq!(offline_read, full_content, "Reassembled object must match original exactly");
+    assert_eq!(
+        offline_read, full_content,
+        "Reassembled object must match original exactly"
+    );
     let max_latency_ms = if cfg!(debug_assertions) { 20 } else { 5 };
     assert!(
         read_latency.as_millis() < max_latency_ms,
@@ -304,8 +314,14 @@ async fn test_pin_hydrate_from_erasure_shards_disconnect_network_and_read_offlin
         read_latency.as_millis()
     );
 
-    let pin_record = pin_manager.get_pin(&manifest_cid).await.expect("pin record");
-    assert_eq!(pin_record.local_hydration_state, HydrationState::FullyAvailableOffline);
+    let pin_record = pin_manager
+        .get_pin(&manifest_cid)
+        .await
+        .expect("pin record");
+    assert_eq!(
+        pin_record.local_hydration_state,
+        HydrationState::FullyAvailableOffline
+    );
 }
 
 #[tokio::test]
@@ -353,16 +369,28 @@ async fn test_concurrent_ingest_pin_unpin_and_gc_sweep_zero_dangling_refs() {
     }
 
     // Run GC cycle
-    let report = gc.run_gc_cycle(&store, &quota, &pin_manager).await.expect("gc cycle");
+    let report = gc
+        .run_gc_cycle(&store, &quota, &pin_manager)
+        .await
+        .expect("gc cycle");
 
     assert_eq!(report.total_chunks_scanned, 50);
-    assert_eq!(report.live_chunks_retained, 25, "All 25 pinned chunks must be retained");
-    assert_eq!(report.garbage_chunks_swept, 25, "All 25 unpinned chunks must be swept");
+    assert_eq!(
+        report.live_chunks_retained, 25,
+        "All 25 pinned chunks must be retained"
+    );
+    assert_eq!(
+        report.garbage_chunks_swept, 25,
+        "All 25 unpinned chunks must be swept"
+    );
 
     // Invariant checks:
     // 1. All pinned chunks must still be readable
     for c in &pinned_cids {
-        assert!(store.has_chunk(c), "Pinned chunk {c} was prematurely deleted!");
+        assert!(
+            store.has_chunk(c),
+            "Pinned chunk {c} was prematurely deleted!"
+        );
     }
 
     // 2. All unpinned chunks must be gone
@@ -372,7 +400,11 @@ async fn test_concurrent_ingest_pin_unpin_and_gc_sweep_zero_dangling_refs() {
 
     // 3. Exact byte accounting parity
     let disk_used: u64 = store.list_all_chunks().iter().map(|c| c.size_bytes).sum();
-    assert_eq!(quota.used_bytes(), disk_used, "Quota used_bytes must match sum of live chunk files");
+    assert_eq!(
+        quota.used_bytes(),
+        disk_used,
+        "Quota used_bytes must match sum of live chunk files"
+    );
 }
 
 #[tokio::test]
@@ -381,7 +413,8 @@ async fn test_idle_bitrot_scrubber_detects_corrupted_local_chunk_and_repairs_fro
     let store = Arc::new(ContentAddressedChunkStore::new(temp_dir.path()).expect("store"));
     let quota = StrictQuotaEnforcer::new(100 * 1024 * 1024, 1024);
 
-    let original_payload = b"High-Reliability Machine Learning Weights: Bit-Rot Scrubbing Verification";
+    let original_payload =
+        b"High-Reliability Machine Learning Weights: Bit-Rot Scrubbing Verification";
     let mut permit = quota
         .try_reserve(original_payload.len() as u64, 100 * 1024 * 1024)
         .expect("reserve");
@@ -398,7 +431,9 @@ async fn test_idle_bitrot_scrubber_detects_corrupted_local_chunk_and_repairs_fro
     let gc = ConcurrentGarbageCollector::new(GcConfig::default());
 
     // Peer mesh resolver that holds the healthy replica
-    let peer_database: HashMap<ChunkId, Vec<u8>> = [(chunk_id, original_payload.to_vec())].into_iter().collect();
+    let peer_database: HashMap<ChunkId, Vec<u8>> = [(chunk_id, original_payload.to_vec())]
+        .into_iter()
+        .collect();
 
     let peer_fetcher = move |cid: ChunkId| {
         let peer_data = peer_database.get(&cid).cloned();
@@ -411,12 +446,21 @@ async fn test_idle_bitrot_scrubber_detects_corrupted_local_chunk_and_repairs_fro
         .await
         .expect("scrub");
 
-    assert_eq!(scrub_report.corrupted_chunks_detected, 1, "Scrubber must detect 1 corrupted chunk");
-    assert_eq!(scrub_report.self_healed_chunks, 1, "Scrubber must repair 1 chunk from peer");
+    assert_eq!(
+        scrub_report.corrupted_chunks_detected, 1,
+        "Scrubber must detect 1 corrupted chunk"
+    );
+    assert_eq!(
+        scrub_report.self_healed_chunks, 1,
+        "Scrubber must repair 1 chunk from peer"
+    );
 
     // Verify chunk is now 100% repaired and readable with BLAKE3 match
     let repaired = store.read_chunk(&chunk_id).expect("read after self-heal");
-    assert_eq!(repaired, original_payload, "Repaired payload must match original byte-for-byte");
+    assert_eq!(
+        repaired, original_payload,
+        "Repaired payload must match original byte-for-byte"
+    );
 }
 
 // ===========================================================================
@@ -440,7 +484,9 @@ async fn test_1000_object_creations_partial_overlapping_ttl_leases_and_50_gc_cyc
     let mut shared_pool = Vec::new();
     for i in 0..20 {
         let data = format!("Deduplicated Shared Pool Block #{i:02}").into_bytes();
-        let mut permit = quota.try_reserve(data.len() as u64, 500 * 1024 * 1024).expect("reserve");
+        let mut permit = quota
+            .try_reserve(data.len() as u64, 500 * 1024 * 1024)
+            .expect("reserve");
         let cid = store.store_chunk(&data, &mut permit, false).expect("store");
         shared_pool.push(cid);
     }
@@ -453,8 +499,12 @@ async fn test_1000_object_creations_partial_overlapping_ttl_leases_and_50_gc_cyc
 
     for i in 0..1000 {
         let unique_data = format!("Object Payload Unique Stream #{i:04}").into_bytes();
-        let mut permit = quota.try_reserve(unique_data.len() as u64, 500 * 1024 * 1024).expect("reserve");
-        let unique_cid = store.store_chunk(&unique_data, &mut permit, false).expect("store");
+        let mut permit = quota
+            .try_reserve(unique_data.len() as u64, 500 * 1024 * 1024)
+            .expect("reserve");
+        let unique_cid = store
+            .store_chunk(&unique_data, &mut permit, false)
+            .expect("store");
 
         let shared_chunk = shared_pool[i % shared_pool.len()];
         let child_chunks = vec![shared_chunk, unique_cid];
@@ -485,7 +535,9 @@ async fn test_1000_object_creations_partial_overlapping_ttl_leases_and_50_gc_cyc
             pin_manager
                 .pin_object(
                     obj_cid,
-                    PinMode::LeaseWithTtl { expires_at_ms: expires_at },
+                    PinMode::LeaseWithTtl {
+                        expires_at_ms: expires_at,
+                    },
                     format!("ttl_{i}"),
                     NodeId("did:umcf:sim_node".to_string()),
                     child_chunks,
@@ -499,13 +551,22 @@ async fn test_1000_object_creations_partial_overlapping_ttl_leases_and_50_gc_cyc
 
         // Run intermittent GC cycles
         if i % 20 == 0 {
-            let _ = gc.run_gc_cycle(&store, &quota, &pin_manager).await.expect("intermittent gc");
+            let _ = gc
+                .run_gc_cycle(&store, &quota, &pin_manager)
+                .await
+                .expect("intermittent gc");
         }
     }
 
     // Final GC cycle
-    let final_report = gc.run_gc_cycle(&store, &quota, &pin_manager).await.expect("final gc");
-    assert!(final_report.garbage_chunks_swept > 0, "GC must have swept expired and unpinned chunks");
+    let final_report = gc
+        .run_gc_cycle(&store, &quota, &pin_manager)
+        .await
+        .expect("final gc");
+    assert!(
+        final_report.garbage_chunks_swept > 0,
+        "GC must have swept expired and unpinned chunks"
+    );
 
     // Critical Invariant: Strict byte accounting parity
     let actual_disk_sum: u64 = store.list_all_chunks().iter().map(|c| c.size_bytes).sum();
@@ -539,8 +600,12 @@ async fn test_hardware_gc_mark_and_sweep_latency_benchmark_10000_chunks() {
     let mut model_roots = Vec::with_capacity(count / 2);
     for i in 0..count {
         let unique_payload = (i as u64).to_le_bytes();
-        let mut permit = quota.try_reserve(unique_payload.len() as u64, 1024 * 1024 * 1024).expect("reserve");
-        let cid = store.store_chunk(&unique_payload, &mut permit, i % 2 == 0).expect("store");
+        let mut permit = quota
+            .try_reserve(unique_payload.len() as u64, 1024 * 1024 * 1024)
+            .expect("reserve");
+        let cid = store
+            .store_chunk(&unique_payload, &mut permit, i % 2 == 0)
+            .expect("store");
         if i % 2 == 0 {
             model_roots.push(cid);
         }
@@ -548,7 +613,10 @@ async fn test_hardware_gc_mark_and_sweep_latency_benchmark_10000_chunks() {
     gc.register_model_chunks(&model_roots).await;
 
     let start = std::time::Instant::now();
-    let report = gc.run_gc_cycle(&store, &quota, &pin_manager).await.expect("gc cycle 10k");
+    let report = gc
+        .run_gc_cycle(&store, &quota, &pin_manager)
+        .await
+        .expect("gc cycle 10k");
     let elapsed = start.elapsed();
 
     println!(

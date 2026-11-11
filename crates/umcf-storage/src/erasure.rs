@@ -203,7 +203,10 @@ impl ConvergentChunkCipher {
 
     /// Derives deterministic (Key, Nonce) from namespace secret and plaintext BLAKE3 hash.
     #[must_use]
-    pub fn derive_keys(namespace_secret: &[u8; 32], plaintext_blake3: &[u8; 32]) -> ([u8; 32], [u8; 24]) {
+    pub fn derive_keys(
+        namespace_secret: &[u8; 32],
+        plaintext_blake3: &[u8; 32],
+    ) -> ([u8; 32], [u8; 24]) {
         // HKDF-Extract: salt = plaintext_blake3, ikm = namespace_secret
         let prk = hmac_sha256(plaintext_blake3, namespace_secret);
         let key_bytes = hkdf_sha256_expand(&prk, Self::KEY_INFO, 32);
@@ -225,13 +228,19 @@ impl ConvergentChunkCipher {
         let plaintext_hash = *blake3::hash(plaintext).as_bytes();
         let (key_bytes, nonce_bytes) = Self::derive_keys(namespace_secret, &plaintext_hash);
 
-        let cipher = XChaCha20Poly1305::new_from_slice(&key_bytes)
-            .map_err(|e| StorageError::CipherError { reason: e.to_string() })?;
+        let cipher = XChaCha20Poly1305::new_from_slice(&key_bytes).map_err(|e| {
+            StorageError::CipherError {
+                reason: e.to_string(),
+            }
+        })?;
         let nonce = XNonce::from_slice(&nonce_bytes);
 
-        let ciphertext = cipher
-            .encrypt(nonce, plaintext)
-            .map_err(|e| StorageError::CipherError { reason: e.to_string() })?;
+        let ciphertext =
+            cipher
+                .encrypt(nonce, plaintext)
+                .map_err(|e| StorageError::CipherError {
+                    reason: e.to_string(),
+                })?;
 
         Ok((ciphertext, plaintext_hash))
     }
@@ -244,15 +253,18 @@ impl ConvergentChunkCipher {
     ) -> Result<Vec<u8>, StorageError> {
         let (key_bytes, nonce_bytes) = Self::derive_keys(namespace_secret, expected_blake3);
 
-        let cipher = XChaCha20Poly1305::new_from_slice(&key_bytes)
-            .map_err(|e| StorageError::CipherError { reason: e.to_string() })?;
+        let cipher = XChaCha20Poly1305::new_from_slice(&key_bytes).map_err(|e| {
+            StorageError::CipherError {
+                reason: e.to_string(),
+            }
+        })?;
         let nonce = XNonce::from_slice(&nonce_bytes);
 
-        let plaintext = cipher
-            .decrypt(nonce, ciphertext)
-            .map_err(|e| StorageError::CipherVerificationFailed {
+        let plaintext = cipher.decrypt(nonce, ciphertext).map_err(|e| {
+            StorageError::CipherVerificationFailed {
                 reason: format!("Poly1305 AEAD tag mismatch: {e}"),
-            })?;
+            }
+        })?;
 
         let computed_hash = *blake3::hash(&plaintext).as_bytes();
         if computed_hash != *expected_blake3 {
@@ -282,9 +294,7 @@ pub enum RedundancyProfile {
         parity_shards_m: u8,
     },
     /// Direct multi-node full replication (primarily for small metadata manifests).
-    FullReplication {
-        replica_count: u8,
-    },
+    FullReplication { replica_count: u8 },
 }
 
 impl RedundancyProfile {
@@ -325,9 +335,10 @@ impl RedundancyProfile {
     #[must_use]
     pub fn total_shards(&self) -> usize {
         match *self {
-            Self::ErasureCoding { data_shards_k, parity_shards_m } => {
-                (data_shards_k as usize) + (parity_shards_m as usize)
-            }
+            Self::ErasureCoding {
+                data_shards_k,
+                parity_shards_m,
+            } => (data_shards_k as usize) + (parity_shards_m as usize),
             Self::FullReplication { replica_count } => replica_count as usize,
         }
     }
@@ -345,7 +356,9 @@ impl RedundancyProfile {
     #[must_use]
     pub fn parity_shards_m(&self) -> usize {
         match *self {
-            Self::ErasureCoding { parity_shards_m, .. } => parity_shards_m as usize,
+            Self::ErasureCoding {
+                parity_shards_m, ..
+            } => parity_shards_m as usize,
             Self::FullReplication { replica_count } => (replica_count as usize).saturating_sub(1),
         }
     }
@@ -406,7 +419,10 @@ impl ReedSolomonErasureEngine {
     /// Creates a new Reed-Solomon engine configured with the given redundancy profile.
     pub fn new(profile: RedundancyProfile) -> Result<Self, StorageError> {
         match profile {
-            RedundancyProfile::ErasureCoding { data_shards_k, parity_shards_m } => {
+            RedundancyProfile::ErasureCoding {
+                data_shards_k,
+                parity_shards_m,
+            } => {
                 if data_shards_k == 0 || parity_shards_m == 0 {
                     return Err(StorageError::ErasureCodingError {
                         reason: "data_shards_k and parity_shards_m must both be > 0".to_string(),
@@ -542,7 +558,10 @@ impl ReedSolomonErasureEngine {
                 }
                 Ok(shards)
             }
-            RedundancyProfile::ErasureCoding { data_shards_k, parity_shards_m } => {
+            RedundancyProfile::ErasureCoding {
+                data_shards_k,
+                parity_shards_m,
+            } => {
                 let k = data_shards_k as usize;
                 let m = parity_shards_m as usize;
                 let original_len = ciphertext.len();
@@ -569,7 +588,9 @@ impl ReedSolomonErasureEngine {
 
                 // Compute M parity shards
                 let mut parity_shards = vec![vec![0u8; shard_len]; m];
-                for (cauchy_row, parity_shard) in cauchy.iter().take(m).zip(parity_shards.iter_mut()) {
+                for (cauchy_row, parity_shard) in
+                    cauchy.iter().take(m).zip(parity_shards.iter_mut())
+                {
                     for (&coeff, data_shard) in cauchy_row.iter().zip(data_shards.iter()) {
                         for (p_byte, &d_byte) in parity_shard.iter_mut().zip(data_shard.iter()) {
                             *p_byte ^= GF.mul(coeff, d_byte);
@@ -625,9 +646,15 @@ impl ReedSolomonErasureEngine {
                         return Ok(shard.payload.clone());
                     }
                 }
-                Err(StorageError::InsufficientShards { required: 1, available: 0 })
+                Err(StorageError::InsufficientShards {
+                    required: 1,
+                    available: 0,
+                })
             }
-            RedundancyProfile::ErasureCoding { data_shards_k, parity_shards_m } => {
+            RedundancyProfile::ErasureCoding {
+                data_shards_k,
+                parity_shards_m,
+            } => {
                 let k = data_shards_k as usize;
                 let m = parity_shards_m as usize;
 

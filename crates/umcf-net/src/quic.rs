@@ -16,7 +16,9 @@ use rustls::server::WebPkiClientVerifier;
 use rustls::{ClientConfig, RootCertStore, ServerConfig, SignatureScheme};
 use tokio_util::sync::CancellationToken;
 use umcf_core::NodeId;
-use umcf_identity::attestation::{AttestationChallenge, AttestationProof, MutualAttestationProtocol, TLS_EXPORTER_LABEL};
+use umcf_identity::attestation::{
+    AttestationChallenge, AttestationProof, MutualAttestationProtocol, TLS_EXPORTER_LABEL,
+};
 use umcf_identity::cert::NodeCertificate;
 use umcf_identity::crl::ClusterCrl;
 use umcf_identity::did::DidKey;
@@ -133,7 +135,10 @@ fn extract_did_key_san(der: &[u8]) -> Result<String, NetError> {
         let target_len = 56;
         if pos + target_len <= der.len() {
             let slice = &der[pos..pos + target_len];
-            if slice.iter().all(|&b| b.is_ascii_alphanumeric() || b == b':') {
+            if slice
+                .iter()
+                .all(|&b| b.is_ascii_alphanumeric() || b == b':')
+            {
                 return String::from_utf8(slice.to_vec())
                     .map_err(|e| NetError::InvalidCertificate(e.to_string()));
             }
@@ -245,12 +250,20 @@ impl ServerCertVerifier for ClusterCaServerVerifier {
         now: UnixTime,
     ) -> Result<ServerCertVerified, rustls::Error> {
         // 1. Verify cryptographic chain of trust and validity period
-        self.inner
-            .verify_server_cert(end_entity, intermediates, server_name, ocsp_response, now)?;
+        self.inner.verify_server_cert(
+            end_entity,
+            intermediates,
+            server_name,
+            ocsp_response,
+            now,
+        )?;
 
         // 2. Extract and validate UMCF certificate metadata
-        let info = extract_cert_info(end_entity.as_ref())
-            .map_err(|_e| rustls::Error::InvalidCertificate(rustls::CertificateError::ApplicationVerificationFailure))?;
+        let info = extract_cert_info(end_entity.as_ref()).map_err(|_e| {
+            rustls::Error::InvalidCertificate(
+                rustls::CertificateError::ApplicationVerificationFailure,
+            )
+        })?;
 
         // 3. Cluster ID isolation check
         if info.cluster_id != self.expected_cluster_id {
@@ -261,7 +274,9 @@ impl ServerCertVerifier for ClusterCaServerVerifier {
 
         // 4. Cluster CRL revocation check
         if let Ok(crl_lock) = self.crl.read() {
-            if crl_lock.is_revoked_serial(&info.serial_hex) || crl_lock.is_revoked_did(&info.did_key) {
+            if crl_lock.is_revoked_serial(&info.serial_hex)
+                || crl_lock.is_revoked_did(&info.did_key)
+            {
                 return Err(rustls::Error::InvalidCertificate(
                     rustls::CertificateError::Revoked,
                 ));
@@ -338,11 +353,15 @@ impl ClientCertVerifier for ClusterCaClientVerifier {
         now: UnixTime,
     ) -> Result<ClientCertVerified, rustls::Error> {
         // 1. Verify cryptographic chain of trust and validity period
-        self.inner.verify_client_cert(end_entity, intermediates, now)?;
+        self.inner
+            .verify_client_cert(end_entity, intermediates, now)?;
 
         // 2. Extract and validate UMCF certificate metadata
-        let info = extract_cert_info(end_entity.as_ref())
-            .map_err(|_| rustls::Error::InvalidCertificate(rustls::CertificateError::ApplicationVerificationFailure))?;
+        let info = extract_cert_info(end_entity.as_ref()).map_err(|_| {
+            rustls::Error::InvalidCertificate(
+                rustls::CertificateError::ApplicationVerificationFailure,
+            )
+        })?;
 
         // 3. Cluster ID isolation check
         if info.cluster_id != self.expected_cluster_id {
@@ -353,7 +372,9 @@ impl ClientCertVerifier for ClusterCaClientVerifier {
 
         // 4. Cluster CRL revocation check
         if let Ok(crl_lock) = self.crl.read() {
-            if crl_lock.is_revoked_serial(&info.serial_hex) || crl_lock.is_revoked_did(&info.did_key) {
+            if crl_lock.is_revoked_serial(&info.serial_hex)
+                || crl_lock.is_revoked_did(&info.did_key)
+            {
                 return Err(rustls::Error::InvalidCertificate(
                     rustls::CertificateError::Revoked,
                 ));
@@ -419,7 +440,10 @@ impl PeerConnection {
     /// Returns the current attestation and readiness state of this connection.
     #[must_use]
     pub fn state(&self) -> PeerConnectionState {
-        self.state.read().map(|s| *s).unwrap_or(PeerConnectionState::Closed)
+        self.state
+            .read()
+            .map(|s| *s)
+            .unwrap_or(PeerConnectionState::Closed)
     }
 
     /// Sets the connection state.
@@ -490,19 +514,30 @@ impl PeerConnection {
     /// Uses `TrafficClass::CriticalControl` and records latency in the shaper.
     pub async fn ping_control(&self, payload: &[u8]) -> Result<(Duration, Vec<u8>), NetError> {
         let t0 = Instant::now();
-        self.shaper.acquire(crate::qos::TrafficClass::CriticalControl, payload.len()).await?;
+        self.shaper
+            .acquire(crate::qos::TrafficClass::CriticalControl, payload.len())
+            .await?;
 
         let (mut send, mut recv) = self.open_bi_control().await?;
         let len_bytes = (payload.len() as u32).to_le_bytes();
-        send.write_all(&len_bytes).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
-        send.write_all(payload).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
-        send.finish().map_err(|e| NetError::QuicStream(e.to_string()))?;
+        send.write_all(&len_bytes)
+            .await
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
+        send.write_all(payload)
+            .await
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
+        send.finish()
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
         let mut reply_len_buf = [0u8; 4];
-        recv.read_exact(&mut reply_len_buf).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
+        recv.read_exact(&mut reply_len_buf)
+            .await
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
         let reply_len = u32::from_le_bytes(reply_len_buf) as usize;
         let mut reply = vec![0u8; reply_len];
-        recv.read_exact(&mut reply).await.map_err(|e| NetError::QuicStream(e.to_string()))?;
+        recv.read_exact(&mut reply)
+            .await
+            .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
         let rtt = t0.elapsed();
         self.shaper.record_control_latency(rtt);
@@ -511,7 +546,11 @@ impl PeerConnection {
 
     /// Sends a bulk tensor payload over a dedicated unidirectional stream with BLAKE3 verification digest,
     /// paced by the `BandwidthShaper`.
-    pub async fn send_bulk_tensor(&self, tensor_id: &str, data: &[u8]) -> Result<[u8; 32], NetError> {
+    pub async fn send_bulk_tensor(
+        &self,
+        tensor_id: &str,
+        data: &[u8],
+    ) -> Result<[u8; 32], NetError> {
         let mut stream = self.open_uni_bulk_tensor().await?;
 
         // 1. Compute BLAKE3 digest
@@ -659,8 +698,8 @@ impl PeerConnection {
         recv.read_exact(&mut proof_bytes)
             .await
             .map_err(|e| NetError::QuicStream(e.to_string()))?;
-        let proof: AttestationProof =
-            bincode::deserialize(&proof_bytes).map_err(|e| NetError::Serialization(e.to_string()))?;
+        let proof: AttestationProof = bincode::deserialize(&proof_bytes)
+            .map_err(|e| NetError::Serialization(e.to_string()))?;
 
         // 3. Export TLS 1.3 keying material from connection
         let mut expected_exporter = [0u8; 32];
@@ -785,12 +824,18 @@ impl QuicTransportEngine {
         } else {
             socket2::Domain::IPV4
         };
-        let socket2_sock = socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
-            .map_err(NetError::Io)?;
+        let socket2_sock =
+            socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
+                .map_err(NetError::Io)?;
         let _ = socket2_sock.set_reuse_address(true);
         let _ = socket2_sock.set_nonblocking(true);
-        let _ = crate::qos::apply_socket_dscp(&socket2_sock, crate::qos::TrafficClass::CriticalControl.dscp_value());
-        socket2_sock.bind(&config.bind_addr.into()).map_err(NetError::Io)?;
+        let _ = crate::qos::apply_socket_dscp(
+            &socket2_sock,
+            crate::qos::TrafficClass::CriticalControl.dscp_value(),
+        );
+        socket2_sock
+            .bind(&config.bind_addr.into())
+            .map_err(NetError::Io)?;
         let std_sock: std::net::UdpSocket = socket2_sock.into();
         Self::start_with_socket(config, std_sock)
     }
@@ -799,7 +844,10 @@ impl QuicTransportEngine {
     ///
     /// # Errors
     /// Returns `NetError` if certificate parsing, crypto configuration, or Quinn initialization fails.
-    pub fn start_with_socket(config: QuicTransportConfig, std_sock: std::net::UdpSocket) -> Result<Self, NetError> {
+    pub fn start_with_socket(
+        config: QuicTransportConfig,
+        std_sock: std::net::UdpSocket,
+    ) -> Result<Self, NetError> {
         let _ = std_sock.set_nonblocking(true);
         let cancel_token = CancellationToken::new();
         let peers = Arc::new(RwLock::new(HashMap::new()));
@@ -875,7 +923,8 @@ impl QuicTransportEngine {
             Some(server_config),
             std_sock,
             runtime,
-        ).map_err(NetError::Io)?;
+        )
+        .map_err(NetError::Io)?;
         endpoint.set_default_client_config(client_config);
 
         // 6. Spawn Background Accept Loop
@@ -1058,7 +1107,8 @@ pub fn ed25519_secret_to_pkcs8_der(secret: &[u8; 32]) -> Vec<u8> {
     pkcs8.extend_from_slice(&[
         0x30, 0x2e, // SEQUENCE (46 bytes)
         0x02, 0x01, 0x00, // INTEGER 0 (version)
-        0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, // AlgorithmIdentifier (Ed25519 OID: 1.3.101.112)
+        0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
+        0x70, // AlgorithmIdentifier (Ed25519 OID: 1.3.101.112)
         0x04, 0x22, 0x04, 0x20, // OCTET STRING wrapping OCTET STRING of 32 bytes
     ]);
     pkcs8.extend_from_slice(secret);
@@ -1097,8 +1147,8 @@ async fn handle_inbound_attestation(
         .await
         .map_err(|e| NetError::QuicStream(e.to_string()))?;
 
-    let challenge: AttestationChallenge =
-        bincode::deserialize(&challenge_bytes).map_err(|e| NetError::Serialization(e.to_string()))?;
+    let challenge: AttestationChallenge = bincode::deserialize(&challenge_bytes)
+        .map_err(|e| NetError::Serialization(e.to_string()))?;
 
     let mut exporter = [0u8; 32];
     peer_conn
@@ -1106,12 +1156,8 @@ async fn handle_inbound_attestation(
         .export_keying_material(&mut exporter, TLS_EXPORTER_LABEL, &[])
         .map_err(|_| NetError::AttestationFailed("Export keying material failed".into()))?;
 
-    let our_proof = MutualAttestationProtocol::create_proof(
-        &keypair,
-        &challenge,
-        exporter,
-        [0u8; 32],
-    );
+    let our_proof =
+        MutualAttestationProtocol::create_proof(&keypair, &challenge, exporter, [0u8; 32]);
     let proof_bytes =
         bincode::serialize(&our_proof).map_err(|e| NetError::Serialization(e.to_string()))?;
     let plen = (proof_bytes.len() as u32).to_le_bytes();
@@ -1152,7 +1198,9 @@ async fn handle_inbound_streams(peer_conn: Arc<PeerConnection>) -> Result<(), Ne
                         return;
                     }
                     if type_buf[0] == QuicStreamType::BidirectionalControl as u8 {
-                        let _ = send.set_priority(crate::qos::TrafficClass::CriticalControl.quic_priority());
+                        let _ = send.set_priority(
+                            crate::qos::TrafficClass::CriticalControl.quic_priority(),
+                        );
                         let mut len_buf = [0u8; 4];
                         if recv.read_exact(&mut len_buf).await.is_ok() {
                             let len = u32::from_le_bytes(len_buf) as usize;
@@ -1164,7 +1212,8 @@ async fn handle_inbound_streams(peer_conn: Arc<PeerConnection>) -> Result<(), Ne
                             }
                         }
                     } else if type_buf[0] == QuicStreamType::BidirectionalRpc as u8 {
-                        let _ = send.set_priority(crate::qos::TrafficClass::ElasticCompute.quic_priority());
+                        let _ = send
+                            .set_priority(crate::qos::TrafficClass::ElasticCompute.quic_priority());
                         let mut len_buf = [0u8; 4];
                         if recv.read_exact(&mut len_buf).await.is_ok() {
                             let len = u32::from_le_bytes(len_buf) as usize;

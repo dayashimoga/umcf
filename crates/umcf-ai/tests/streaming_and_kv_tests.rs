@@ -113,7 +113,10 @@ fn test_unit_kv_cache_longest_common_prefix_matching_and_lru_eviction() {
     // Touch slot 1 so slot 0 is the least recently used
     kv.update_slot_tokens(1, vec![100, 200, 300, 999]);
     let evicted_slot = kv.allocate_slot_lru();
-    assert_eq!(evicted_slot, 0, "least recently used slot 0 must be evicted");
+    assert_eq!(
+        evicted_slot, 0,
+        "least recently used slot 0 must be evicted"
+    );
 }
 
 #[test]
@@ -141,7 +144,10 @@ fn test_unit_context_shift_preserves_sink_tokens() {
 
     // Assert the first 10 sink tokens (0..10) are strictly preserved
     for i in 0..10i32 {
-        assert_eq!(remaining_tokens[i as usize], i, "sink token {i} must be preserved");
+        assert_eq!(
+            remaining_tokens[i as usize], i,
+            "sink token {i} must be preserved"
+        );
     }
 }
 
@@ -180,7 +186,8 @@ async fn test_integration_multi_turn_chat_kv_prefix_cache_speedup() {
 
     let model = SafeLlamaModel::load_verified(&guard, &ModelLoadParams::default())
         .expect("load verified model");
-    let ctx = SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
+    let ctx =
+        SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
 
     let mut engine = InferenceEngine::new(model, ctx, 4, 512, 16);
 
@@ -207,7 +214,10 @@ async fn test_integration_multi_turn_chat_kv_prefix_cache_speedup() {
             hit_rate_turn_1 = kv_cache_hit_rate;
         }
     }
-    assert_eq!(hit_rate_turn_1, 0.0, "turn 1 cold prefill must have 0% KV hit rate");
+    assert_eq!(
+        hit_rate_turn_1, 0.0,
+        "turn 1 cold prefill must have 0% KV hit rate"
+    );
 
     // --- Turn 2: Follow-up sharing same system prompt prefix ---
     let (tx2, mut rx2) = mpsc::channel(64);
@@ -241,7 +251,8 @@ async fn test_integration_mid_decode_cancellation_via_ggml_abort_callback_under_
 
     let model = SafeLlamaModel::load_verified(&guard, &ModelLoadParams::default())
         .expect("load verified model");
-    let ctx = SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
+    let ctx =
+        SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
 
     let mut engine = InferenceEngine::new(model, ctx, 2, 512, 16);
 
@@ -307,8 +318,7 @@ fn test_integration_kv_session_encrypted_disk_save_and_restore_bit_exact_continu
     // 2. Attempt restore with wrong key -> Must fail authentication
     let mut fresh_kv = KvCacheManager::new(4, 512, 16);
     let target_slot = fresh_kv.allocate_slot_lru();
-    let restore_fail =
-        fresh_kv.restore_session_encrypted(target_slot, &wrong_key, &session_file);
+    let restore_fail = fresh_kv.restore_session_encrypted(target_slot, &wrong_key, &session_file);
     assert!(restore_fail.is_err(), "wrong key decryption must fail");
 
     // 3. Restore with correct key -> Must succeed with bit-exact token match
@@ -367,7 +377,8 @@ async fn test_hardware_benchmark_ttft_and_decode_tps_with_prefix_caching() {
 
     let model = SafeLlamaModel::load_verified(&guard, &ModelLoadParams::default())
         .expect("load verified model");
-    let ctx = SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
+    let ctx =
+        SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
 
     let mut engine = InferenceEngine::new(model, ctx, 4, 512, 16);
     let cancel = Arc::new(AtomicBool::new(false));
@@ -406,7 +417,8 @@ async fn test_manual_streaming_conversation_and_stop_button_inspection() {
 
     let model = SafeLlamaModel::load_verified(&guard, &ModelLoadParams::default())
         .expect("load verified model");
-    let ctx = SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
+    let ctx =
+        SafeLlamaContext::new(model.clone(), &ContextParams::default()).expect("create context");
 
     let mut engine = InferenceEngine::new(model, ctx, 2, 512, 16);
     let cancel = Arc::new(AtomicBool::new(false));
@@ -421,7 +433,10 @@ async fn test_manual_streaming_conversation_and_stop_button_inspection() {
         .await
         .expect("generate");
 
-    assert!(!text.is_empty(), "generated stream output must not be empty");
+    assert!(
+        !text.is_empty(),
+        "generated stream output must not be empty"
+    );
 
     let mut events = Vec::new();
     while let Some(ev) = rx.recv().await {
@@ -429,8 +444,16 @@ async fn test_manual_streaming_conversation_and_stop_button_inspection() {
     }
 
     // Must have PromptProgress, TokenDelta, UsageMetrics, and Completed
-    assert!(events.iter().any(|e| matches!(e, StreamEvent::PromptProgress { .. })));
-    assert!(events.iter().any(|e| matches!(e, StreamEvent::TokenDelta { .. })));
-    assert!(events.iter().any(|e| matches!(e, StreamEvent::UsageMetrics { .. })));
-    assert!(events.iter().any(|e| matches!(e, StreamEvent::Completed { .. })));
+    assert!(events
+        .iter()
+        .any(|e| matches!(e, StreamEvent::PromptProgress { .. })));
+    assert!(events
+        .iter()
+        .any(|e| matches!(e, StreamEvent::TokenDelta { .. })));
+    assert!(events
+        .iter()
+        .any(|e| matches!(e, StreamEvent::UsageMetrics { .. })));
+    assert!(events
+        .iter()
+        .any(|e| matches!(e, StreamEvent::Completed { .. })));
 }

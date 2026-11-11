@@ -129,18 +129,13 @@ impl NetworkInterfaceWatcher {
     ) -> Option<InterfaceDiff> {
         let current_set: HashSet<IpAddr> = current_ips.iter().copied().collect();
 
-        let added_addrs: Vec<IpAddr> = current_set
-            .difference(&self.known_addrs)
-            .copied()
-            .collect();
+        let added_addrs: Vec<IpAddr> = current_set.difference(&self.known_addrs).copied().collect();
 
-        let removed_addrs: Vec<IpAddr> = self
-            .known_addrs
-            .difference(&current_set)
-            .copied()
-            .collect();
+        let removed_addrs: Vec<IpAddr> =
+            self.known_addrs.difference(&current_set).copied().collect();
 
-        let primary_changed = self.primary_addr != current_primary || self.primary_type != current_type;
+        let primary_changed =
+            self.primary_addr != current_primary || self.primary_type != current_type;
 
         let diff = InterfaceDiff {
             added_addrs,
@@ -267,12 +262,18 @@ impl ConnectionMigrationCoordinator {
         } else {
             socket2::Domain::IPV4
         };
-        let socket2_sock = socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
-            .map_err(NetError::Io)?;
+        let socket2_sock =
+            socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
+                .map_err(NetError::Io)?;
         let _ = socket2_sock.set_reuse_address(true);
         let _ = socket2_sock.set_nonblocking(true);
-        let _ = crate::qos::apply_socket_dscp(&socket2_sock, crate::qos::TrafficClass::CriticalControl.dscp_value());
-        socket2_sock.bind(&new_bind_addr.into()).map_err(NetError::Io)?;
+        let _ = crate::qos::apply_socket_dscp(
+            &socket2_sock,
+            crate::qos::TrafficClass::CriticalControl.dscp_value(),
+        );
+        socket2_sock
+            .bind(&new_bind_addr.into())
+            .map_err(NetError::Io)?;
         let new_std_sock: std::net::UdpSocket = socket2_sock.into();
 
         // 2. Rebind Quinn Endpoint: swaps active underlying socket

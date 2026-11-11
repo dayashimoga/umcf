@@ -80,7 +80,8 @@ impl QuotaManager {
         self.vram_tracker.update_limit(quota_config.max_vram_bytes);
 
         // 2. Update RAM allocator guard ceiling
-        self.allocator_guard.update_limit(quota_config.max_ram_bytes);
+        self.allocator_guard
+            .update_limit(quota_config.max_ram_bytes);
 
         // 3. Update underlying OS/cgroup/JobObject platform enforcer
         {
@@ -155,4 +156,3 @@ impl QuotaManager {
         }
     }
 }
-

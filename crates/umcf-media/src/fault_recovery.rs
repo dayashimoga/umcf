@@ -10,7 +10,9 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::MediaError;
-use crate::quality_auditor::{AnchorFrameType, MediaQualityAuditor, QualityPolicy, SegmentQualityReport};
+use crate::quality_auditor::{
+    AnchorFrameType, MediaQualityAuditor, QualityPolicy, SegmentQualityReport,
+};
 use crate::stitcher::TranscodedSegmentOutput;
 
 /// Current lifecycle status of an assigned segment.
@@ -74,7 +76,8 @@ impl SegmentFaultRecoveryManager {
     /// Initializes tracking for a new transcode job.
     pub fn register_segments(&mut self, segment_specs: &[(u32, u64)]) {
         for &(seg_idx, frames) in segment_specs {
-            self.segment_states.insert(seg_idx, SegmentLifecycleStatus::Pending);
+            self.segment_states
+                .insert(seg_idx, SegmentLifecycleStatus::Pending);
             self.expected_frames_per_segment.insert(seg_idx, frames);
             self.retry_counts.insert(seg_idx, 0);
             self.blacklists.insert(seg_idx, Vec::new());
@@ -135,11 +138,7 @@ impl SegmentFaultRecoveryManager {
 
     /// Watchdog scan identifying stalled workers with no progress for > `timeout_ms`.
     /// Automatically resets stalled segments to `Pending` and blacklists the stalled worker.
-    pub fn check_and_recover_stalled_workers(
-        &mut self,
-        now_ms: u64,
-        timeout_ms: u64,
-    ) -> Vec<u32> {
+    pub fn check_and_recover_stalled_workers(&mut self, now_ms: u64, timeout_ms: u64) -> Vec<u32> {
         let mut stalled_segments = Vec::new();
 
         for (&seg_idx, state) in &self.segment_states {
@@ -167,7 +166,8 @@ impl SegmentFaultRecoveryManager {
             *retries += 1;
 
             // Re-queue to Pending
-            self.segment_states.insert(seg_idx, SegmentLifecycleStatus::Pending);
+            self.segment_states
+                .insert(seg_idx, SegmentLifecycleStatus::Pending);
             recovered.push(seg_idx);
         }
 
@@ -239,7 +239,8 @@ impl SegmentFaultRecoveryManager {
             }
 
             // Re-queue segment to Pending for fallback re-assignment
-            self.segment_states.insert(segment_index, SegmentLifecycleStatus::Pending);
+            self.segment_states
+                .insert(segment_index, SegmentLifecycleStatus::Pending);
             Ok(report)
         }
     }
@@ -270,29 +271,44 @@ impl SegmentFaultRecoveryManager {
             fs::create_dir_all(&self.checkpoint_dir)?;
         }
 
-        let checkpoint_path = self.checkpoint_dir.join(format!("{job_id}_checkpoint.json"));
-        let json = serde_json::to_string_pretty(&checkpoint)
-            .map_err(|e| MediaError::InvalidInput { reason: e.to_string() })?;
+        let checkpoint_path = self
+            .checkpoint_dir
+            .join(format!("{job_id}_checkpoint.json"));
+        let json =
+            serde_json::to_string_pretty(&checkpoint).map_err(|e| MediaError::InvalidInput {
+                reason: e.to_string(),
+            })?;
         fs::write(&checkpoint_path, json)?;
 
         Ok(checkpoint_path)
     }
 
     /// Loads checkpoint from disk and restores already completed segments.
-    pub fn resume_from_checkpoint(&mut self, job_id: &str) -> Result<Option<JobCheckpoint>, MediaError> {
-        let checkpoint_path = self.checkpoint_dir.join(format!("{job_id}_checkpoint.json"));
+    pub fn resume_from_checkpoint(
+        &mut self,
+        job_id: &str,
+    ) -> Result<Option<JobCheckpoint>, MediaError> {
+        let checkpoint_path = self
+            .checkpoint_dir
+            .join(format!("{job_id}_checkpoint.json"));
         if !checkpoint_path.exists() {
             return Ok(None);
         }
 
         let json = fs::read_to_string(&checkpoint_path)?;
-        let checkpoint: JobCheckpoint = serde_json::from_str(&json)
-            .map_err(|e| MediaError::InvalidInput { reason: e.to_string() })?;
+        let checkpoint: JobCheckpoint =
+            serde_json::from_str(&json).map_err(|e| MediaError::InvalidInput {
+                reason: e.to_string(),
+            })?;
 
         self.blacklists = checkpoint.blacklisted_workers.clone();
 
         for (&seg_idx, path) in &checkpoint.completed_output_paths {
-            let frames = self.expected_frames_per_segment.get(&seg_idx).copied().unwrap_or(0);
+            let frames = self
+                .expected_frames_per_segment
+                .get(&seg_idx)
+                .copied()
+                .unwrap_or(0);
             self.segment_states.insert(
                 seg_idx,
                 SegmentLifecycleStatus::VerifiedCompleted {

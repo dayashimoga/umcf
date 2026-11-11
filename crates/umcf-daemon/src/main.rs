@@ -157,19 +157,24 @@ mod tests {
     fn integration_daemon_model_registry_service() {
         use tempfile::TempDir;
         use umcf_daemon::ModelRegistryService;
-        use umcf_gguf::{ContentAddressedModelStore, DownloadScope, MockPeerProvider, CHUNK_SIZE_BYTES};
+        use umcf_gguf::{
+            ContentAddressedModelStore, DownloadScope, MockPeerProvider, CHUNK_SIZE_BYTES,
+        };
 
         let temp = TempDir::new().expect("temp dir");
         let store = ContentAddressedModelStore::new(temp.path()).expect("store");
         let service = ModelRegistryService::new(store);
 
         let test_file = temp.path().join("model.gguf");
-        std::fs::write(&test_file, vec![0x42; (CHUNK_SIZE_BYTES as usize) * 2]).expect("write file");
+        std::fs::write(&test_file, vec![0x42; (CHUNK_SIZE_BYTES as usize) * 2])
+            .expect("write file");
 
         let manifest = service.import_local_model(&test_file).expect("import");
         assert_eq!(manifest.chunks.len(), 2);
 
-        let fetched = service.get_model_manifest(&manifest.model_id).expect("get manifest");
+        let fetched = service
+            .get_model_manifest(&manifest.model_id)
+            .expect("get manifest");
         assert_eq!(fetched.model_id, manifest.model_id);
 
         let list = service.list_models().expect("list");
@@ -186,13 +191,17 @@ mod tests {
             .expect("start sync");
         assert!(session_id.starts_with("sync-"));
 
-        let progress = service.subscribe_sync_progress(&session_id).expect("progress");
+        let progress = service
+            .subscribe_sync_progress(&session_id)
+            .expect("progress");
         assert_eq!(progress.total_chunks, 2);
 
         service.pause_model_sync(&session_id).expect("pause");
         service.cancel_model_sync(&session_id).expect("cancel");
 
-        let freed = service.evict_model(&manifest.model_id, true).expect("evict");
+        let freed = service
+            .evict_model(&manifest.model_id, true)
+            .expect("evict");
         assert!(freed > 0);
     }
 }

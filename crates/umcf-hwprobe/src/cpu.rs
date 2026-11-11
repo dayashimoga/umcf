@@ -55,8 +55,12 @@ impl CpuProber {
         }
 
         // Detect P-cores vs E-cores: if frequency disparity > 25%, split cores
-        let (p_cores, e_cores) = if max_freq > 0 && min_freq > 0 && max_freq > min_freq * 125 / 100 {
-            let e_count = cpus.iter().filter(|c| c.frequency() < (max_freq + min_freq) / 2).count() as u32;
+        let (p_cores, e_cores) = if max_freq > 0 && min_freq > 0 && max_freq > min_freq * 125 / 100
+        {
+            let e_count = cpus
+                .iter()
+                .filter(|c| c.frequency() < (max_freq + min_freq) / 2)
+                .count() as u32;
             let p_count = physical_cores.saturating_sub(e_count).max(1);
             (p_count, e_count)
         } else {
@@ -147,7 +151,9 @@ impl CpuProber {
             let line = line.trim();
             if line.starts_with("processor") && line.contains(':') {
                 count += 1;
-            } else if (line.starts_with("flags") || line.starts_with("Features")) && line.contains(':') {
+            } else if (line.starts_with("flags") || line.starts_with("Features"))
+                && line.contains(':')
+            {
                 if let Some(pos) = line.find(':') {
                     let flags_part = &line[pos + 1..];
                     for f in flags_part.split_whitespace() {

@@ -6,7 +6,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use umcf_core::{NodeId, NodeRole};
 
-use crate::cloud_sync::{CloudPeerRecord, CloudflareControlPlaneClient, RegisterResponse, SyncDeltaResponse};
+use crate::cloud_sync::{
+    CloudPeerRecord, CloudflareControlPlaneClient, RegisterResponse, SyncDeltaResponse,
+};
 use crate::crdt::RegistryDelta;
 use crate::error::RegistryError;
 
@@ -189,7 +191,9 @@ impl FailoverControlPlaneClient {
                         return Ok(resp);
                     }
                     Err(e) => {
-                        tracing::warn!("Primary control plane sync failed: {e}; attempting fallback");
+                        tracing::warn!(
+                            "Primary control plane sync failed: {e}; attempting fallback"
+                        );
                         self.primary_breaker.record_failure(now_ms);
                     }
                 }

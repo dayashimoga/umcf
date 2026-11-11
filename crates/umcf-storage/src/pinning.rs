@@ -40,9 +40,7 @@ pub enum HydrationState {
     /// All constituent chunks are present locally on disk, verified, and readable without network.
     FullyAvailableOffline,
     /// Some constituent chunks are missing or degraded.
-    Degraded {
-        missing_chunks: usize,
-    },
+    Degraded { missing_chunks: usize },
 }
 
 /// Metadata record for a pinned object.

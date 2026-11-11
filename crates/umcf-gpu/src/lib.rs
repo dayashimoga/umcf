@@ -16,8 +16,8 @@ pub mod verifier;
 
 pub use compositor::{CompletedTilePacket, FrameCompositor, ProgressiveFrameDelta};
 pub use dispatcher::{
-    BoundedVramAllocator, BufferUsage, ComputeExecutionReceipt, DispatchWorkgroups,
-    GpuBuffer, GpuComputeDispatcher, KernelBindings,
+    BoundedVramAllocator, BufferUsage, ComputeExecutionReceipt, DispatchWorkgroups, GpuBuffer,
+    GpuComputeDispatcher, KernelBindings,
 };
 pub use error::GpuError;
 pub use render_coordinator::{

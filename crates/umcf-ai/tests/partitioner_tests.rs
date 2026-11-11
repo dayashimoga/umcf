@@ -101,7 +101,10 @@ fn test_unit_single_node_preferred_when_model_fits_in_vram() {
         .solve_optimal_pipeline_partition(&report, "Llama-3-8B-Q4", &[desktop, laptop], &links)
         .expect("partition plan should succeed");
 
-    assert!(plan.is_single_node, "model fits in desktop VRAM, must choose single-node execution");
+    assert!(
+        plan.is_single_node,
+        "model fits in desktop VRAM, must choose single-node execution"
+    );
     assert_eq!(plan.stages.len(), 1);
     assert_eq!(plan.stages[0].node_id.0, "did:umcf:desktop-rtx4090");
     assert_eq!(plan.stages[0].start_layer, 0);
@@ -181,7 +184,10 @@ fn test_unit_heterogeneous_3_node_proportional_layer_assignment() {
     assert!(plan.stages.last().unwrap().has_output_head);
 
     // Proportional check: desktop has ~57% of cluster memory, must get largest chunk
-    assert!(plan.stages[0].layer_count() >= 20, "desktop must hold majority of layers");
+    assert!(
+        plan.stages[0].layer_count() >= 20,
+        "desktop must hold majority of layers"
+    );
 }
 
 #[test]
@@ -390,7 +396,10 @@ fn test_integration_real_model_footprint_pipeline_partitioning() {
     updated_nodes[1].thermal_state = ThermalState::Serious;
 
     let trigger = rebalancer.detect_rebalance_trigger(&plan, &updated_nodes);
-    assert!(trigger.is_some(), "rebalance must trigger when node degrades to Serious/Critical");
+    assert!(
+        trigger.is_some(),
+        "rebalance must trigger when node degrades to Serious/Critical"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -478,7 +487,10 @@ fn test_hardware_live_cluster_partition_plan_generation() {
         .expect("must generate live partition plan");
 
     assert!(plan.is_single_node);
-    assert_eq!(plan.stages[0].total_stage_memory_bytes, report.total_ram_vram_required);
+    assert_eq!(
+        plan.stages[0].total_stage_memory_bytes,
+        report.total_ram_vram_required
+    );
 }
 
 // ---------------------------------------------------------------------------

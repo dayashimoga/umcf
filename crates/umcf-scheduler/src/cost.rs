@@ -146,7 +146,8 @@ impl RooflineCostModel {
     ) -> CostBreakdown {
         // 1. Compute time: (FLOPs / (GFLOPS * 10^9)) * 1000.0 ms
         let gflops = node.effective_gflops.max(0.001);
-        let compute_time_ms = (task.spec.estimated_flops as f64 / (gflops * 1_000_000_000.0)) * 1000.0;
+        let compute_time_ms =
+            (task.spec.estimated_flops as f64 / (gflops * 1_000_000_000.0)) * 1000.0;
 
         // 2. Memory time: (Bytes / Bandwidth_bytes_per_sec) * 1000.0 ms
         let mem_bw = node.memory_bandwidth_bytes_per_sec.max(1.0);

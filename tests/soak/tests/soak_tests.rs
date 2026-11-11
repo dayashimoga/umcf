@@ -2,11 +2,11 @@
 
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
 use soak_suite::{
     LeakProfiler, QuiescenceBarrier, ResourceSnapshot, SoakError, SoakTestCoordinator,
 };
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 // ============================================================================
 // 1. [UNIT] TESTS
@@ -16,7 +16,8 @@ use soak_suite::{
 fn test_ols_linear_regression_leak_slope_detector_catches_16_byte_per_cycle_leak() {
     // 1. Case A: Zero-leak flat trend (slope = 0.0)
     let flat_samples: Vec<(usize, f64)> = (0..50).map(|i| (i * 100, 16_000_000.0)).collect();
-    let res_flat = LeakProfiler::compute_regression("heap_bytes_flat", &flat_samples, 0.001).unwrap();
+    let res_flat =
+        LeakProfiler::compute_regression("heap_bytes_flat", &flat_samples, 0.001).unwrap();
     assert!(!res_flat.is_leak);
     assert!(res_flat.slope.abs() <= 1e-6);
     assert_eq!(res_flat.r_squared, 1.0);
@@ -29,7 +30,8 @@ fn test_ols_linear_regression_leak_slope_detector_catches_16_byte_per_cycle_leak
             (cycle, bytes)
         })
         .collect();
-    let res_leak = LeakProfiler::compute_regression("heap_bytes_leaking", &leak_samples, 0.001).unwrap();
+    let res_leak =
+        LeakProfiler::compute_regression("heap_bytes_leaking", &leak_samples, 0.001).unwrap();
     assert!(res_leak.is_leak);
     assert!((res_leak.slope - 16.0).abs() < 1e-4);
     assert!(res_leak.r_squared > 0.999);
@@ -38,7 +40,10 @@ fn test_ols_linear_regression_leak_slope_detector_catches_16_byte_per_cycle_leak
 #[test]
 fn test_fd_and_os_handle_counter_accuracy_windows_linux_macos() {
     let count = LeakProfiler::query_host_fd_or_handle_count();
-    assert!(count > 0, "Expected non-zero handle/FD count on host process");
+    assert!(
+        count > 0,
+        "Expected non-zero handle/FD count on host process"
+    );
 }
 
 #[tokio::test]
@@ -55,23 +60,24 @@ async fn test_quiescence_barrier_waits_for_background_drop_tasks() {
     });
 
     // Barrier must wait until counter drops to 0
-    let res = QuiescenceBarrier::wait_for_quiescence(
-        || active_counter.load(Ordering::SeqCst),
-        1000,
-    )
-    .await;
+    let res =
+        QuiescenceBarrier::wait_for_quiescence(|| active_counter.load(Ordering::SeqCst), 1000)
+            .await;
 
     assert!(res.is_ok());
     assert_eq!(active_counter.load(Ordering::SeqCst), 0);
 
     // Timeout case check
     let stuck_counter = Arc::new(AtomicUsize::new(3));
-    let timeout_res = QuiescenceBarrier::wait_for_quiescence(
-        || stuck_counter.load(Ordering::SeqCst),
-        30,
-    )
-    .await;
-    assert!(matches!(timeout_res, Err(SoakError::QuiescenceTimeout { active_count: 3, .. })));
+    let timeout_res =
+        QuiescenceBarrier::wait_for_quiescence(|| stuck_counter.load(Ordering::SeqCst), 30).await;
+    assert!(matches!(
+        timeout_res,
+        Err(SoakError::QuiescenceTimeout {
+            active_count: 3,
+            ..
+        })
+    ));
 }
 
 // ============================================================================
@@ -91,7 +97,11 @@ fn test_1000_cycle_ci_accelerated_multi_workload_soak_zero_leak_gate() {
     assert_eq!(report.final_snapshot.temp_directory_file_count, 0);
 
     for reg in &report.regressions {
-        assert!(!reg.is_leak, "Metric {} detected leak with slope {}", reg.metric_name, reg.slope);
+        assert!(
+            !reg.is_leak,
+            "Metric {} detected leak with slope {}",
+            reg.metric_name, reg.slope
+        );
         assert!(reg.slope <= reg.max_allowed_slope);
     }
 }
@@ -120,7 +130,10 @@ fn test_abrupt_client_disconnect_storm_zero_socket_or_stream_handle_leak() {
     }
 
     let results = LeakProfiler::evaluate_snapshots(&snapshots, 200).unwrap();
-    let quic_reg = results.iter().find(|r| r.metric_name == "active_quic_streams").unwrap();
+    let quic_reg = results
+        .iter()
+        .find(|r| r.metric_name == "active_quic_streams")
+        .unwrap();
     assert!(!quic_reg.is_leak);
     assert_eq!(quic_reg.slope, 0.0);
 }
@@ -140,7 +153,11 @@ fn test_10000_cycle_accelerated_soak_with_churn_and_cancellations() {
     assert!(report.snapshots_count >= 50);
 
     // Heap allocation post-warmup must remain within <= 1.0% of cycle-2,000 baseline
-    let cycle_2000_snapshot = report.regressions.iter().find(|r| r.metric_name == "heap_allocated_bytes").unwrap();
+    let cycle_2000_snapshot = report
+        .regressions
+        .iter()
+        .find(|r| r.metric_name == "heap_allocated_bytes")
+        .unwrap();
     assert!(!cycle_2000_snapshot.is_leak);
     assert!(cycle_2000_snapshot.slope <= 0.001);
 }
@@ -176,4 +193,3 @@ fn test_manual_resource_and_leak_diagnostics_ui_schema() {
     assert_eq!(json_val["zero_leak_verified"], true);
     assert!(json_val["regressions"].as_array().unwrap().len() >= 5);
 }
-

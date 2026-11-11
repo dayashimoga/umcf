@@ -1,7 +1,7 @@
 //! Automated Zero-Leak Regression Profiler using Ordinary Least Squares (OLS).
 
-use serde::{Deserialize, Serialize};
 use crate::error::SoakError;
+use serde::{Deserialize, Serialize};
 
 /// Resource utilization snapshot sampled at a given cycle.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -158,7 +158,10 @@ impl LeakProfiler {
                 metric: "open_file_descriptors".to_string(),
                 slope: r_fd.slope,
                 threshold: r_fd.max_allowed_slope,
-                details: format!("File descriptor / handle leak: +{:.4} handles/cycle", r_fd.slope),
+                details: format!(
+                    "File descriptor / handle leak: +{:.4} handles/cycle",
+                    r_fd.slope
+                ),
             });
         }
         results.push(r_fd);
@@ -174,7 +177,10 @@ impl LeakProfiler {
                 metric: "active_quic_streams".to_string(),
                 slope: r_quic.slope,
                 threshold: r_quic.max_allowed_slope,
-                details: format!("QUIC stream handle leak: +{:.4} streams/cycle", r_quic.slope),
+                details: format!(
+                    "QUIC stream handle leak: +{:.4} streams/cycle",
+                    r_quic.slope
+                ),
             });
         }
         results.push(r_quic);
@@ -190,7 +196,10 @@ impl LeakProfiler {
                 metric: "temp_directory_file_count".to_string(),
                 slope: r_temp.slope,
                 threshold: r_temp.max_allowed_slope,
-                details: format!("Temporary file orphan leak: +{:.4} files/cycle", r_temp.slope),
+                details: format!(
+                    "Temporary file orphan leak: +{:.4} files/cycle",
+                    r_temp.slope
+                ),
             });
         }
         results.push(r_temp);
@@ -215,10 +224,7 @@ impl LeakProfiler {
 pub struct QuiescenceBarrier;
 
 impl QuiescenceBarrier {
-    pub async fn wait_for_quiescence<F>(
-        check_active: F,
-        timeout_ms: u64,
-    ) -> Result<(), SoakError>
+    pub async fn wait_for_quiescence<F>(check_active: F, timeout_ms: u64) -> Result<(), SoakError>
     where
         F: Fn() -> usize,
     {
@@ -244,4 +250,3 @@ impl QuiescenceBarrier {
         }
     }
 }
-

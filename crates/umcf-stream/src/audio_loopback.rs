@@ -69,7 +69,8 @@ impl LoopbackAudioCapturer {
         self.sample_clock_us += duration_us;
 
         // Low-delay Opus packet sizing (approx 80 bytes for 5ms @ 128 kbps)
-        let payload_size = ((self.bitrate_kbps * 1000 / 8) * self.packet_duration_ms / 1000) as usize;
+        let payload_size =
+            ((self.bitrate_kbps * 1000 / 8) * self.packet_duration_ms / 1000) as usize;
         let mut opus_payload = vec![0u8; payload_size];
 
         // Opus TOC byte: config 12 = SILK/CELT hybrid 48kHz, stereo

@@ -78,7 +78,10 @@ async fn test_unit_vram_budget_tracker_concurrent_reservations() {
 
     let mut leases = Vec::new();
     for h in handles {
-        let lease = h.await.expect("join handle").expect("reservation should succeed");
+        let lease = h
+            .await
+            .expect("join handle")
+            .expect("reservation should succeed");
         leases.push(lease);
     }
 
@@ -89,9 +92,16 @@ async fn test_unit_vram_budget_tracker_concurrent_reservations() {
     let overflow_res = tracker.reserve(1024 * 1024, "overflow-task");
     assert!(matches!(
         overflow_res,
-        Err(GuardError::VramQuotaExceeded { requested_bytes: 1048576, available_bytes: 0, ceiling_bytes: 524288000 })
+        Err(GuardError::VramQuotaExceeded {
+            requested_bytes: 1048576,
+            available_bytes: 0,
+            ceiling_bytes: 524288000
+        })
     ));
-    assert_eq!(overflow_res.expect_err("overflow").error_code(), ErrorCode::E4002_VRAM_QUOTA_EXCEEDED);
+    assert_eq!(
+        overflow_res.expect_err("overflow").error_code(),
+        ErrorCode::E4002_VRAM_QUOTA_EXCEEDED
+    );
 
     // Drop one 50 MiB lease
     drop(leases.pop());
@@ -108,7 +118,9 @@ fn test_unit_vram_budget_tracker_raii_lease_drop_release() {
     let tracker = VramBudgetTracker::new(limit_bytes);
 
     {
-        let lease1 = tracker.reserve(200 * 1024 * 1024, "task-1").expect("reserve 200M");
+        let lease1 = tracker
+            .reserve(200 * 1024 * 1024, "task-1")
+            .expect("reserve 200M");
         assert_eq!(tracker.reserved_vram_bytes(), 200 * 1024 * 1024);
         assert_eq!(tracker.available_vram_bytes(), 56 * 1024 * 1024);
         assert_eq!(lease1.bytes(), 200 * 1024 * 1024);
@@ -120,7 +132,9 @@ fn test_unit_vram_budget_tracker_raii_lease_drop_release() {
     assert_eq!(tracker.available_vram_bytes(), limit_bytes);
 
     // Explicit release test
-    let lease2 = tracker.reserve(100 * 1024 * 1024, "task-2").expect("reserve 100M");
+    let lease2 = tracker
+        .reserve(100 * 1024 * 1024, "task-2")
+        .expect("reserve 100M");
     assert_eq!(tracker.reserved_vram_bytes(), 100 * 1024 * 1024);
     lease2.release();
     assert_eq!(tracker.reserved_vram_bytes(), 0);
@@ -142,7 +156,10 @@ fn test_unit_wasm_resource_limiter_pages() {
     // 1025 pages = 64 MiB + 64 KiB -> Exceeds quota
     let err = limiter.memory_growing(1025);
     assert!(err.is_err());
-    assert_eq!(err.expect_err("exceeds quota").error_code(), ErrorCode::E4001_MEMORY_QUOTA_EXCEEDED);
+    assert_eq!(
+        err.expect_err("exceeds quota").error_code(),
+        ErrorCode::E4001_MEMORY_QUOTA_EXCEEDED
+    );
 
     // Table elements
     assert!(limiter.table_growing(500));
@@ -171,14 +188,17 @@ fn test_unit_cgroup_v2_control_file_formatting() {
     assert_eq!(mem_content, "67108864");
 
     // Check memory.high (90% = 60,397,977 bytes)
-    let high_content = fs::read_to_string(dir.path().join("memory.high")).expect("read memory.high");
+    let high_content =
+        fs::read_to_string(dir.path().join("memory.high")).expect("read memory.high");
     assert_eq!(high_content, "60397977");
 
     // Apply update to 80% CPU and 128 MiB RAM
     let mut updated_config = config;
     updated_config.max_cpu_percent = 80;
     updated_config.max_ram_bytes = 128 * 1024 * 1024;
-    enforcer.apply_limits(&updated_config).expect("apply updated limits");
+    enforcer
+        .apply_limits(&updated_config)
+        .expect("apply updated limits");
 
     let updated_cpu = fs::read_to_string(dir.path().join("cpu.max")).expect("read updated cpu");
     assert_eq!(updated_cpu, "80000 100000");
@@ -203,12 +223,14 @@ async fn test_integration_cpu_memory_intensive_workload_enforcement() {
     assert_eq!(t_snapshot0.reserved_ram_bytes, 0);
 
     // 1. Task 1 reserves 32 MiB RAM
-    let lease_ram_1 = manager.reserve_ram(32 * 1024 * 1024, "workload-1")
+    let lease_ram_1 = manager
+        .reserve_ram(32 * 1024 * 1024, "workload-1")
         .expect("reserve 32 MiB RAM");
     assert_eq!(lease_ram_1.bytes(), 32 * 1024 * 1024);
 
     // 2. Task 2 reserves another 32 MiB RAM (reaching 64 MiB total)
-    let lease_ram_2 = manager.reserve_ram(32 * 1024 * 1024, "workload-2")
+    let lease_ram_2 = manager
+        .reserve_ram(32 * 1024 * 1024, "workload-2")
         .expect("reserve 32 MiB RAM");
     assert_eq!(lease_ram_2.bytes(), 32 * 1024 * 1024);
 
@@ -224,7 +246,9 @@ async fn test_integration_cpu_memory_intensive_workload_enforcement() {
 
     // 4. Update policy to 128 MiB RAM and 75% CPU dynamically
     let updated_policy = make_sample_policy(&keypair, 75, 128, 256);
-    let update_duration = manager.update_policy(updated_policy).await
+    let update_duration = manager
+        .update_policy(updated_policy)
+        .await
         .expect("policy update must succeed");
 
     assert!(
@@ -234,7 +258,8 @@ async fn test_integration_cpu_memory_intensive_workload_enforcement() {
     );
 
     // 5. With new 128 MiB ceiling, Task 3 can now reserve its 32 MiB
-    let lease_ram_3 = manager.reserve_ram(32 * 1024 * 1024, "workload-3")
+    let lease_ram_3 = manager
+        .reserve_ram(32 * 1024 * 1024, "workload-3")
         .expect("reserve 32 MiB after limit increase");
     assert_eq!(lease_ram_3.bytes(), 32 * 1024 * 1024);
 
@@ -282,7 +307,8 @@ async fn test_integration_cpu_utilization_window_measurement() {
     }
 
     let total_elapsed = start.elapsed();
-    let measured_cpu_percent = ((busy_time.as_secs_f64() / total_elapsed.as_secs_f64()) * 100.0) as u8;
+    let measured_cpu_percent =
+        ((busy_time.as_secs_f64() / total_elapsed.as_secs_f64()) * 100.0) as u8;
 
     let delta = (measured_cpu_percent as i32 - target_cpu_percent as i32).abs();
     assert!(
@@ -360,7 +386,9 @@ fn test_hw_required_cgroup_v2_or_job_object_limits() {
 
     let mut job_enforcer = JobObjectEnforcer::new(config.clone());
     assert!(job_enforcer.apply_limits(&config).is_ok());
-    assert!(job_enforcer.assign_task("local-hw-task", Some(std::process::id())).is_ok());
+    assert!(job_enforcer
+        .assign_task("local-hw-task", Some(std::process::id()))
+        .is_ok());
     assert_eq!(job_enforcer.current_config(), config);
     assert!(job_enforcer.remove_task("local-hw-task").is_ok());
 }
@@ -379,8 +407,12 @@ async fn test_manually_verified_quota_enforcement_report_audit() {
     let t_baseline = manager.telemetry().await;
 
     // Execute active workload: reserve 64 MiB RAM and 128 MiB VRAM
-    let lease_ram = manager.reserve_ram(64 * 1024 * 1024, "active-job").expect("reserve RAM");
-    let lease_vram = manager.reserve_vram(128 * 1024 * 1024, "active-job").expect("reserve VRAM");
+    let lease_ram = manager
+        .reserve_ram(64 * 1024 * 1024, "active-job")
+        .expect("reserve RAM");
+    let lease_vram = manager
+        .reserve_vram(128 * 1024 * 1024, "active-job")
+        .expect("reserve VRAM");
 
     // Telemetry: During peak workload
     let t_peak = manager.telemetry().await;
@@ -403,7 +435,8 @@ async fn test_manually_verified_quota_enforcement_report_audit() {
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let report_path = workspace_root.join("artifacts/evidence/stage-04/quota_enforcement_report.json");
+    let report_path =
+        workspace_root.join("artifacts/evidence/stage-04/quota_enforcement_report.json");
 
     if let Some(parent) = report_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -494,7 +527,10 @@ fn test_unit_hysteresis_deadband_oscillation_prevention() {
         timestamp_epoch_ms: 2000,
     });
     assert_eq!(r2.current_regime, GuardRegime::PausedWaitCoolOrCharge);
-    assert!(!r2.transition_occurred, "Hysteresis must prevent resume at 40.5°C");
+    assert!(
+        !r2.transition_occurred,
+        "Hysteresis must prevent resume at 40.5°C"
+    );
 
     // Heat up to 41.2°C -> remains Paused
     let r3 = guard.evaluate(&SensorTelemetry {
@@ -605,7 +641,13 @@ async fn test_integration_sensor_stream_throttle_pause_resume() {
     );
 
     let ev1 = rx.recv().await.expect("receive regime changed");
-    assert!(matches!(ev1, NodeGuardEvent::RegimeChanged { to: GuardRegime::PausedWaitCoolOrCharge, .. }));
+    assert!(matches!(
+        ev1,
+        NodeGuardEvent::RegimeChanged {
+            to: GuardRegime::PausedWaitCoolOrCharge,
+            ..
+        }
+    ));
     let ev2 = rx.recv().await.expect("receive suspend workload");
     assert!(matches!(ev2, NodeGuardEvent::SuspendWorkload { .. }));
 
@@ -628,7 +670,13 @@ async fn test_integration_sensor_stream_throttle_pause_resume() {
     assert_eq!(r4.current_regime, GuardRegime::FullCapacity);
 
     let ev3 = rx.recv().await.expect("receive resume regime changed");
-    assert!(matches!(ev3, NodeGuardEvent::RegimeChanged { to: GuardRegime::FullCapacity, .. }));
+    assert!(matches!(
+        ev3,
+        NodeGuardEvent::RegimeChanged {
+            to: GuardRegime::FullCapacity,
+            ..
+        }
+    ));
     let ev4 = rx.recv().await.expect("receive resume workload");
     assert_eq!(ev4, NodeGuardEvent::ResumeWorkload);
 }
@@ -641,7 +689,9 @@ async fn test_integration_os_trim_memory_emergency_evict() {
     let mut rx = guard.subscribe();
 
     let t0 = Instant::now();
-    let res = guard.handle_lifecycle_signal(OsLifecycleSignal::TrimMemory(TrimMemoryLevel::RunningCritical));
+    let res = guard.handle_lifecycle_signal(OsLifecycleSignal::TrimMemory(
+        TrimMemoryLevel::RunningCritical,
+    ));
     let elapsed = t0.elapsed();
 
     assert_eq!(res.current_regime, GuardRegime::EmergencyEvict);
@@ -652,7 +702,13 @@ async fn test_integration_os_trim_memory_emergency_evict() {
     );
 
     let ev1 = rx.recv().await.expect("recv regime event");
-    assert!(matches!(ev1, NodeGuardEvent::RegimeChanged { to: GuardRegime::EmergencyEvict, .. }));
+    assert!(matches!(
+        ev1,
+        NodeGuardEvent::RegimeChanged {
+            to: GuardRegime::EmergencyEvict,
+            ..
+        }
+    ));
     let ev2 = rx.recv().await.expect("recv evacuate event");
     if let NodeGuardEvent::EvacuateNode { deadline_ms, .. } = ev2 {
         assert!(deadline_ms <= 100);
@@ -698,7 +754,13 @@ async fn test_simulation_abrupt_battery_drop_and_unplug_fault_injection() {
     );
 
     let ev = rx.recv().await.expect("receive suspend event");
-    assert!(matches!(ev, NodeGuardEvent::RegimeChanged { to: GuardRegime::PausedWaitCoolOrCharge, .. }));
+    assert!(matches!(
+        ev,
+        NodeGuardEvent::RegimeChanged {
+            to: GuardRegime::PausedWaitCoolOrCharge,
+            ..
+        }
+    ));
 }
 
 #[test]
@@ -739,7 +801,8 @@ fn test_manually_verified_thermal_battery_hysteresis_trace_audit() {
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let trace_path = workspace_root.join("artifacts/evidence/stage-04/thermal_battery_hysteresis_trace.json");
+    let trace_path =
+        workspace_root.join("artifacts/evidence/stage-04/thermal_battery_hysteresis_trace.json");
 
     if let Some(parent) = trace_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -1147,7 +1210,8 @@ fn test_s4_p1_sp3_manually_verified_latency_histogram_export() {
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let hist_path = workspace_root.join("artifacts/evidence/stage-04/preemption_latency_histogram.json");
+    let hist_path =
+        workspace_root.join("artifacts/evidence/stage-04/preemption_latency_histogram.json");
 
     if let Some(parent) = hist_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -1163,5 +1227,3 @@ fn test_s4_p1_sp3_manually_verified_latency_histogram_export() {
     assert!(hist_path.exists());
     assert!(!hist_json.is_empty());
 }
-
-

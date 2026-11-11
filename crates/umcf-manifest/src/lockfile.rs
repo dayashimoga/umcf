@@ -172,7 +172,9 @@ impl Lockfile {
         let pubkey_bytes = hex::decode(&self.developer_pubkey)
             .map_err(|e| ManifestError::InvalidSignature(format!("Malformed pubkey: {e}")))?;
         if pubkey_bytes.len() != 32 {
-            return Err(ManifestError::InvalidSignature("Invalid pubkey length".to_string()));
+            return Err(ManifestError::InvalidSignature(
+                "Invalid pubkey length".to_string(),
+            ));
         }
         let mut pk_arr = [0u8; 32];
         pk_arr.copy_from_slice(&pubkey_bytes);
@@ -182,7 +184,9 @@ impl Lockfile {
         let sig_bytes = hex::decode(&self.signature)
             .map_err(|e| ManifestError::InvalidSignature(format!("Malformed signature: {e}")))?;
         if sig_bytes.len() != 64 {
-            return Err(ManifestError::InvalidSignature("Invalid signature length".to_string()));
+            return Err(ManifestError::InvalidSignature(
+                "Invalid signature length".to_string(),
+            ));
         }
         let mut sig_arr = [0u8; 64];
         sig_arr.copy_from_slice(&sig_bytes);
@@ -202,11 +206,9 @@ impl Lockfile {
         step_id: &str,
         current_artifact_hash: &str,
     ) -> Result<(), ManifestError> {
-        let step = self
-            .steps
-            .iter()
-            .find(|s| s.id == step_id)
-            .ok_or_else(|| ManifestError::ValidationError(format!("Step '{step_id}' not found in lockfile")))?;
+        let step = self.steps.iter().find(|s| s.id == step_id).ok_or_else(|| {
+            ManifestError::ValidationError(format!("Step '{step_id}' not found in lockfile"))
+        })?;
 
         if step.artifact_hash != current_artifact_hash {
             return Err(ManifestError::LockfileMismatch {

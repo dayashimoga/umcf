@@ -37,7 +37,11 @@ struct PoolInner {
 
 impl AlignedSlabBufferPool {
     /// Constructs a new slab buffer pool with specified block size, byte alignment, and max buffers.
-    pub fn new(block_size: usize, alignment: usize, max_buffers: usize) -> Result<Self, BufferPoolError> {
+    pub fn new(
+        block_size: usize,
+        alignment: usize,
+        max_buffers: usize,
+    ) -> Result<Self, BufferPoolError> {
         if alignment == 0 || (alignment & (alignment - 1)) != 0 {
             return Err(BufferPoolError::InvalidAlignment(alignment));
         }
@@ -63,7 +67,8 @@ impl AlignedSlabBufferPool {
 
         if let Some(buf) = avail.pop() {
             let raw_addr = buf.as_ptr() as usize;
-            let offset = (self.inner.alignment - (raw_addr % self.inner.alignment)) % self.inner.alignment;
+            let offset =
+                (self.inner.alignment - (raw_addr % self.inner.alignment)) % self.inner.alignment;
 
             return Ok(BufferLease {
                 buffer: Some(buf),
@@ -90,7 +95,8 @@ impl AlignedSlabBufferPool {
         // Allocate aligned buffer without unsafe code by over-allocating by alignment bytes
         let raw = vec![0u8; self.inner.block_size + self.inner.alignment];
         let raw_addr = raw.as_ptr() as usize;
-        let offset = (self.inner.alignment - (raw_addr % self.inner.alignment)) % self.inner.alignment;
+        let offset =
+            (self.inner.alignment - (raw_addr % self.inner.alignment)) % self.inner.alignment;
 
         Ok(BufferLease {
             buffer: Some(raw),
@@ -102,20 +108,12 @@ impl AlignedSlabBufferPool {
 
     /// Returns the number of buffers currently available in the free slab list.
     pub fn available_count(&self) -> usize {
-        self.inner
-            .available
-            .lock()
-            .map(|a| a.len())
-            .unwrap_or(0)
+        self.inner.available.lock().map(|a| a.len()).unwrap_or(0)
     }
 
     /// Returns the total number of buffers allocated by this pool.
     pub fn total_allocated(&self) -> usize {
-        self.inner
-            .allocated_count
-            .lock()
-            .map(|c| *c)
-            .unwrap_or(0)
+        self.inner.allocated_count.lock().map(|c| *c).unwrap_or(0)
     }
 
     /// Returns the configured block size.

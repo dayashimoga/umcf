@@ -6,12 +6,18 @@
 
 use ui_a11y::*;
 
-const EN_US_JSON: &str = include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/en-US.json");
-const ES_ES_JSON: &str = include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/es-ES.json");
-const DE_DE_JSON: &str = include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/de-DE.json");
-const JA_JP_JSON: &str = include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/ja-JP.json");
-const ZH_CN_JSON: &str = include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/zh-CN.json");
-const AR_SA_JSON: &str = include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/ar-SA.json");
+const EN_US_JSON: &str =
+    include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/en-US.json");
+const ES_ES_JSON: &str =
+    include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/es-ES.json");
+const DE_DE_JSON: &str =
+    include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/de-DE.json");
+const JA_JP_JSON: &str =
+    include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/ja-JP.json");
+const ZH_CN_JSON: &str =
+    include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/zh-CN.json");
+const AR_SA_JSON: &str =
+    include_str!("../../../apps/web-dashboard/src/lib/i18n/locales/ar-SA.json");
 
 // ============================================================================
 // 1. [UNIT] TESTS
@@ -29,7 +35,10 @@ fn test_i18n_locale_key_parity_and_placeholder_variable_matching_all_6_locales()
 
     let report = I18nCatalogVerifier::verify_parities("en-US", EN_US_JSON, &locales).unwrap();
 
-    assert!(report.total_keys >= 35, "Must have >= 35 core localization keys");
+    assert!(
+        report.total_keys >= 35,
+        "Must have >= 35 core localization keys"
+    );
     assert_eq!(report.audited_locales.len(), 5);
     assert!(report.zero_missing_keys);
     assert!(report.zero_variable_mismatches);
@@ -43,21 +52,32 @@ fn test_i18n_locale_key_parity_and_placeholder_variable_matching_all_6_locales()
 #[test]
 fn test_wcag_relative_luminance_and_contrast_ratio_theme_palette_verifier() {
     // 1. Black & White extremes
-    assert_eq!(WcagColorContrastAuditor::relative_luminance(RgbColor::BLACK), 0.0);
-    assert_eq!(WcagColorContrastAuditor::relative_luminance(RgbColor::WHITE), 1.0);
+    assert_eq!(
+        WcagColorContrastAuditor::relative_luminance(RgbColor::BLACK),
+        0.0
+    );
+    assert_eq!(
+        WcagColorContrastAuditor::relative_luminance(RgbColor::WHITE),
+        1.0
+    );
     let bw_ratio = WcagColorContrastAuditor::contrast_ratio(RgbColor::BLACK, RgbColor::WHITE);
     assert_eq!(bw_ratio, 21.0);
 
     // 2. Dark Theme: Text #F3F4F6 on BG #111827
-    let dark_ratio = WcagColorContrastAuditor::contrast_ratio(RgbColor::DARK_TEXT, RgbColor::DARK_BG);
+    let dark_ratio =
+        WcagColorContrastAuditor::contrast_ratio(RgbColor::DARK_TEXT, RgbColor::DARK_BG);
     assert!(
         dark_ratio >= 4.5,
         "Dark theme text contrast must meet WCAG AA >= 4.5:1; got {dark_ratio:.2}"
     );
-    assert!(WcagColorContrastAuditor::is_wcag_aa_normal_text(RgbColor::DARK_TEXT, RgbColor::DARK_BG));
+    assert!(WcagColorContrastAuditor::is_wcag_aa_normal_text(
+        RgbColor::DARK_TEXT,
+        RgbColor::DARK_BG
+    ));
 
     // 3. Light Theme: Text #111827 on BG #FFFFFF
-    let light_ratio = WcagColorContrastAuditor::contrast_ratio(RgbColor::LIGHT_TEXT, RgbColor::LIGHT_BG);
+    let light_ratio =
+        WcagColorContrastAuditor::contrast_ratio(RgbColor::LIGHT_TEXT, RgbColor::LIGHT_BG);
     assert!(
         light_ratio >= 4.5,
         "Light theme text contrast must meet WCAG AA >= 4.5:1; got {light_ratio:.2}"
@@ -69,10 +89,14 @@ fn test_wcag_relative_luminance_and_contrast_ratio_theme_palette_verifier() {
         hc_ratio >= 7.0,
         "High-contrast mode must meet WCAG AAA >= 7.0:1; got {hc_ratio:.2}"
     );
-    assert!(WcagColorContrastAuditor::is_wcag_aaa_enhanced(RgbColor::YELLOW, RgbColor::BLACK));
+    assert!(WcagColorContrastAuditor::is_wcag_aaa_enhanced(
+        RgbColor::YELLOW,
+        RgbColor::BLACK
+    ));
 
     // 5. Non-text UI graphics (borders): #4B5563 on #111827
-    let border_ratio = WcagColorContrastAuditor::contrast_ratio(RgbColor::DARK_BORDER, RgbColor::DARK_BG);
+    let border_ratio =
+        WcagColorContrastAuditor::contrast_ratio(RgbColor::DARK_BORDER, RgbColor::DARK_BG);
     assert!(
         border_ratio >= 3.0,
         "UI component borders must meet WCAG AA >= 3.0:1; got {border_ratio:.2}"
@@ -252,4 +276,3 @@ fn test_manual_rtl_arabic_and_german_compound_word_schema() {
     assert_eq!(schema["axe_core_violations_count"], 0);
     assert_eq!(schema["zero_overflow_verified"], true);
 }
-

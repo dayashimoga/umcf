@@ -25,8 +25,8 @@ impl Default for QuotaConfig {
     fn default() -> Self {
         Self {
             max_cpu_percent: 50,
-            max_ram_bytes: 512 * 1024 * 1024,   // 512 MiB
-            max_vram_bytes: 1024 * 1024 * 1024, // 1 GiB
+            max_ram_bytes: 512 * 1024 * 1024,          // 512 MiB
+            max_vram_bytes: 1024 * 1024 * 1024,        // 1 GiB
             max_storage_bytes: 2 * 1024 * 1024 * 1024, // 2 GiB
         }
     }
@@ -74,7 +74,10 @@ pub struct CgroupV2Enforcer {
 
 impl CgroupV2Enforcer {
     /// Creates a new cgroup v2 enforcer at the specified directory.
-    pub fn new(cgroup_root: impl Into<PathBuf>, initial_config: QuotaConfig) -> Result<Self, GuardError> {
+    pub fn new(
+        cgroup_root: impl Into<PathBuf>,
+        initial_config: QuotaConfig,
+    ) -> Result<Self, GuardError> {
         let root = cgroup_root.into();
         let _ = fs::create_dir_all(&root);
         let mut enforcer = Self {
@@ -424,13 +427,14 @@ impl WasmResourceLimiter {
         if desired_bytes > self.max_memory_bytes {
             return Err(GuardError::MemoryQuotaExceeded {
                 requested_bytes: desired_bytes,
-                available_bytes: self.max_memory_bytes.saturating_sub(
-                    self.current_memory_bytes.load(Ordering::Acquire),
-                ),
+                available_bytes: self
+                    .max_memory_bytes
+                    .saturating_sub(self.current_memory_bytes.load(Ordering::Acquire)),
                 ceiling_bytes: self.max_memory_bytes,
             });
         }
-        self.current_memory_bytes.store(desired_bytes, Ordering::Release);
+        self.current_memory_bytes
+            .store(desired_bytes, Ordering::Release);
         Ok(true)
     }
 

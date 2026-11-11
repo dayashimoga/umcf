@@ -51,9 +51,17 @@ pub fn render_top_buffer(
         let ram_str = format!("{}/{}", node.ram_available_mb, node.ram_total_mb);
         out.push_str(&format!(
             "{:<24} {:<12} {:<18} {:<6} {:<16} {:<12} {:<8}\n",
-            if node.node_id.len() > 24 { &node.node_id[..24] } else { &node.node_id },
+            if node.node_id.len() > 24 {
+                &node.node_id[..24]
+            } else {
+                &node.node_id
+            },
             node.role,
-            if node.os.len() > 18 { &node.os[..18] } else { &node.os },
+            if node.os.len() > 18 {
+                &node.os[..18]
+            } else {
+                &node.os
+            },
             node.cpu_cores,
             if gpu.len() > 16 { &gpu[..16] } else { gpu },
             ram_str,
@@ -67,4 +75,3 @@ pub fn render_top_buffer(
 
     out
 }
-

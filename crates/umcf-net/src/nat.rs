@@ -128,13 +128,21 @@ pub struct IceCandidate {
 impl IceCandidate {
     /// Constructs a new candidate and calculates RFC 5245 priority.
     #[must_use]
-    pub fn new(candidate_type: IceCandidateType, addr: SocketAddr, local_pref: u16, component_id: u16) -> Self {
+    pub fn new(
+        candidate_type: IceCandidateType,
+        addr: SocketAddr,
+        local_pref: u16,
+        component_id: u16,
+    ) -> Self {
         // Priority formula: (2^24)*type_pref + (2^8)*local_pref + (256 - component_id)
         let priority = (candidate_type.type_preference() << 24)
             | (u32::from(local_pref) << 8)
             | u32::from(256 - component_id.min(255));
 
-        let foundation = blake3::hash(format!("{}:{}:{}", candidate_type as u8, addr.ip(), addr.port()).as_bytes()).to_hex();
+        let foundation = blake3::hash(
+            format!("{}:{}:{}", candidate_type as u8, addr.ip(), addr.port()).as_bytes(),
+        )
+        .to_hex();
 
         Self {
             candidate_type,
@@ -175,10 +183,24 @@ impl IceCandidateSet {
             .unwrap_or_default()
             .as_millis() as u64;
 
-        let ufrag = format!("ufrag_{}", &blake3::hash(format!("{}:{}", node_id, now_ms).as_bytes()).to_hex()[..10]);
-        let pwd = format!("pwd_{}", &blake3::hash(format!("{}:{}:pwd", node_id, now_ms).as_bytes()).to_hex()[..20]);
+        let ufrag = format!(
+            "ufrag_{}",
+            &blake3::hash(format!("{}:{}", node_id, now_ms).as_bytes()).to_hex()[..10]
+        );
+        let pwd = format!(
+            "pwd_{}",
+            &blake3::hash(format!("{}:{}:pwd", node_id, now_ms).as_bytes()).to_hex()[..20]
+        );
 
-        let sig = compute_candidate_signature(&node_id, nat_type, &ufrag, &pwd, &candidates, now_ms, secret_key);
+        let sig = compute_candidate_signature(
+            &node_id,
+            nat_type,
+            &ufrag,
+            &pwd,
+            &candidates,
+            now_ms,
+            secret_key,
+        );
 
         Self {
             node_id,
@@ -274,12 +296,12 @@ impl HolePunchProbePacket {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(74);
         buf.extend_from_slice(HOLE_PUNCH_PROBE_MAGIC); // 9 bytes
-        buf.push(PROBE_VERSION);                      // 1 byte
-        buf.push(self.probe_type);                    // 1 byte
-        buf.extend_from_slice(&self.ufrag);           // 16 bytes
+        buf.push(PROBE_VERSION); // 1 byte
+        buf.push(self.probe_type); // 1 byte
+        buf.extend_from_slice(&self.ufrag); // 16 bytes
         buf.extend_from_slice(&self.tx_id.to_le_bytes()); // 8 bytes
         buf.extend_from_slice(&self.timestamp_ms.to_le_bytes()); // 8 bytes
-        buf.extend_from_slice(&self.hmac);            // 32 bytes
+        buf.extend_from_slice(&self.hmac); // 32 bytes
         buf
     }
 
@@ -306,9 +328,12 @@ impl HolePunchProbePacket {
         let mut hmac = [0u8; 32];
         hmac.copy_from_slice(&buf[43..75]);
 
-        let expected_hmac = compute_probe_hmac(probe_type, &ufrag, tx_id, timestamp_ms, expected_pwd);
+        let expected_hmac =
+            compute_probe_hmac(probe_type, &ufrag, tx_id, timestamp_ms, expected_pwd);
         if hmac != expected_hmac {
-            return Err(NetError::InvalidStun("Probe HMAC authentication failed".into()));
+            return Err(NetError::InvalidStun(
+                "Probe HMAC authentication failed".into(),
+            ));
         }
 
         Ok(Self {
@@ -321,7 +346,13 @@ impl HolePunchProbePacket {
     }
 }
 
-fn compute_probe_hmac(probe_type: u8, ufrag: &[u8; 16], tx_id: u64, timestamp_ms: u64, pwd: &str) -> [u8; 32] {
+fn compute_probe_hmac(
+    probe_type: u8,
+    ufrag: &[u8; 16],
+    tx_id: u64,
+    timestamp_ms: u64,
+    pwd: &str,
+) -> [u8; 32] {
     let key = blake3::hash(pwd.as_bytes());
     let mut hasher = blake3::Hasher::new_keyed(key.as_bytes());
     hasher.update(b"UMCF-HOLE-PUNCH-PROBE");
@@ -342,9 +373,7 @@ pub enum NatTraversalResult {
         rtt_ms: f64,
     },
     /// Direct P2P hole punching failed or is mathematically impossible (e.g. Symmetric NAT <-> Symmetric NAT).
-    RequiresRelay {
-        reason: String,
-    },
+    RequiresRelay { reason: String },
 }
 
 /// Gathers local Host and ServerReflexive ICE candidates.
@@ -356,7 +385,12 @@ pub async fn gather_candidates(
     timeout_duration: Duration,
 ) -> Result<IceCandidateSet, NetError> {
     let local_addr = socket.local_addr().map_err(NetError::Io)?;
-    let mut candidates = vec![IceCandidate::new(IceCandidateType::Host, local_addr, 65535, 1)];
+    let mut candidates = vec![IceCandidate::new(
+        IceCandidateType::Host,
+        local_addr,
+        65535,
+        1,
+    )];
 
     let mut reflexive_addrs = Vec::new();
     for &server in stun_servers {
@@ -388,11 +422,18 @@ pub async fn gather_candidates(
 
     for addr in reflexive_addrs {
         if !candidates.iter().any(|c| c.addr == addr) {
-            candidates.push(IceCandidate::new(IceCandidateType::ServerReflexive, addr, 32768, 1));
+            candidates.push(IceCandidate::new(
+                IceCandidateType::ServerReflexive,
+                addr,
+                32768,
+                1,
+            ));
         }
     }
 
-    Ok(IceCandidateSet::sign_new(node_id, nat_type, candidates, secret_key))
+    Ok(IceCandidateSet::sign_new(
+        node_id, nat_type, candidates, secret_key,
+    ))
 }
 
 /// Executes synchronized paced UDP connectivity checks between two candidate sets.
@@ -405,7 +446,9 @@ pub async fn execute_hole_punch(
 ) -> Result<NatTraversalResult, NetError> {
     // 1. Verify signatures on remote candidates
     if !remote_set.verify_signature(secret_key) {
-        return Err(NetError::SecurityAlert("Remote ICE candidate set signature verification failed".into()));
+        return Err(NetError::SecurityAlert(
+            "Remote ICE candidate set signature verification failed".into(),
+        ));
     }
 
     // 2. Fast-fail if topologies require relay
@@ -442,24 +485,43 @@ pub async fn execute_hole_punch(
         // Send a burst of requests to remote candidate addresses
         for &remote_addr in &remote_addrs {
             tx_counter += 1;
-            let req = HolePunchProbePacket::new(PROBE_TYPE_REQUEST, &local_set.ufrag, tx_counter, &remote_set.pwd);
+            let req = HolePunchProbePacket::new(
+                PROBE_TYPE_REQUEST,
+                &local_set.ufrag,
+                tx_counter,
+                &remote_set.pwd,
+            );
             let req_bytes = req.to_bytes();
             let _ = socket.send_to(&req_bytes, remote_addr).await;
         }
 
         // Listen for incoming probes for 25ms
         let slice_timeout = Duration::from_millis(25);
-        if let Ok(Ok((len, peer_src))) = timeout(slice_timeout, socket.recv_from(&mut recv_buf)).await {
+        if let Ok(Ok((len, peer_src))) =
+            timeout(slice_timeout, socket.recv_from(&mut recv_buf)).await
+        {
             // Validate packet
-            if let Ok(probe) = HolePunchProbePacket::parse_and_verify(&recv_buf[..len], &local_set.pwd) {
+            if let Ok(probe) =
+                HolePunchProbePacket::parse_and_verify(&recv_buf[..len], &local_set.pwd)
+            {
                 if probe.probe_type == PROBE_TYPE_REQUEST {
                     // Reply immediately with PROBE_TYPE_RESPONSE
-                    let resp = HolePunchProbePacket::new(PROBE_TYPE_RESPONSE, &local_set.ufrag, probe.tx_id, &remote_set.pwd);
+                    let resp = HolePunchProbePacket::new(
+                        PROBE_TYPE_RESPONSE,
+                        &local_set.ufrag,
+                        probe.tx_id,
+                        &remote_set.pwd,
+                    );
                     let resp_bytes = resp.to_bytes();
                     let _ = socket.send_to(&resp_bytes, peer_src).await;
                 } else if probe.probe_type == PROBE_TYPE_RESPONSE {
                     // Send an acknowledgement response back so peer also completes immediately
-                    let resp = HolePunchProbePacket::new(PROBE_TYPE_RESPONSE, &local_set.ufrag, probe.tx_id, &remote_set.pwd);
+                    let resp = HolePunchProbePacket::new(
+                        PROBE_TYPE_RESPONSE,
+                        &local_set.ufrag,
+                        probe.tx_id,
+                        &remote_set.pwd,
+                    );
                     let resp_bytes = resp.to_bytes();
                     let _ = socket.send_to(&resp_bytes, peer_src).await;
 

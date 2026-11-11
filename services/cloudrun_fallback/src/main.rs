@@ -83,20 +83,12 @@ fn verify_request_auth(
     headers: &HeaderMap,
     body_bytes: &[u8],
 ) -> Result<String, (StatusCode, Json<ErrorEnvelope>)> {
-    let get_header = |key: &str| -> Option<&str> {
-        headers
-            .get(key)
-            .and_then(|v| v.to_str().ok())
-    };
+    let get_header = |key: &str| -> Option<&str> { headers.get(key).and_then(|v| v.to_str().ok()) };
 
-    let did = get_header("x-umcf-did")
-        .or_else(|| get_header("X-UMCF-DID"));
-    let ts_str = get_header("x-umcf-timestamp")
-        .or_else(|| get_header("X-UMCF-Timestamp"));
-    let sig_hex = get_header("x-umcf-signature")
-        .or_else(|| get_header("X-UMCF-Signature"));
-    let pk_hex = get_header("x-umcf-public-key")
-        .or_else(|| get_header("X-UMCF-Public-Key"));
+    let did = get_header("x-umcf-did").or_else(|| get_header("X-UMCF-DID"));
+    let ts_str = get_header("x-umcf-timestamp").or_else(|| get_header("X-UMCF-Timestamp"));
+    let sig_hex = get_header("x-umcf-signature").or_else(|| get_header("X-UMCF-Signature"));
+    let pk_hex = get_header("x-umcf-public-key").or_else(|| get_header("X-UMCF-Public-Key"));
 
     let (did, ts_str, sig_hex) = match (did, ts_str, sig_hex) {
         (Some(d), Some(t), Some(s)) => (d, t, s),
@@ -128,7 +120,9 @@ fn verify_request_auth(
             StatusCode::UNAUTHORIZED,
             Json(ErrorEnvelope {
                 code: "E2001",
-                error: format!("Timestamp expired: drift {drift} ms exceeds limit {MAX_REPLAY_SKEW_MS} ms"),
+                error: format!(
+                    "Timestamp expired: drift {drift} ms exceeds limit {MAX_REPLAY_SKEW_MS} ms"
+                ),
             }),
         ));
     }
@@ -209,7 +203,8 @@ fn verify_request_auth(
     // Try raw canonical first, then domain-separated payload
     let verify_raw = vk.verify_strict(canonical.as_bytes(), &sig);
     if verify_raw.is_err() {
-        let mut domain_payload = Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + canonical.len());
+        let mut domain_payload =
+            Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + canonical.len());
         domain_payload.extend_from_slice(DOMAIN_SEPARATION_PREFIX);
         domain_payload.extend_from_slice(canonical.as_bytes());
 
@@ -342,7 +337,10 @@ async fn sync_delta_handler(
         cluster.current_hlc.logical += 1;
     }
 
-    let delta_key = format!("{}:{}_{}", delta.sender_node_id, delta.delta_hlc.wall_ms, delta.delta_hlc.logical);
+    let delta_key = format!(
+        "{}:{}_{}",
+        delta.sender_node_id, delta.delta_hlc.wall_ms, delta.delta_hlc.logical
+    );
     cluster.deltas.insert(delta_key, delta);
 
     let resp = serde_json::json!({

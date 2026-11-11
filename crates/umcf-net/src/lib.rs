@@ -46,19 +46,19 @@ pub use quic::{
 pub use rate_limiter::{ReplayFilter, TokenBucketLimiter};
 pub use relay::{
     HybridUdpRelaySocket, PathType, PathUpgradeMonitor, RelayFrame, RelaySession, UmcfRelayServer,
-    FRAME_TYPE_BIND, FRAME_TYPE_BIND_ACK, FRAME_TYPE_ERROR, FRAME_TYPE_KEEPALIVE,
-    FRAME_TYPE_RECV, FRAME_TYPE_SEND, RELAY_MAGIC, RELAY_PROTOCOL_VERSION,
+    FRAME_TYPE_BIND, FRAME_TYPE_BIND_ACK, FRAME_TYPE_ERROR, FRAME_TYPE_KEEPALIVE, FRAME_TYPE_RECV,
+    FRAME_TYPE_SEND, RELAY_MAGIC, RELAY_PROTOCOL_VERSION,
 };
 pub use roaming::{
     ConnectionMigrationCoordinator, InterfaceDiff, InterfaceType, MigrationRecord,
     NetworkInterfaceInfo, NetworkInterfaceWatcher, RoamingEvent,
 };
-pub use zero_copy::{
-    is_pointer_within_range, MmapSliceGuard, ZeroCopyError, ZeroCopyMetrics, ZeroCopyShardStreamer,
-};
 pub use stun::{
     crc32_ieee, query_stun_server, EmbeddedStunServer, StunMessage, BINDING_REQUEST,
     BINDING_SUCCESS_RESPONSE, STUN_MAGIC_COOKIE,
+};
+pub use zero_copy::{
+    is_pointer_within_range, MmapSliceGuard, ZeroCopyError, ZeroCopyMetrics, ZeroCopyShardStreamer,
 };
 
 #[cfg(test)]
@@ -120,11 +120,14 @@ mod tests {
         let bytes = beacon.to_bytes().expect("serialization should succeed");
         assert!(bytes.len() <= MAX_BEACON_PAYLOAD_BYTES);
 
-        let decoded = SignedDiscoveryBeacon::from_bytes(&bytes).expect("deserialization should succeed");
+        let decoded =
+            SignedDiscoveryBeacon::from_bytes(&bytes).expect("deserialization should succeed");
         assert_eq!(decoded, beacon);
         assert!(decoded.verify_signature().is_ok());
 
-        let node_id = decoded.node_id().expect("node id derivation should succeed");
+        let node_id = decoded
+            .node_id()
+            .expect("node id derivation should succeed");
         assert_eq!(node_id, keypair.node_id());
     }
 
@@ -148,12 +151,18 @@ mod tests {
 
         assert_eq!(map.get("v").map(String::as_str), Some("1"));
         assert_eq!(map.get("cid").map(String::as_str), Some("umcf-mesh-alpha"));
-        assert_eq!(map.get("did").map(String::as_str), Some(keypair.did_key().as_str()));
+        assert_eq!(
+            map.get("did").map(String::as_str),
+            Some(keypair.did_key().as_str())
+        );
         assert_eq!(map.get("role").map(String::as_str), Some("Worker"));
         assert_eq!(map.get("port").map(String::as_str), Some("9090"));
         assert_eq!(map.get("seq").map(String::as_str), Some("101"));
         assert_eq!(map.get("wall").map(String::as_str), Some("1700000000500"));
-        assert_eq!(map.get("cap").map(String::as_str), Some(hex::encode([42u8; 32]).as_str()));
+        assert_eq!(
+            map.get("cap").map(String::as_str),
+            Some(hex::encode([42u8; 32]).as_str())
+        );
     }
 
     #[test]
@@ -174,12 +183,18 @@ mod tests {
         // Tamper with port
         beacon.quic_port = 5555;
         let res = beacon.verify_signature();
-        assert!(matches!(res, Err(NetError::SignatureVerificationFailed { .. })));
+        assert!(matches!(
+            res,
+            Err(NetError::SignatureVerificationFailed { .. })
+        ));
 
         // Tamper with signature bytes
         beacon.signature[0] ^= 0xff;
         let res2 = beacon.verify_signature();
-        assert!(matches!(res2, Err(NetError::SignatureVerificationFailed { .. })));
+        assert!(matches!(
+            res2,
+            Err(NetError::SignatureVerificationFailed { .. })
+        ));
     }
 
     #[test]
@@ -198,11 +213,17 @@ mod tests {
         });
 
         beacon.magic = *b"FAKE";
-        assert!(matches!(beacon.verify_signature(), Err(NetError::InvalidBeacon(_))));
+        assert!(matches!(
+            beacon.verify_signature(),
+            Err(NetError::InvalidBeacon(_))
+        ));
 
         beacon.magic = BEACON_MAGIC;
         beacon.version = 99;
-        assert!(matches!(beacon.verify_signature(), Err(NetError::InvalidBeacon(_))));
+        assert!(matches!(
+            beacon.verify_signature(),
+            Err(NetError::InvalidBeacon(_))
+        ));
     }
 
     #[test]
@@ -225,7 +246,10 @@ mod tests {
         assert!(limiter.check_rate_limit(ip, after_200ms).is_ok());
         assert!(limiter.check_rate_limit(ip, after_200ms).is_ok());
         // 3rd should fail
-        assert!(matches!(limiter.check_rate_limit(ip, after_200ms), Err(NetError::RateLimited { .. })));
+        assert!(matches!(
+            limiter.check_rate_limit(ip, after_200ms),
+            Err(NetError::RateLimited { .. })
+        ));
 
         // Stale cleanup test
         let mut limiter2 = TokenBucketLimiter::new();
@@ -256,7 +280,10 @@ mod tests {
         assert!(filter.check_and_update(did, 5, ts).is_ok());
 
         // Duplicate sequence 5: rejected
-        assert!(matches!(filter.check_and_update(did, 5, ts), Err(NetError::ReplayDetected { .. })));
+        assert!(matches!(
+            filter.check_and_update(did, 5, ts),
+            Err(NetError::ReplayDetected { .. })
+        ));
 
         // Advance to sequence 100
         assert!(filter.check_and_update(did, 100, ts).is_ok());
@@ -337,9 +364,12 @@ mod tests {
             let peers2 = eng2.discovered_peers();
             let peers3 = eng3.discovered_peers();
 
-            let n1_has_n2_n3 = peers1.iter().any(|p| p.node_id == id2) && peers1.iter().any(|p| p.node_id == id3);
-            let n2_has_n1_n3 = peers2.iter().any(|p| p.node_id == id1) && peers2.iter().any(|p| p.node_id == id3);
-            let n3_has_n1_n2 = peers3.iter().any(|p| p.node_id == id1) && peers3.iter().any(|p| p.node_id == id2);
+            let n1_has_n2_n3 =
+                peers1.iter().any(|p| p.node_id == id2) && peers1.iter().any(|p| p.node_id == id3);
+            let n2_has_n1_n3 =
+                peers2.iter().any(|p| p.node_id == id1) && peers2.iter().any(|p| p.node_id == id3);
+            let n3_has_n1_n2 =
+                peers3.iter().any(|p| p.node_id == id1) && peers3.iter().any(|p| p.node_id == id2);
 
             if n1_has_n2_n3 && n2_has_n1_n3 && n3_has_n1_n2 {
                 converged = true;
@@ -382,8 +412,11 @@ mod tests {
         });
 
         let json_path = evidence_dir.join("lan_discovery_convergence.json");
-        fs::write(&json_path, serde_json::to_string_pretty(&convergence_data).unwrap_or_default())
-            .expect("write lan_discovery_convergence.json");
+        fs::write(
+            &json_path,
+            serde_json::to_string_pretty(&convergence_data).unwrap_or_default(),
+        )
+        .expect("write lan_discovery_convergence.json");
     }
 
     // =========================================================================
@@ -421,7 +454,8 @@ mod tests {
         let iterations = 1000;
 
         for _ in 0..iterations {
-            let (res, duration) = engine.evaluate_raw_beacon(&foreign_bytes, src_ip, &mut limiter, &mut replay);
+            let (res, duration) =
+                engine.evaluate_raw_beacon(&foreign_bytes, src_ip, &mut limiter, &mut replay);
             assert!(matches!(res, Err(NetError::ClusterMismatch { .. })));
             total_duration += duration;
         }
@@ -436,7 +470,8 @@ mod tests {
         // 2. Corrupted magic header drop latency
         let mut corrupted = foreign_bytes.clone();
         corrupted[0] = b'X';
-        let (res_corrupt, corrupt_duration) = engine.evaluate_raw_beacon(&corrupted, src_ip, &mut limiter, &mut replay);
+        let (res_corrupt, corrupt_duration) =
+            engine.evaluate_raw_beacon(&corrupted, src_ip, &mut limiter, &mut replay);
         assert!(matches!(res_corrupt, Err(NetError::InvalidBeacon(_))));
         assert!(corrupt_duration.as_micros() < 50);
 
@@ -492,7 +527,10 @@ mod tests {
     fn test_hardware_network_interfaces_probe() {
         // Inspect loopback socket binding capability on the host system
         let probe_socket = std::net::UdpSocket::bind("127.0.0.1:0");
-        assert!(probe_socket.is_ok(), "Host system should support loopback UDP");
+        assert!(
+            probe_socket.is_ok(),
+            "Host system should support loopback UDP"
+        );
 
         if let Ok(socket) = probe_socket {
             let local_addr = socket.local_addr().expect("local addr");
@@ -532,7 +570,10 @@ mod tests {
             let content = fs::read_to_string(conv_path).expect("read conv file");
             let val: serde_json::Value = serde_json::from_str(&content).expect("parse json");
             assert!(val.get("convergence_duration_ms").is_some());
-            assert_eq!(val.get("status").and_then(|v| v.as_str()), Some("CONVERGED_SUCCESSFULLY"));
+            assert_eq!(
+                val.get("status").and_then(|v| v.as_str()),
+                Some("CONVERGED_SUCCESSFULLY")
+            );
         }
     }
 
@@ -542,10 +583,22 @@ mod tests {
 
     #[test]
     fn test_quic_stream_type_encoding_decoding() {
-        assert_eq!(QuicStreamType::from_u8(0x01), Some(QuicStreamType::BidirectionalControl));
-        assert_eq!(QuicStreamType::from_u8(0x02), Some(QuicStreamType::BidirectionalRpc));
-        assert_eq!(QuicStreamType::from_u8(0x03), Some(QuicStreamType::UnidirectionalBulkTensor));
-        assert_eq!(QuicStreamType::from_u8(0x04), Some(QuicStreamType::UnreliableDatagramMedia));
+        assert_eq!(
+            QuicStreamType::from_u8(0x01),
+            Some(QuicStreamType::BidirectionalControl)
+        );
+        assert_eq!(
+            QuicStreamType::from_u8(0x02),
+            Some(QuicStreamType::BidirectionalRpc)
+        );
+        assert_eq!(
+            QuicStreamType::from_u8(0x03),
+            Some(QuicStreamType::UnidirectionalBulkTensor)
+        );
+        assert_eq!(
+            QuicStreamType::from_u8(0x04),
+            Some(QuicStreamType::UnreliableDatagramMedia)
+        );
         assert_eq!(QuicStreamType::from_u8(0x00), None);
         assert_eq!(QuicStreamType::from_u8(0xff), None);
     }
@@ -564,7 +617,9 @@ mod tests {
         let cluster_id = "cluster-cert-extract";
         let ca = umcf_identity::cert::ClusterCa::generate(cluster_id).expect("ca generate");
         let keypair = NodeKeypair::generate();
-        let cert = ca.issue_node_certificate(&keypair, NodeRole::Worker, 7).expect("issue leaf");
+        let cert = ca
+            .issue_node_certificate(&keypair, NodeRole::Worker, 7)
+            .expect("issue leaf");
 
         let info = crate::quic::extract_cert_info(&cert.cert_der).expect("extract cert info");
         assert_eq!(info.cluster_id, cluster_id);
@@ -616,7 +671,9 @@ mod tests {
 
         // Node 1 (Server / Master)
         let kp1 = Arc::new(NodeKeypair::generate());
-        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+        let cert1 = ca
+            .issue_node_certificate(&kp1, NodeRole::Master, 30)
+            .expect("cert1");
         let cfg1 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
             cluster_id,
@@ -630,7 +687,9 @@ mod tests {
 
         // Node 2 (Client / Worker)
         let kp2 = Arc::new(NodeKeypair::generate());
-        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+        let cert2 = ca
+            .issue_node_certificate(&kp2, NodeRole::Worker, 30)
+            .expect("cert2");
         let cfg2 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
             cluster_id,
@@ -643,7 +702,10 @@ mod tests {
 
         // 1. Measure Handshake + 2-RTT Mutual Attestation latency
         let t0 = Instant::now();
-        let peer_conn = engine2.connect(addr1).await.expect("engine2 connect to engine1");
+        let peer_conn = engine2
+            .connect(addr1)
+            .await
+            .expect("engine2 connect to engine1");
         let handshake_ms = t0.elapsed().as_micros() as f64 / 1000.0;
 
         assert_eq!(peer_conn.state(), PeerConnectionState::AuthenticatedReady);
@@ -673,7 +735,9 @@ mod tests {
                 let ping_payload = format!("rpc-ping-{i}");
                 let len_bytes = (ping_payload.len() as u32).to_le_bytes();
                 send.write_all(&len_bytes).await.expect("write len");
-                send.write_all(ping_payload.as_bytes()).await.expect("write ping");
+                send.write_all(ping_payload.as_bytes())
+                    .await
+                    .expect("write ping");
                 send.finish().expect("finish");
 
                 // Stream accepted and echo back can be handled or verified
@@ -763,11 +827,15 @@ mod tests {
 
         // Node 1 (Server)
         let kp1 = Arc::new(NodeKeypair::generate());
-        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+        let cert1 = ca
+            .issue_node_certificate(&kp1, NodeRole::Master, 30)
+            .expect("cert1");
 
         // Node 2 (Client - will be revoked in CRL)
         let kp2 = Arc::new(NodeKeypair::generate());
-        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+        let cert2 = ca
+            .issue_node_certificate(&kp2, NodeRole::Worker, 30)
+            .expect("cert2");
         let serial2 = cert2.serial_number().to_string();
 
         let revoked_entry = RevokedCertificateEntry {
@@ -820,8 +888,11 @@ mod tests {
         let main_cluster_id = "cluster-main";
         let foreign_cluster_id = "cluster-foreign";
 
-        let ca_main = Arc::new(umcf_identity::cert::ClusterCa::generate(main_cluster_id).expect("ca main"));
-        let ca_foreign = Arc::new(umcf_identity::cert::ClusterCa::generate(foreign_cluster_id).expect("ca foreign"));
+        let ca_main =
+            Arc::new(umcf_identity::cert::ClusterCa::generate(main_cluster_id).expect("ca main"));
+        let ca_foreign = Arc::new(
+            umcf_identity::cert::ClusterCa::generate(foreign_cluster_id).expect("ca foreign"),
+        );
 
         let crl_main = Arc::new(RwLock::new(ClusterCrl::new(
             main_cluster_id,
@@ -842,7 +913,9 @@ mod tests {
 
         // Server on cluster-main
         let kp1 = Arc::new(NodeKeypair::generate());
-        let cert1 = ca_main.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+        let cert1 = ca_main
+            .issue_node_certificate(&kp1, NodeRole::Master, 30)
+            .expect("cert1");
         let cfg1 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
             main_cluster_id,
@@ -856,7 +929,9 @@ mod tests {
 
         // Client on cluster-foreign
         let kp2 = Arc::new(NodeKeypair::generate());
-        let cert2 = ca_foreign.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+        let cert2 = ca_foreign
+            .issue_node_certificate(&kp2, NodeRole::Worker, 30)
+            .expect("cert2");
         let cfg2 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
             foreign_cluster_id,
@@ -868,7 +943,10 @@ mod tests {
         let engine2 = QuicTransportEngine::start(cfg2).expect("engine2");
 
         let res = engine2.connect(addr1).await;
-        assert!(res.is_err(), "Foreign cluster peer must be rejected at handshake");
+        assert!(
+            res.is_err(),
+            "Foreign cluster peer must be rejected at handshake"
+        );
 
         engine1.stop();
         engine2.stop();
@@ -882,7 +960,10 @@ mod tests {
             let content = fs::read_to_string(bench_path).expect("read bench file");
             let val: serde_json::Value = serde_json::from_str(&content).expect("parse json");
             assert!(val.get("throughput_gbps").is_some());
-            assert_eq!(val.get("integrity_verified").and_then(|v| v.as_bool()), Some(true));
+            assert_eq!(
+                val.get("integrity_verified").and_then(|v| v.as_bool()),
+                Some(true)
+            );
             assert_eq!(val.get("status").and_then(|v| v.as_str()), Some("PASS"));
         }
     }
@@ -901,7 +982,10 @@ mod tests {
         assert_eq!(TrafficClass::RealtimeInteractive.quic_priority(), 500);
         assert_eq!(TrafficClass::RealtimeInteractive.dscp_value(), 34);
         assert_eq!(TrafficClass::RealtimeInteractive.tos_byte(), 0x88);
-        assert_eq!(TrafficClass::RealtimeInteractive.name(), "RealtimeInteractive");
+        assert_eq!(
+            TrafficClass::RealtimeInteractive.name(),
+            "RealtimeInteractive"
+        );
 
         assert_eq!(TrafficClass::ElasticCompute.quic_priority(), 100);
         assert_eq!(TrafficClass::ElasticCompute.dscp_value(), 18);
@@ -928,13 +1012,22 @@ mod tests {
 
         // CriticalControl is never blocked
         let t0 = Instant::now();
-        shaper.acquire(TrafficClass::CriticalControl, 10_000).await.expect("control acquire");
-        assert!(t0.elapsed() < Duration::from_millis(5), "CriticalControl should not sleep");
+        shaper
+            .acquire(TrafficClass::CriticalControl, 10_000)
+            .await
+            .expect("control acquire");
+        assert!(
+            t0.elapsed() < Duration::from_millis(5),
+            "CriticalControl should not sleep"
+        );
 
         // Warm up token bucket for 100 ms
         let warm_start = Instant::now();
         while warm_start.elapsed() < Duration::from_millis(100) {
-            shaper.acquire(TrafficClass::BackgroundBulk, chunk_size).await.expect("warmup acquire");
+            shaper
+                .acquire(TrafficClass::BackgroundBulk, chunk_size)
+                .await
+                .expect("warmup acquire");
         }
 
         // Measure transmission over a 1.0s window
@@ -942,7 +1035,10 @@ mod tests {
         let window_duration = Duration::from_millis(1000);
         let t_window = Instant::now();
         while t_window.elapsed() < window_duration {
-            shaper.acquire(TrafficClass::BackgroundBulk, chunk_size).await.expect("acquire");
+            shaper
+                .acquire(TrafficClass::BackgroundBulk, chunk_size)
+                .await
+                .expect("acquire");
             total_bytes += chunk_size;
         }
 
@@ -975,7 +1071,9 @@ mod tests {
 
         // Node 1 (Server)
         let kp1 = Arc::new(NodeKeypair::generate());
-        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+        let cert1 = ca
+            .issue_node_certificate(&kp1, NodeRole::Master, 30)
+            .expect("cert1");
         let cfg1 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
             cluster_id,
@@ -989,7 +1087,9 @@ mod tests {
 
         // Node 2 (Client with 100 Mbps shaper)
         let kp2 = Arc::new(NodeKeypair::generate());
-        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+        let cert2 = ca
+            .issue_node_certificate(&kp2, NodeRole::Worker, 30)
+            .expect("cert2");
         let shaper = Arc::new(BandwidthShaper::new(12_500_000)); // 100 Mbps = 12.5 MB/s
         let cfg2 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
@@ -998,7 +1098,8 @@ mod tests {
             kp2.clone(),
             ca.ca_cert_der().to_vec(),
             crl.clone(),
-        ).with_bandwidth_shaper(shaper.clone());
+        )
+        .with_bandwidth_shaper(shaper.clone());
         let engine2 = QuicTransportEngine::start(cfg2).expect("engine2 start");
 
         let peer_conn = engine2.connect(addr1).await.expect("connect");
@@ -1074,7 +1175,10 @@ mod tests {
         let _ = bulk_sender.await;
 
         // Zero drops assertion: CriticalControl must NEVER be dropped
-        assert_eq!(drops, 0, "CriticalControl pings must never be dropped under load");
+        assert_eq!(
+            drops, 0,
+            "CriticalControl pings must never be dropped under load"
+        );
 
         // Latency quantiles
         latencies.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
@@ -1082,9 +1186,17 @@ mod tests {
         let p99 = latencies[(latencies.len() as f64 * 0.99) as usize];
 
         #[cfg(debug_assertions)]
-        assert!(p99 < 20.0, "p99 control ping latency under load was {:.2} ms (debug limit < 20.0 ms)", p99);
+        assert!(
+            p99 < 20.0,
+            "p99 control ping latency under load was {:.2} ms (debug limit < 20.0 ms)",
+            p99
+        );
         #[cfg(not(debug_assertions))]
-        assert!(p99 < 8.0, "p99 control ping latency under load was {:.2} ms, exceeding 8.0 ms ceiling", p99);
+        assert!(
+            p99 < 8.0,
+            "p99 control ping latency under load was {:.2} ms, exceeding 8.0 ms ceiling",
+            p99
+        );
 
         // Record evidence
         let evidence_dir = workspace_artifacts_dir();
@@ -1104,8 +1216,11 @@ mod tests {
         });
 
         let json_path = evidence_dir.join("qos_latency_under_load.json");
-        fs::write(&json_path, serde_json::to_string_pretty(&qos_evidence).unwrap_or_default())
-            .expect("write qos_latency_under_load.json");
+        fs::write(
+            &json_path,
+            serde_json::to_string_pretty(&qos_evidence).unwrap_or_default(),
+        )
+        .expect("write qos_latency_under_load.json");
 
         engine1.stop();
         engine2.stop();
@@ -1120,7 +1235,10 @@ mod tests {
         // Send at initial rate for 100 ms
         let t_start = Instant::now();
         while t_start.elapsed() < Duration::from_millis(100) {
-            shaper.acquire(TrafficClass::BackgroundBulk, chunk_size).await.expect("acquire");
+            shaper
+                .acquire(TrafficClass::BackgroundBulk, chunk_size)
+                .await
+                .expect("acquire");
         }
 
         // Dynamically throttle down to 10 Mbps (1,250,000 bytes/sec)
@@ -1129,7 +1247,10 @@ mod tests {
         assert_eq!(shaper.rate_limit(), 1_250_000);
 
         // Measure time for subsequent acquire to adapt to the new rate
-        shaper.acquire(TrafficClass::BackgroundBulk, chunk_size).await.expect("acquire after throttle");
+        shaper
+            .acquire(TrafficClass::BackgroundBulk, chunk_size)
+            .await
+            .expect("acquire after throttle");
         let convergence_elapsed = t_reconfig.elapsed();
 
         // Convergence must occur in < 200 ms
@@ -1143,15 +1264,25 @@ mod tests {
     #[tokio::test]
     async fn test_qos_openmetrics_telemetry_exposition() {
         let shaper = BandwidthShaper::new(10_000_000);
-        shaper.acquire(TrafficClass::CriticalControl, 2048).await.expect("acquire");
-        shaper.acquire(TrafficClass::BackgroundBulk, 65536).await.expect("acquire");
+        shaper
+            .acquire(TrafficClass::CriticalControl, 2048)
+            .await
+            .expect("acquire");
+        shaper
+            .acquire(TrafficClass::BackgroundBulk, 65536)
+            .await
+            .expect("acquire");
         shaper.record_control_latency(Duration::from_micros(1250));
 
         let openmetrics = shaper.to_openmetrics_text();
         assert!(openmetrics.contains("# HELP umcf_qos_rate_limit_bytes_per_sec"));
         assert!(openmetrics.contains("# TYPE umcf_qos_rate_limit_bytes_per_sec gauge"));
-        assert!(openmetrics.contains("umcf_qos_bytes_transmitted_total{class=\"CriticalControl\",dscp=\"46\"} 2048"));
-        assert!(openmetrics.contains("umcf_qos_bytes_transmitted_total{class=\"BackgroundBulk\",dscp=\"0\"} 65536"));
+        assert!(openmetrics.contains(
+            "umcf_qos_bytes_transmitted_total{class=\"CriticalControl\",dscp=\"46\"} 2048"
+        ));
+        assert!(openmetrics.contains(
+            "umcf_qos_bytes_transmitted_total{class=\"BackgroundBulk\",dscp=\"0\"} 65536"
+        ));
         assert!(openmetrics.contains("umcf_qos_queue_drops_total{class=\"CriticalControl\"} 0"));
         assert!(openmetrics.contains("umcf_qos_control_latency_p99_ms"));
     }
@@ -1172,7 +1303,10 @@ mod tests {
         // Magic cookie check at bytes 4..8
         assert_eq!(&bytes_v4[4..8], &STUN_MAGIC_COOKIE.to_be_bytes());
         // Message type at 0..2
-        assert_eq!(u16::from_be_bytes([bytes_v4[0], bytes_v4[1]]), BINDING_SUCCESS_RESPONSE);
+        assert_eq!(
+            u16::from_be_bytes([bytes_v4[0], bytes_v4[1]]),
+            BINDING_SUCCESS_RESPONSE
+        );
 
         // Parse back and verify fields
         let parsed_v4 = StunMessage::parse(&bytes_v4).expect("parse valid stun v4");
@@ -1182,7 +1316,9 @@ mod tests {
         assert!(parsed_v4.software.is_some());
 
         // 2. IPv6 XOR-MAPPED-ADDRESS test vector
-        let v6_addr: SocketAddr = "[2001:db8:1234:5678:11:22:33:44]:45678".parse().expect("parse v6");
+        let v6_addr: SocketAddr = "[2001:db8:1234:5678:11:22:33:44]:45678"
+            .parse()
+            .expect("parse v6");
         let resp_v6 = StunMessage::new_binding_response(tx_id, v6_addr);
         let bytes_v6 = resp_v6.to_bytes();
 
@@ -1196,13 +1332,19 @@ mod tests {
         let len = tampered_bytes.len();
         tampered_bytes[len - 2] ^= 0xFF; // Corrupt fingerprint checksum
         let parse_err = StunMessage::parse(&tampered_bytes);
-        assert!(parse_err.is_err(), "Corrupted FINGERPRINT must fail parsing");
+        assert!(
+            parse_err.is_err(),
+            "Corrupted FINGERPRINT must fail parsing"
+        );
 
         // 4. Corrupted Magic Cookie test
         let mut bad_magic = bytes_v4.clone();
         bad_magic[4] ^= 0xFF;
         let magic_err = StunMessage::parse(&bad_magic);
-        assert!(magic_err.is_err(), "Corrupted magic cookie must fail parsing");
+        assert!(
+            magic_err.is_err(),
+            "Corrupted magic cookie must fail parsing"
+        );
     }
 
     #[test]
@@ -1245,8 +1387,14 @@ mod tests {
         assert!(!candidate_set.verify_signature(&wrong_key));
 
         // Candidates sorted descending by priority
-        assert_eq!(candidate_set.candidates[0].candidate_type, IceCandidateType::Host);
-        assert_eq!(candidate_set.candidates[1].candidate_type, IceCandidateType::ServerReflexive);
+        assert_eq!(
+            candidate_set.candidates[0].candidate_type,
+            IceCandidateType::Host
+        );
+        assert_eq!(
+            candidate_set.candidates[1].candidate_type,
+            IceCandidateType::ServerReflexive
+        );
 
         // Tampering causes verification failure
         let mut tampered_set = candidate_set.clone();
@@ -1304,12 +1452,24 @@ mod tests {
                     assert!(!punchable, "UdpBlocked must never be direct punchable");
                 }
 
-                if (a == NatType::OpenInternet || a == NatType::FullCone) && b != NatType::UdpBlocked {
-                    assert!(punchable, "OpenInternet and FullCone must punch against all non-blocked types");
+                if (a == NatType::OpenInternet || a == NatType::FullCone)
+                    && b != NatType::UdpBlocked
+                {
+                    assert!(
+                        punchable,
+                        "OpenInternet and FullCone must punch against all non-blocked types"
+                    );
                 }
 
-                if a == NatType::SymmetricNat && (b == NatType::RestrictedCone || b == NatType::PortRestrictedCone || b == NatType::SymmetricNat) {
-                    assert!(!punchable, "Symmetric NAT against restricted cone or symmetric must require relay");
+                if a == NatType::SymmetricNat
+                    && (b == NatType::RestrictedCone
+                        || b == NatType::PortRestrictedCone
+                        || b == NatType::SymmetricNat)
+                {
+                    assert!(
+                        !punchable,
+                        "Symmetric NAT against restricted cone or symmetric must require relay"
+                    );
                 }
             }
         }
@@ -1321,29 +1481,44 @@ mod tests {
         let kp2 = NodeKeypair::generate();
         let secret = [0x77u8; 32];
 
-        let sock1 = tokio::net::UdpSocket::bind("127.0.0.1:0").await.expect("bind sock1");
-        let sock2 = tokio::net::UdpSocket::bind("127.0.0.1:0").await.expect("bind sock2");
+        let sock1 = tokio::net::UdpSocket::bind("127.0.0.1:0")
+            .await
+            .expect("bind sock1");
+        let sock2 = tokio::net::UdpSocket::bind("127.0.0.1:0")
+            .await
+            .expect("bind sock2");
         let addr1 = sock1.local_addr().expect("addr1");
         let addr2 = sock2.local_addr().expect("addr2");
 
         let c1 = IceCandidate::new(IceCandidateType::Host, addr1, 65535, 1);
-        let set1 = IceCandidateSet::sign_new(kp1.node_id(), NatType::SymmetricNat, vec![c1], &secret);
+        let set1 =
+            IceCandidateSet::sign_new(kp1.node_id(), NatType::SymmetricNat, vec![c1], &secret);
 
         let c2 = IceCandidate::new(IceCandidateType::Host, addr2, 65535, 1);
-        let set2 = IceCandidateSet::sign_new(kp2.node_id(), NatType::SymmetricNat, vec![c2], &secret);
+        let set2 =
+            IceCandidateSet::sign_new(kp2.node_id(), NatType::SymmetricNat, vec![c2], &secret);
 
         let t_start = Instant::now();
-        let res = execute_hole_punch(&sock1, &set1, &set2, &secret, Duration::from_millis(1000)).await.expect("execute");
+        let res = execute_hole_punch(&sock1, &set1, &set2, &secret, Duration::from_millis(1000))
+            .await
+            .expect("execute");
         let elapsed = t_start.elapsed();
 
         // Must immediately detect incompatible topologies without stalling (well within 1200 ms timeout)
-        assert!(elapsed < Duration::from_millis(50), "Symmetric detection took {:?}, exceeding 50 ms fast-fail limit", elapsed);
+        assert!(
+            elapsed < Duration::from_millis(50),
+            "Symmetric detection took {:?}, exceeding 50 ms fast-fail limit",
+            elapsed
+        );
 
         match res {
             NatTraversalResult::RequiresRelay { reason } => {
                 assert!(reason.contains("SymmetricNat"));
             }
-            _ => panic!("Expected RequiresRelay for Symmetric <-> Symmetric, got {:?}", res),
+            _ => panic!(
+                "Expected RequiresRelay for Symmetric <-> Symmetric, got {:?}",
+                res
+            ),
         }
     }
 
@@ -1351,33 +1526,64 @@ mod tests {
     async fn test_nat_port_restricted_cone_hole_punching_and_quic_mtls() {
         // 1. Start embedded STUN server
         let stun_bind: SocketAddr = "127.0.0.1:0".parse().expect("parse stun addr");
-        let stun_server = EmbeddedStunServer::start(stun_bind).await.expect("stun start");
+        let stun_server = EmbeddedStunServer::start(stun_bind)
+            .await
+            .expect("stun start");
         let stun_addr = stun_server.local_addr().expect("stun addr");
 
         // 2. Setup Cluster CA and identities for Node 1 and Node 2
         let cluster_id = "cluster-nat-hole-punch";
         let ca = Arc::new(umcf_identity::cert::ClusterCa::generate(cluster_id).expect("ca"));
         let crl = Arc::new(RwLock::new(ClusterCrl::new(
-            cluster_id, "did:key:ca", 1, 1_700_000_000_000, 1_800_000_000_000, vec![]
+            cluster_id,
+            "did:key:ca",
+            1,
+            1_700_000_000_000,
+            1_800_000_000_000,
+            vec![],
         )));
 
         let kp1 = Arc::new(NodeKeypair::generate());
-        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+        let cert1 = ca
+            .issue_node_certificate(&kp1, NodeRole::Master, 30)
+            .expect("cert1");
 
         let kp2 = Arc::new(NodeKeypair::generate());
-        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+        let cert2 = ca
+            .issue_node_certificate(&kp2, NodeRole::Worker, 30)
+            .expect("cert2");
 
         // 3. Bind UDP sockets
-        let sock1 = tokio::net::UdpSocket::bind("127.0.0.1:0").await.expect("bind sock1");
-        let sock2 = tokio::net::UdpSocket::bind("127.0.0.1:0").await.expect("bind sock2");
+        let sock1 = tokio::net::UdpSocket::bind("127.0.0.1:0")
+            .await
+            .expect("bind sock1");
+        let sock2 = tokio::net::UdpSocket::bind("127.0.0.1:0")
+            .await
+            .expect("bind sock2");
         let addr1 = sock1.local_addr().expect("addr1");
         let addr2 = sock2.local_addr().expect("addr2");
 
         // 4. Gather ICE Candidates with timing assertion (< 300 ms)
         let shared_secret = [0x5Au8; 32];
         let t_gather = Instant::now();
-        let candidates1 = gather_candidates(&sock1, &[stun_addr], kp1.node_id(), &shared_secret, Duration::from_millis(500)).await.expect("gather1");
-        let candidates2 = gather_candidates(&sock2, &[stun_addr], kp2.node_id(), &shared_secret, Duration::from_millis(500)).await.expect("gather2");
+        let candidates1 = gather_candidates(
+            &sock1,
+            &[stun_addr],
+            kp1.node_id(),
+            &shared_secret,
+            Duration::from_millis(500),
+        )
+        .await
+        .expect("gather1");
+        let candidates2 = gather_candidates(
+            &sock2,
+            &[stun_addr],
+            kp2.node_id(),
+            &shared_secret,
+            Duration::from_millis(500),
+        )
+        .await
+        .expect("gather2");
         let gather_elapsed = t_gather.elapsed();
 
         assert!(
@@ -1391,8 +1597,20 @@ mod tests {
         // 5. Synchronized UDP Hole Punching with timing assertion (< 800 ms)
         let t_punch = Instant::now();
         let (res1, res2) = tokio::join!(
-            execute_hole_punch(&sock1, &candidates1, &candidates2, &shared_secret, Duration::from_millis(1500)),
-            execute_hole_punch(&sock2, &candidates2, &candidates1, &shared_secret, Duration::from_millis(1500)),
+            execute_hole_punch(
+                &sock1,
+                &candidates1,
+                &candidates2,
+                &shared_secret,
+                Duration::from_millis(1500)
+            ),
+            execute_hole_punch(
+                &sock2,
+                &candidates2,
+                &candidates1,
+                &shared_secret,
+                Duration::from_millis(1500)
+            ),
         );
         let punch_elapsed = t_punch.elapsed();
         let punch1 = res1.expect("punch 1");
@@ -1406,15 +1624,26 @@ mod tests {
 
         match (&punch1, &punch2) {
             (
-                NatTraversalResult::DirectHolePunchSucceeded { winning_local: l1, winning_remote: r1, rtt_ms: _ },
-                NatTraversalResult::DirectHolePunchSucceeded { winning_local: l2, winning_remote: r2, rtt_ms: _ },
+                NatTraversalResult::DirectHolePunchSucceeded {
+                    winning_local: l1,
+                    winning_remote: r1,
+                    rtt_ms: _,
+                },
+                NatTraversalResult::DirectHolePunchSucceeded {
+                    winning_local: l2,
+                    winning_remote: r2,
+                    rtt_ms: _,
+                },
             ) => {
                 assert_eq!(*l1, addr1);
                 assert_eq!(*r1, addr2);
                 assert_eq!(*l2, addr2);
                 assert_eq!(*r2, addr1);
             }
-            _ => panic!("Expected DirectHolePunchSucceeded on both sides, got {:?}, {:?}", punch1, punch2),
+            _ => panic!(
+                "Expected DirectHolePunchSucceeded on both sides, got {:?}, {:?}",
+                punch1, punch2
+            ),
         }
 
         // 6. Upgrade hole-punched sockets directly to Quinn QUIC mTLS
@@ -1429,7 +1658,8 @@ mod tests {
             ca.ca_cert_der().to_vec(),
             crl.clone(),
         );
-        let engine1 = QuicTransportEngine::start_with_socket(cfg1, std_sock1).expect("engine1 start");
+        let engine1 =
+            QuicTransportEngine::start_with_socket(cfg1, std_sock1).expect("engine1 start");
 
         let cfg2 = QuicTransportConfig::new(
             addr2,
@@ -1439,14 +1669,18 @@ mod tests {
             ca.ca_cert_der().to_vec(),
             crl.clone(),
         );
-        let engine2 = QuicTransportEngine::start_with_socket(cfg2, std_sock2).expect("engine2 start");
+        let engine2 =
+            QuicTransportEngine::start_with_socket(cfg2, std_sock2).expect("engine2 start");
 
         // Connect from Node 1 to Node 2 over the hole-punched socket pair
         let peer_conn = engine1.connect(addr2).await.expect("quic connect");
         assert_eq!(peer_conn.node_id, kp2.node_id());
 
         // Verify bidirectional control ping
-        let (ping_rtt, _reply) = peer_conn.ping_control(b"NAT_HOLE_PUNCH_QUIC_VERIFIED").await.expect("control ping");
+        let (ping_rtt, _reply) = peer_conn
+            .ping_control(b"NAT_HOLE_PUNCH_QUIC_VERIFIED")
+            .await
+            .expect("control ping");
         assert!(ping_rtt < Duration::from_millis(100));
 
         // 7. Write out nat_hole_punch_matrix.json evidence
@@ -1488,7 +1722,10 @@ mod tests {
             let content = fs::read_to_string(matrix_path).expect("read nat matrix file");
             let val: serde_json::Value = serde_json::from_str(&content).expect("parse json");
             assert_eq!(val.get("status").and_then(|v| v.as_str()), Some("PASS"));
-            assert_eq!(val.get("quic_mtls_upgraded").and_then(|v| v.as_bool()), Some(true));
+            assert_eq!(
+                val.get("quic_mtls_upgraded").and_then(|v| v.as_bool()),
+                Some(true)
+            );
             assert!(val.get("candidate_gathering_ms").is_some());
             assert!(val.get("hole_punch_elapsed_ms").is_some());
         }
@@ -1547,7 +1784,10 @@ mod tests {
         // 4. KeepAlive & RelayError
         let keepalive = RelayFrame::KeepAlive;
         let ka_bytes = keepalive.to_bytes();
-        assert_eq!(RelayFrame::from_bytes(&ka_bytes).expect("decode ka"), keepalive);
+        assert_eq!(
+            RelayFrame::from_bytes(&ka_bytes).expect("decode ka"),
+            keepalive
+        );
 
         let err = RelayFrame::RelayError {
             code: 429,
@@ -1568,7 +1808,9 @@ mod tests {
         let cluster_id = "cluster-relay-routing";
         let bind_addr: SocketAddr = "127.0.0.1:0".parse().expect("parse addr");
         // Quota: 1024 bytes
-        let relay_server = UmcfRelayServer::start(cluster_id, bind_addr, 1024).await.expect("relay start");
+        let relay_server = UmcfRelayServer::start(cluster_id, bind_addr, 1024)
+            .await
+            .expect("relay start");
         let relay_addr = relay_server.local_addr();
 
         let kp_a = NodeKeypair::generate();
@@ -1577,9 +1819,14 @@ mod tests {
         let did_b = kp_b.did_key();
 
         // Client A binds
-        let sock_a = tokio::net::UdpSocket::bind("127.0.0.1:0").await.expect("bind sock_a");
+        let sock_a = tokio::net::UdpSocket::bind("127.0.0.1:0")
+            .await
+            .expect("bind sock_a");
         let bind_a = RelayFrame::new_bind(&kp_a, cluster_id, 101);
-        sock_a.send_to(&bind_a.to_bytes(), relay_addr).await.expect("send bind_a");
+        sock_a
+            .send_to(&bind_a.to_bytes(), relay_addr)
+            .await
+            .expect("send bind_a");
         let mut buf_a = [0u8; 1024];
         let (len_a, _) = sock_a.recv_from(&mut buf_a).await.expect("recv ack_a");
         match RelayFrame::from_bytes(&buf_a[..len_a]).expect("parse ack_a") {
@@ -1588,9 +1835,14 @@ mod tests {
         }
 
         // Client B binds
-        let sock_b = tokio::net::UdpSocket::bind("127.0.0.1:0").await.expect("bind sock_b");
+        let sock_b = tokio::net::UdpSocket::bind("127.0.0.1:0")
+            .await
+            .expect("bind sock_b");
         let bind_b = RelayFrame::new_bind(&kp_b, cluster_id, 102);
-        sock_b.send_to(&bind_b.to_bytes(), relay_addr).await.expect("send bind_b");
+        sock_b
+            .send_to(&bind_b.to_bytes(), relay_addr)
+            .await
+            .expect("send bind_b");
         let mut buf_b = [0u8; 1024];
         let (len_b, _) = sock_b.recv_from(&mut buf_b).await.expect("recv ack_b");
         match RelayFrame::from_bytes(&buf_b[..len_b]).expect("parse ack_b") {
@@ -1606,12 +1858,18 @@ mod tests {
             dst_did: did_b.clone(),
             payload: payload.clone(),
         };
-        sock_a.send_to(&send_frame.to_bytes(), relay_addr).await.expect("send packet");
+        sock_a
+            .send_to(&send_frame.to_bytes(), relay_addr)
+            .await
+            .expect("send packet");
 
         // Client B receives RecvPacket
         let (len_recv, _) = sock_b.recv_from(&mut buf_b).await.expect("recv packet");
         match RelayFrame::from_bytes(&buf_b[..len_recv]).expect("parse recv") {
-            RelayFrame::RecvPacket { src_did, payload: recv_payload } => {
+            RelayFrame::RecvPacket {
+                src_did,
+                payload: recv_payload,
+            } => {
                 assert_eq!(src_did, did_a);
                 assert_eq!(recv_payload, payload);
             }
@@ -1626,7 +1884,10 @@ mod tests {
             dst_did: did_b.clone(),
             payload: big_payload,
         };
-        sock_a.send_to(&big_send.to_bytes(), relay_addr).await.expect("send big packet");
+        sock_a
+            .send_to(&big_send.to_bytes(), relay_addr)
+            .await
+            .expect("send big packet");
 
         // Server responds with RelayError (code 429)
         let (len_err, _) = sock_a.recv_from(&mut buf_a).await.expect("recv quota err");
@@ -1668,7 +1929,9 @@ mod tests {
             let expected_mac = &packet[data_len..];
             let actual_mac = blake3::keyed_hash(&secret_key, data);
             if actual_mac.as_bytes() != expected_mac {
-                return Err(NetError::SecurityAlert("AEAD MAC validation failed: payload was tampered in transit".into()));
+                return Err(NetError::SecurityAlert(
+                    "AEAD MAC validation failed: payload was tampered in transit".into(),
+                ));
             }
             Ok(data.to_vec())
         };
@@ -1689,7 +1952,9 @@ mod tests {
     async fn test_relay_fallback_connection_and_automatic_path_upgrade() {
         let cluster_id = "cluster-relay-upgrade-e2e";
         let bind_addr: SocketAddr = "127.0.0.1:0".parse().expect("parse addr");
-        let relay_server = UmcfRelayServer::start(cluster_id, bind_addr, 0).await.expect("relay start");
+        let relay_server = UmcfRelayServer::start(cluster_id, bind_addr, 0)
+            .await
+            .expect("relay start");
         let relay_addr = relay_server.local_addr();
 
         let kp_a = NodeKeypair::generate();
@@ -1698,7 +1963,9 @@ mod tests {
         let did_b = kp_b.did_key();
 
         // Create direct sockets to simulate physical addresses
-        let dummy_sock_b = tokio::net::UdpSocket::bind("127.0.0.1:0").await.expect("bind dummy b");
+        let dummy_sock_b = tokio::net::UdpSocket::bind("127.0.0.1:0")
+            .await
+            .expect("bind dummy b");
         let direct_addr_b = dummy_sock_b.local_addr().expect("addr b");
         drop(dummy_sock_b);
 
@@ -1712,7 +1979,9 @@ mod tests {
             &did_b,
             direct_addr_b,
             PathType::RelayedE2ee,
-        ).await.expect("bind hybrid a");
+        )
+        .await
+        .expect("bind hybrid a");
 
         // 2. Bind HybridUdpRelaySocket on Node B (initial: RelayedE2ee)
         let hybrid_b = HybridUdpRelaySocket::bind(
@@ -1722,7 +1991,9 @@ mod tests {
             &did_a,
             hybrid_a.local_addr().expect("addr a"),
             PathType::RelayedE2ee,
-        ).await.expect("bind hybrid b");
+        )
+        .await
+        .expect("bind hybrid b");
 
         let connect_elapsed = t_connect_start.elapsed();
         // Acceptance criteria: fallback connection established in < 1500 ms
@@ -1740,7 +2011,10 @@ mod tests {
         hybrid_a.send_datagram(msg1).await.expect("send over relay");
 
         let mut recv_buf = [0u8; 1024];
-        let (recv_len, path1) = hybrid_b.recv_datagram(&mut recv_buf).await.expect("recv over relay");
+        let (recv_len, path1) = hybrid_b
+            .recv_datagram(&mut recv_buf)
+            .await
+            .expect("recv over relay");
         assert_eq!(&recv_buf[..recv_len], msg1);
         assert_eq!(path1, PathType::RelayedE2ee);
         assert!(relay_server.total_packets_forwarded() >= 1);
@@ -1748,10 +2022,17 @@ mod tests {
         // 4. Automatic Seamless Path Upgrade to Direct P2P
         // When direct path opens, Node A sends direct UDP probe from its socket to Node B's socket
         let probe_msg = b"DIRECT_P2P_UPGRADE_PACKET";
-        hybrid_a.socket().send_to(probe_msg, hybrid_b.local_addr().expect("b addr")).await.expect("send direct probe");
+        hybrid_a
+            .socket()
+            .send_to(probe_msg, hybrid_b.local_addr().expect("b addr"))
+            .await
+            .expect("send direct probe");
 
         // Node B receives direct packet and automatically upgrades its path to DirectWanPunched
-        let (recv_direct_len, path2) = hybrid_b.recv_datagram(&mut recv_buf).await.expect("recv direct");
+        let (recv_direct_len, path2) = hybrid_b
+            .recv_datagram(&mut recv_buf)
+            .await
+            .expect("recv direct");
         assert_eq!(&recv_buf[..recv_direct_len], probe_msg);
         assert_eq!(path2, PathType::DirectWanPunched);
         assert_eq!(hybrid_b.current_path().await, PathType::DirectWanPunched);
@@ -1763,7 +2044,10 @@ mod tests {
         // 5. Subsequent packets flow directly (relay packet count does not increase)
         let relay_count_before = relay_server.total_packets_forwarded();
         let msg_direct = b"ZERO_DROP_DIRECT_P2P_STREAM_PAYLOAD";
-        hybrid_b.send_datagram(msg_direct).await.expect("send direct");
+        hybrid_b
+            .send_datagram(msg_direct)
+            .await
+            .expect("send direct");
 
         // Verify relay count remained unchanged
         assert_eq!(relay_server.total_packets_forwarded(), relay_count_before);
@@ -1803,8 +2087,14 @@ mod tests {
             let content = fs::read_to_string(trace_path).expect("read trace file");
             let val: serde_json::Value = serde_json::from_str(&content).expect("parse json");
             assert_eq!(val.get("status").and_then(|v| v.as_str()), Some("PASS"));
-            assert_eq!(val.get("zero_knowledge_verified").and_then(|v| v.as_bool()), Some(true));
-            assert_eq!(val.get("upgrade_detected").and_then(|v| v.as_bool()), Some(true));
+            assert_eq!(
+                val.get("zero_knowledge_verified").and_then(|v| v.as_bool()),
+                Some(true)
+            );
+            assert_eq!(
+                val.get("upgrade_detected").and_then(|v| v.as_bool()),
+                Some(true)
+            );
             assert_eq!(val.get("dropped_streams").and_then(|v| v.as_u64()), Some(0));
             assert!(val.get("fallback_connection_ms").is_some());
         }
@@ -1830,8 +2120,15 @@ mod tests {
         assert_eq!(watcher.primary_type(), InterfaceType::WiFi);
 
         // 2. Debounce: immediate evaluation before 50 ms must be suppressed
-        let debounced = watcher.evaluate_interfaces(&[ip_wifi, ip_cell], Some(ip_cell), InterfaceType::Cellular);
-        assert!(debounced.is_none(), "Evaluation within debounce window must return None");
+        let debounced = watcher.evaluate_interfaces(
+            &[ip_wifi, ip_cell],
+            Some(ip_cell),
+            InterfaceType::Cellular,
+        );
+        assert!(
+            debounced.is_none(),
+            "Evaluation within debounce window must return None"
+        );
 
         // 3. Sleep past debounce window
         std::thread::sleep(Duration::from_millis(60));
@@ -1858,16 +2155,25 @@ mod tests {
         let cluster_id = "cluster-quic-roaming";
         let ca = Arc::new(umcf_identity::cert::ClusterCa::generate(cluster_id).expect("ca"));
         let crl = Arc::new(RwLock::new(ClusterCrl::new(
-            cluster_id, "did:key:ca", 1, 1_700_000_000_000, 1_800_000_000_000, vec![]
+            cluster_id,
+            "did:key:ca",
+            1,
+            1_700_000_000_000,
+            1_800_000_000_000,
+            vec![],
         )));
 
         // Node 1 (Client initiating migration)
         let kp1 = Arc::new(NodeKeypair::generate());
-        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+        let cert1 = ca
+            .issue_node_certificate(&kp1, NodeRole::Master, 30)
+            .expect("cert1");
 
         // Node 2 (Server receiving migrated streams)
         let kp2 = Arc::new(NodeKeypair::generate());
-        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+        let cert2 = ca
+            .issue_node_certificate(&kp2, NodeRole::Worker, 30)
+            .expect("cert2");
 
         let cfg2 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
@@ -1995,14 +2301,23 @@ mod tests {
         let cluster_id = "cluster-quic-blackhole";
         let ca = Arc::new(umcf_identity::cert::ClusterCa::generate(cluster_id).expect("ca"));
         let crl = Arc::new(RwLock::new(ClusterCrl::new(
-            cluster_id, "did:key:ca", 1, 1_700_000_000_000, 1_800_000_000_000, vec![]
+            cluster_id,
+            "did:key:ca",
+            1,
+            1_700_000_000_000,
+            1_800_000_000_000,
+            vec![],
         )));
 
         let kp1 = Arc::new(NodeKeypair::generate());
-        let cert1 = ca.issue_node_certificate(&kp1, NodeRole::Master, 30).expect("cert1");
+        let cert1 = ca
+            .issue_node_certificate(&kp1, NodeRole::Master, 30)
+            .expect("cert1");
 
         let kp2 = Arc::new(NodeKeypair::generate());
-        let cert2 = ca.issue_node_certificate(&kp2, NodeRole::Worker, 30).expect("cert2");
+        let cert2 = ca
+            .issue_node_certificate(&kp2, NodeRole::Worker, 30)
+            .expect("cert2");
 
         let cfg2 = QuicTransportConfig::new(
             SocketAddr::from(([127, 0, 0, 1], 0)),
@@ -2032,7 +2347,10 @@ mod tests {
         let _ = engine1.rebind(new_sock).expect("rebind");
 
         // Communication immediately resumes on new socket
-        let (ping_rtt, _reply) = peer_conn.ping_control(b"POST_BLACKHOLE_RECOVERY").await.expect("ping post blackhole");
+        let (ping_rtt, _reply) = peer_conn
+            .ping_control(b"POST_BLACKHOLE_RECOVERY")
+            .await
+            .expect("ping post blackhole");
         assert!(ping_rtt < Duration::from_millis(100));
 
         engine1.stop();
@@ -2046,9 +2364,15 @@ mod tests {
             let content = fs::read_to_string(trace_path).expect("read trace file");
             let val: serde_json::Value = serde_json::from_str(&content).expect("parse json");
             assert_eq!(val.get("status").and_then(|v| v.as_str()), Some("PASS"));
-            assert_eq!(val.get("migrations_completed").and_then(|v| v.as_u64()), Some(5));
+            assert_eq!(
+                val.get("migrations_completed").and_then(|v| v.as_u64()),
+                Some(5)
+            );
             assert_eq!(val.get("broken_streams").and_then(|v| v.as_u64()), Some(0));
-            assert_eq!(val.get("integrity_verified").and_then(|v| v.as_bool()), Some(true));
+            assert_eq!(
+                val.get("integrity_verified").and_then(|v| v.as_bool()),
+                Some(true)
+            );
             assert!(val.get("max_migration_duration_ms").is_some());
         }
     }
@@ -2060,7 +2384,10 @@ mod tests {
             let content = fs::read_to_string(qos_path).expect("read qos file");
             let val: serde_json::Value = serde_json::from_str(&content).expect("parse json");
             assert!(val.get("control_latency_p99_ms").is_some());
-            assert_eq!(val.get("control_pings_dropped").and_then(|v| v.as_u64()), Some(0));
+            assert_eq!(
+                val.get("control_pings_dropped").and_then(|v| v.as_u64()),
+                Some(0)
+            );
             assert_eq!(val.get("status").and_then(|v| v.as_str()), Some("PASS"));
         }
     }

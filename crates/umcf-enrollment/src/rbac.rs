@@ -160,27 +160,21 @@ impl RbacPolicyEngine {
         role_permissions.insert(Role::HybridNode, hybrid_perms);
 
         // 4. ComputeWorker executes workloads and reads state
-        let worker_perms: HashSet<Permission> = [
-            Permission::ReadClusterState,
-            Permission::AccessPrivateAi,
-        ]
-        .into_iter()
-        .collect();
+        let worker_perms: HashSet<Permission> =
+            [Permission::ReadClusterState, Permission::AccessPrivateAi]
+                .into_iter()
+                .collect();
         role_permissions.insert(Role::ComputeWorker, worker_perms);
 
         // 5. StorageProvider contributes storage substrate
-        let storage_perms: HashSet<Permission> = [
-            Permission::ReadClusterState,
-            Permission::ReadWriteStorage,
-        ]
-        .into_iter()
-        .collect();
+        let storage_perms: HashSet<Permission> =
+            [Permission::ReadClusterState, Permission::ReadWriteStorage]
+                .into_iter()
+                .collect();
         role_permissions.insert(Role::StorageProvider, storage_perms);
 
         // 6. ObserverGuest read-only telemetry
-        let guest_perms: HashSet<Permission> = [Permission::ReadClusterState]
-            .into_iter()
-            .collect();
+        let guest_perms: HashSet<Permission> = [Permission::ReadClusterState].into_iter().collect();
         role_permissions.insert(Role::ObserverGuest, guest_perms);
 
         Self {

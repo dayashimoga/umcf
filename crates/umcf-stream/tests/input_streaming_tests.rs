@@ -548,9 +548,13 @@ fn test_manual_virtual_gamepad_overlay_and_direct_touch_schema() {
     });
 
     assert_eq!(schema["modes"].as_array().unwrap().len(), 2);
-    assert!(schema["virtual_gamepad"]["haptic_feedback"].as_bool().unwrap());
+    assert!(schema["virtual_gamepad"]["haptic_feedback"]
+        .as_bool()
+        .unwrap());
     assert_eq!(
-        schema["safety_actions"]["emergency_release"].as_str().unwrap(),
+        schema["safety_actions"]["emergency_release"]
+            .as_str()
+            .unwrap(),
         "synthesize_emergency_release_events"
     );
 }

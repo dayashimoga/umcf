@@ -346,8 +346,8 @@ impl CloudflareControlPlaneClient {
         );
         let url = format!("{}{}", self.base_url, path);
 
-        let body_bytes = serde_json::to_vec(delta)
-            .map_err(|e| RegistryError::Serialization(e.to_string()))?;
+        let body_bytes =
+            serde_json::to_vec(delta).map_err(|e| RegistryError::Serialization(e.to_string()))?;
 
         let now_ms = current_time_ms();
         let headers = self.sign_request("POST", &path, &body_bytes, now_ms)?;

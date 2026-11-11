@@ -13,4 +13,3 @@ pub use error::MarketError;
 pub use orderbook::{
     ComputeAskOffer, ComputeBidRequest, MarketplaceMatchingEngine, MatchedLeaseContract,
 };
-

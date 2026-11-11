@@ -12,9 +12,9 @@ use ed25519_dalek::SigningKey;
 use tempfile::TempDir;
 use umcf_gguf::{
     create_test_gguf_bytes, ContentAddressedModelStore, Ed25519PublicKey, GgmlType,
-    LicenseAcceptanceReceipt, LicenseCategory, LicensePolicyEngine, ModelAccessPolicy,
-    ModelId, ModelIntegrityVerifier, ModelQuarantineManager, ModelVisibility,
-    SignedModelAttestation, VerifyMode,
+    LicenseAcceptanceReceipt, LicenseCategory, LicensePolicyEngine, ModelAccessPolicy, ModelId,
+    ModelIntegrityVerifier, ModelQuarantineManager, ModelVisibility, SignedModelAttestation,
+    VerifyMode,
 };
 
 /// Helper to generate a deterministic Ed25519 keypair for test assertions.
@@ -46,7 +46,9 @@ fn test_unit_ed25519_model_attestation_sign_and_verify() {
     );
 
     // Verification must pass on untampered attestation
-    attestation.verify().expect("attestation signature must be valid");
+    attestation
+        .verify()
+        .expect("attestation signature must be valid");
 
     // Tampering test: modify header_blake3
     let mut tampered = attestation.clone();
@@ -77,8 +79,9 @@ fn test_unit_overlapping_or_out_of_bounds_tensor_offsets_rejected() {
     let manifest = store.ingest_local_file(&original_path).expect("ingest");
 
     // FastPreFlight on unmodified model must succeed
-    let guard = ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None)
-        .expect("unmodified model passes preflight");
+    let guard =
+        ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None)
+            .expect("unmodified model passes preflight");
     assert_eq!(guard.model_id(), &manifest.model_id);
 
     // Corrupt tensor offset table: mutate tensor offset so it points beyond file bounds
@@ -91,15 +94,17 @@ fn test_unit_overlapping_or_out_of_bounds_tensor_offsets_rejected() {
             // Offset is stored after name + n_dims + dims + ggml_type
             let offset_pos = i + 17 + 4 + 16 + 4;
             if offset_pos + 8 <= corrupted_bytes.len() {
-                corrupted_bytes[offset_pos..offset_pos + 8].copy_from_slice(&(999_999_999u64).to_le_bytes());
+                corrupted_bytes[offset_pos..offset_pos + 8]
+                    .copy_from_slice(&(999_999_999u64).to_le_bytes());
                 break;
             }
         }
     }
     fs::write(&model_file, &corrupted_bytes).expect("overwrite with corrupted offset");
 
-    let err = ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None)
-        .expect_err("out of bounds offset must be rejected");
+    let err =
+        ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None)
+            .expect_err("out of bounds offset must be rejected");
     assert!(
         err.to_string().contains("out of bounds") || err.to_string().contains("Range"),
         "Error must mention out of bounds range"
@@ -116,7 +121,9 @@ fn test_unit_license_policy_blocks_unaccepted_restricted_model() {
     // Permissive licenses require no acceptance receipt
     let apache_cat = LicensePolicyEngine::classify_license("Apache-2.0");
     assert_eq!(apache_cat, LicenseCategory::OpenPermissive);
-    assert!(!LicensePolicyEngine::requires_explicit_acceptance(apache_cat));
+    assert!(!LicensePolicyEngine::requires_explicit_acceptance(
+        apache_cat
+    ));
     policy_engine
         .check_compliance(&model_id, apache_cat)
         .expect("permissive license compliant without receipt");
@@ -130,7 +137,9 @@ fn test_unit_license_policy_blocks_unaccepted_restricted_model() {
     let block_err = policy_engine
         .check_compliance(&model_id, llama_cat)
         .expect_err("unaccepted community license must be blocked");
-    assert!(block_err.to_string().contains("License compliance violation"));
+    assert!(block_err
+        .to_string()
+        .contains("License compliance violation"));
 
     // Record valid acceptance receipt
     let signing_key = create_test_signing_key(7);
@@ -181,7 +190,10 @@ fn test_unit_private_local_only_policy_denies_remote_peer_access() {
     // Error must be ModelNotFound, not PermissionDenied
     match remote_err {
         umcf_gguf::StoreError::ModelNotFound(id) => assert_eq!(id, model_id),
-        other => panic!("Expected ModelNotFound to prevent leakage, got: {:?}", other),
+        other => panic!(
+            "Expected ModelNotFound to prevent leakage, got: {:?}",
+            other
+        ),
     }
 
     // Public shared policy permits remote peers
@@ -222,7 +234,8 @@ fn test_integration_on_disk_corruption_triggers_automatic_quarantine() {
     drop(file);
 
     // FullCryptographicScrub detects chunk mismatch and automatically quarantines file!
-    let scrub_err = ModelIntegrityVerifier::verify(&store, &model_id, VerifyMode::FullCryptographicScrub, None);
+    let scrub_err =
+        ModelIntegrityVerifier::verify(&store, &model_id, VerifyMode::FullCryptographicScrub, None);
     assert!(scrub_err.is_err(), "Corrupted model must fail scrub");
 
     // Verify model is now in quarantine
@@ -316,12 +329,14 @@ fn test_hardware_fast_preflight_verification_latency_benchmark() {
     let manifest = store.ingest_local_file(&path).expect("ingest");
 
     // Warm-up
-    let _ = ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None);
+    let _ =
+        ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None);
 
     // Measure pre-flight validation latency
     let start = Instant::now();
-    let guard = ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None)
-        .expect("preflight verification");
+    let guard =
+        ModelIntegrityVerifier::verify(&store, &manifest.model_id, VerifyMode::FastPreFlight, None)
+            .expect("preflight verification");
     let elapsed = start.elapsed();
     let elapsed_ms = elapsed.as_secs_f64() * 1000.0;
 
@@ -359,7 +374,9 @@ fn test_manual_ui_license_acceptance_and_security_audit_log() {
         &signing_key,
     );
 
-    engine.record_acceptance(receipt.clone()).expect("record receipt");
+    engine
+        .record_acceptance(receipt.clone())
+        .expect("record receipt");
     assert!(engine.is_accepted(&model_id));
 
     // Audit verification

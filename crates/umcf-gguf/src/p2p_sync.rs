@@ -19,9 +19,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{StoreError, SyncError};
-use crate::store::{
-    ByteRange, ChunkHash, ContentAddressedModelStore, ModelId, ModelManifest,
-};
+use crate::store::{ByteRange, ChunkHash, ContentAddressedModelStore, ModelId, ModelManifest};
 
 /// Bitfield tracking presence or completion of 4 MiB chunks.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -118,7 +116,8 @@ impl Bitfield {
     /// Returns a list of all chunk indices that are not yet set.
     #[must_use]
     pub fn missing_indices(&self) -> Vec<usize> {
-        let mut missing = Vec::with_capacity(self.chunk_count.saturating_sub(self.completed_count()));
+        let mut missing =
+            Vec::with_capacity(self.chunk_count.saturating_sub(self.completed_count()));
         for i in 0..self.chunk_count {
             if !self.get(i) {
                 missing.push(i);
@@ -379,7 +378,9 @@ impl ResumableShardDownloader {
         scope: DownloadScope,
     ) -> Result<Self, StoreError> {
         let model_id_hex = manifest.model_id.to_hex();
-        let part_data_path = store.staging_dir().join(format!("{model_id_hex}.part.data"));
+        let part_data_path = store
+            .staging_dir()
+            .join(format!("{model_id_hex}.part.data"));
         let part_bitfield_path = store
             .staging_dir()
             .join(format!("{model_id_hex}.part.bitfield"));
@@ -433,9 +434,7 @@ impl ResumableShardDownloader {
 
     #[must_use]
     pub fn status(&self) -> SyncStatus {
-        self.status
-            .read()
-            .map_or(SyncStatus::Idle, |s| s.clone())
+        self.status.read().map_or(SyncStatus::Idle, |s| s.clone())
     }
 
     /// Computes current progress snapshot.
@@ -472,10 +471,7 @@ impl ResumableShardDownloader {
             .sum();
 
         let elapsed = self.session_start.elapsed().as_secs_f64().max(0.1);
-        let session_bytes = self
-            .downloaded_bytes_session
-            .lock()
-            .map_or(0, |b| *b);
+        let session_bytes = self.downloaded_bytes_session.lock().map_or(0, |b| *b);
         let bytes_per_sec = (session_bytes as f64) / elapsed;
 
         let remaining_bytes = total_bytes.saturating_sub(downloaded_bytes);
@@ -485,10 +481,7 @@ impl ResumableShardDownloader {
             None
         };
 
-        let active_peers = self
-            .peer_scores
-            .lock()
-            .map_or(0, |m| m.len());
+        let active_peers = self.peer_scores.lock().map_or(0, |m| m.len());
 
         SyncProgress {
             model_id: self.manifest.model_id,
@@ -526,17 +519,19 @@ impl ResumableShardDownloader {
     }
 
     /// Runs multi-peer chunk synchronization to completion or pause.
-    pub fn sync(&mut self, peers: &[Arc<dyn PeerChunkProvider>]) -> Result<SyncProgress, SyncError> {
+    pub fn sync(
+        &mut self,
+        peers: &[Arc<dyn PeerChunkProvider>],
+    ) -> Result<SyncProgress, SyncError> {
         if peers.is_empty() {
             return Err(SyncError::AllPeersFailed { chunk_index: 0 });
         }
 
         // Initialize peer scores if not already present
         {
-            let mut scores = self
-                .peer_scores
-                .lock()
-                .map_err(|_| SyncError::Store(StoreError::CorruptedFile("score lock poisoned".into())))?;
+            let mut scores = self.peer_scores.lock().map_err(|_| {
+                SyncError::Store(StoreError::CorruptedFile("score lock poisoned".into()))
+            })?;
             for peer in peers {
                 scores
                     .entry(peer.peer_id().to_string())
@@ -638,9 +633,7 @@ impl ResumableShardDownloader {
                         }
 
                         // Write verified chunk to exact offset in .part.data
-                        let mut file = OpenOptions::new()
-                            .write(true)
-                            .open(&self.part_data_path)?;
+                        let mut file = OpenOptions::new().write(true).open(&self.part_data_path)?;
                         file.seek(SeekFrom::Start(descriptor.offset))?;
                         file.write_all(&data)?;
                         file.flush()?;

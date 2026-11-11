@@ -36,7 +36,9 @@ fn test_unit_minijinja_chat_template_rendering_llama3_chatml_gemma_tools() {
     let llama3_out =
         ChatTemplateRenderer::render(&messages, "llama3").expect("render llama3 template");
     assert!(llama3_out.contains("<|begin_of_text|>"));
-    assert!(llama3_out.contains("<|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant.<|eot_id|>"));
+    assert!(llama3_out.contains(
+        "<|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant.<|eot_id|>"
+    ));
     assert!(llama3_out.contains("<|start_header_id|>assistant<|end_header_id|>\n\n"));
 
     // 2. ChatML Template
@@ -46,7 +48,8 @@ fn test_unit_minijinja_chat_template_rendering_llama3_chatml_gemma_tools() {
     assert!(chatml_out.contains("<|im_start|>assistant\n"));
 
     // 3. Gemma Template
-    let gemma_out = ChatTemplateRenderer::render(&messages, "gemma").expect("render gemma template");
+    let gemma_out =
+        ChatTemplateRenderer::render(&messages, "gemma").expect("render gemma template");
     assert!(gemma_out.contains("<start_of_turn>user\nHello, who are you?<end_of_turn>\n"));
     assert!(gemma_out.contains("<start_of_turn>model\n"));
 }
@@ -60,7 +63,10 @@ fn test_unit_secret_prompt_buffer_zeroize_on_drop() {
 
     // Manual zeroize test
     buffer.zeroize();
-    assert!(buffer.is_zeroed(), "SecretPromptBuffer must be completely zeroed out");
+    assert!(
+        buffer.is_zeroed(),
+        "SecretPromptBuffer must be completely zeroed out"
+    );
 
     // Also assert debug output redaction
     let debug_repr = format!("{buffer:?}");
@@ -202,7 +208,9 @@ fn test_integration_openai_embeddings_l2_normalization_and_cosine_similarity() {
         ],
     };
 
-    let resp = engine.generate_embeddings(&req).expect("generate embeddings");
+    let resp = engine
+        .generate_embeddings(&req)
+        .expect("generate embeddings");
     assert_eq!(resp.data.len(), 3);
 
     // Verify L2 normalization: sum(x^2) == 1.0
@@ -257,7 +265,10 @@ fn test_integration_tracing_log_redaction_in_private_enclave_mode() {
     let raw_log = format!("Processing user prompt with key: {canary} in background worker.");
 
     let redacted = redact_enclave_text(&raw_log, canary);
-    assert!(!redacted.contains(canary), "canary string must never appear in redacted log");
+    assert!(
+        !redacted.contains(canary),
+        "canary string must never appear in redacted log"
+    );
     assert!(redacted.contains("[REDACTED_PRIVATE_ENCLAVE]"));
 }
 
@@ -272,7 +283,10 @@ fn test_simulation_50_concurrent_clients_with_abort_handling() {
     for client_id in 0..50 {
         let req = ChatCompletionRequest {
             model: "Llama-3-8B".to_string(),
-            messages: vec![ChatMessage::new("user", &format!("Client {client_id} message"))],
+            messages: vec![ChatMessage::new(
+                "user",
+                &format!("Client {client_id} message"),
+            )],
             stream: true,
             temperature: 0.5,
             max_tokens: 32,
@@ -346,4 +360,3 @@ fn test_manual_openai_curl_snippet_and_status_card_verification() {
     assert!(curl_snippet.contains("127.0.0.1:11435"));
     assert!(curl_snippet.contains("X-UMCF-Privacy-Mode: strict-local"));
 }
-

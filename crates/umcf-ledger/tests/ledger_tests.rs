@@ -9,9 +9,9 @@
 
 #![allow(clippy::unwrap_used)]
 
-use std::time::Instant;
 use ed25519_dalek::SigningKey;
 use rand_core::OsRng;
+use std::time::Instant;
 
 use umcf_ledger::error::LedgerError;
 use umcf_ledger::meter::{MeteredResourceVector, ResourceMeteringCollector, SanityBoundsChecker};
@@ -74,9 +74,15 @@ fn test_canonical_receipt_serialization_and_dual_ed25519_signatures() {
 
     // 2. Requester countersigns with matching output payload
     let cs_result = receipt.countersign(&requester_sk, &worker_vk, output_data);
-    assert!(cs_result.is_ok(), "Countersign failed: {:?}", cs_result.err());
+    assert!(
+        cs_result.is_ok(),
+        "Countersign failed: {:?}",
+        cs_result.err()
+    );
     assert!(receipt.requester_countersignature.is_some());
-    assert!(receipt.verify_requester_countersignature(&requester_vk).is_ok());
+    assert!(receipt
+        .verify_requester_countersignature(&requester_vk)
+        .is_ok());
 
     // 3. Test canonical binary serialization
     let bytes1 = receipt.body.resources.to_canonical_bytes();
@@ -112,53 +118,82 @@ fn test_receipt_hash_chain_detects_missing_or_reordered_sequence() {
         };
 
         let mut r = SignedResourceReceipt::create_by_worker(body, &worker_sk);
-        r.countersign(&requester_sk, &worker_vk, &output_data).unwrap();
+        r.countersign(&requester_sk, &worker_vk, &output_data)
+            .unwrap();
         prev_id = r.receipt_id;
         receipts.push(r);
     }
 
     // Append receipt 1 & 2 -> PASS
-    assert!(verifier.verify_and_append(&receipts[0], &worker_vk, &requester_vk).is_ok());
-    assert!(verifier.verify_and_append(&receipts[1], &worker_vk, &requester_vk).is_ok());
+    assert!(verifier
+        .verify_and_append(&receipts[0], &worker_vk, &requester_vk)
+        .is_ok());
+    assert!(verifier
+        .verify_and_append(&receipts[1], &worker_vk, &requester_vk)
+        .is_ok());
 
     // Attempt to append receipt 4 directly (skipping receipt 3) -> FAIL with InvalidSequenceNumber
     let err_skip = verifier.verify_and_append(&receipts[3], &worker_vk, &requester_vk);
-    assert!(matches!(err_skip, Err(LedgerError::InvalidSequenceNumber { expected: 3, actual: 4 })));
+    assert!(matches!(
+        err_skip,
+        Err(LedgerError::InvalidSequenceNumber {
+            expected: 3,
+            actual: 4
+        })
+    ));
 
     // Append receipt 3 -> PASS
-    assert!(verifier.verify_and_append(&receipts[2], &worker_vk, &requester_vk).is_ok());
+    assert!(verifier
+        .verify_and_append(&receipts[2], &worker_vk, &requester_vk)
+        .is_ok());
 
     // Tamper with receipt 4 prev_receipt_id -> FAIL with HashChainBroken
     let mut tampered_4 = receipts[3].clone();
     tampered_4.body.prev_receipt_id = [99u8; 32];
     tampered_4.receipt_id = tampered_4.body.canonical_digest();
     let err_broken = verifier.verify_and_append(&tampered_4, &worker_vk, &requester_vk);
-    assert!(matches!(err_broken, Err(LedgerError::HashChainBroken { .. }) | Err(LedgerError::SignatureVerificationFailed { .. })));
+    assert!(matches!(
+        err_broken,
+        Err(LedgerError::HashChainBroken { .. })
+            | Err(LedgerError::SignatureVerificationFailed { .. })
+    ));
 }
 
 #[test]
 fn test_sanity_bounds_checker_rejects_inflated_token_or_pixel_claims() {
     // 1. AI tokens: claimed 10,000 tokens on a 128-token stream
     let err_tokens = SanityBoundsChecker::check_ai_tokens(10000, 128, 500);
-    assert!(matches!(err_tokens, Err(LedgerError::InflatedResourceClaim { .. })));
+    assert!(matches!(
+        err_tokens,
+        Err(LedgerError::InflatedResourceClaim { .. })
+    ));
 
     // Valid tokens -> PASS
     assert!(SanityBoundsChecker::check_ai_tokens(128, 128, 500).is_ok());
 
     // 2. Render pixels: claimed 100,000,000 pixels on 1920x1080 with 1 sample
     let err_pixels = SanityBoundsChecker::check_render_pixels(100_000_000, 1920, 1080, 1);
-    assert!(matches!(err_pixels, Err(LedgerError::InflatedResourceClaim { .. })));
+    assert!(matches!(
+        err_pixels,
+        Err(LedgerError::InflatedResourceClaim { .. })
+    ));
 
     // Valid pixels -> PASS
     assert!(SanityBoundsChecker::check_render_pixels(1920 * 1080, 1920, 1080, 1).is_ok());
 
     // 3. Media frames: claimed 10,000 frames on a 2-second 30fps clip
     let err_frames = SanityBoundsChecker::check_media_frames(10000, 2, 30);
-    assert!(matches!(err_frames, Err(LedgerError::InflatedResourceClaim { .. })));
+    assert!(matches!(
+        err_frames,
+        Err(LedgerError::InflatedResourceClaim { .. })
+    ));
 
     // 4. CPU execution time: claimed 100 seconds of CPU thread time in a 10ms window on 4 cores
     let err_cpu = SanityBoundsChecker::check_cpu_time(100_000_000, 10, 4);
-    assert!(matches!(err_cpu, Err(LedgerError::InflatedResourceClaim { .. })));
+    assert!(matches!(
+        err_cpu,
+        Err(LedgerError::InflatedResourceClaim { .. })
+    ));
 }
 
 // ============================================================================
@@ -175,24 +210,40 @@ fn test_end_to_end_wasm_ai_gpu_media_tasks_produce_countersigned_receipts() {
     let mut verifier = ReceiptChainVerifier::new();
 
     let task_profiles: Vec<TaskProfile> = vec![
-        ("wasm_task", "WASM compute matrix multiply", |m: &mut ResourceMeteringCollector| {
-            m.record_cpu(250_000);
-            m.record_wasm_fuel(500_000);
-        }),
-        ("ai_task", "AI prompt completion response", |m: &mut ResourceMeteringCollector| {
-            m.record_cpu(100_000);
-            m.record_gpu(600_000, 4_000_000_000, 1);
-            m.record_ai_tokens(512, 128, 32);
-        }),
-        ("gpu_task", "GPU 3D tile rendering result", |m: &mut ResourceMeteringCollector| {
-            m.record_gpu(1_200_000, 2_000_000_000, 1);
-            m.record_render_pixels(1920 * 1080);
-        }),
-        ("media_task", "Media GOP transcoded annex-b segment", |m: &mut ResourceMeteringCollector| {
-            m.record_cpu(800_000);
-            m.record_media_frames(120);
-            m.record_network(1048576, 5242880);
-        }),
+        (
+            "wasm_task",
+            "WASM compute matrix multiply",
+            |m: &mut ResourceMeteringCollector| {
+                m.record_cpu(250_000);
+                m.record_wasm_fuel(500_000);
+            },
+        ),
+        (
+            "ai_task",
+            "AI prompt completion response",
+            |m: &mut ResourceMeteringCollector| {
+                m.record_cpu(100_000);
+                m.record_gpu(600_000, 4_000_000_000, 1);
+                m.record_ai_tokens(512, 128, 32);
+            },
+        ),
+        (
+            "gpu_task",
+            "GPU 3D tile rendering result",
+            |m: &mut ResourceMeteringCollector| {
+                m.record_gpu(1_200_000, 2_000_000_000, 1);
+                m.record_render_pixels(1920 * 1080);
+            },
+        ),
+        (
+            "media_task",
+            "Media GOP transcoded annex-b segment",
+            |m: &mut ResourceMeteringCollector| {
+                m.record_cpu(800_000);
+                m.record_media_frames(120);
+                m.record_network(1048576, 5242880);
+            },
+        ),
     ];
 
     let mut prev_id = GENESIS_PREV_RECEIPT_ID;
@@ -218,14 +269,21 @@ fn test_end_to_end_wasm_ai_gpu_media_tasks_produce_countersigned_receipts() {
         };
 
         let mut receipt = SignedResourceReceipt::create_by_worker(body, &worker_sk);
-        receipt.countersign(&requester_sk, &worker_vk, output_bytes).unwrap();
+        receipt
+            .countersign(&requester_sk, &worker_vk, output_bytes)
+            .unwrap();
 
-        assert!(verifier.verify_and_append(&receipt, &worker_vk, &requester_vk).is_ok());
+        assert!(verifier
+            .verify_and_append(&receipt, &worker_vk, &requester_vk)
+            .is_ok());
         prev_id = receipt.receipt_id;
     }
 
     // Verify chain head
-    let head = verifier.get_chain_head("did:umcf:worker_multimodal", "did:umcf:requester_multimodal");
+    let head = verifier.get_chain_head(
+        "did:umcf:worker_multimodal",
+        "did:umcf:requester_multimodal",
+    );
     assert!(head.is_some());
     let (head_seq, head_id) = head.unwrap();
     assert_eq!(head_seq, 4);
@@ -256,21 +314,23 @@ fn test_streaming_session_emits_60s_incremental_checkpoint_receipts() {
         delta_resources.gpu_compute_time_us = 50_000_000;
 
         let state_bytes = format!("checkpoint-state-{chk_idx}").into_bytes();
-        let mut receipt = emitter.emit_checkpoint(
-            delta_resources,
-            &state_bytes,
-            current_time_ms,
-            &worker_sk,
-        );
+        let mut receipt =
+            emitter.emit_checkpoint(delta_resources, &state_bytes, current_time_ms, &worker_sk);
 
         // Requester countersigns intermediate checkpoint
-        receipt.countersign(&requester_sk, &worker_vk, &state_bytes).unwrap();
+        receipt
+            .countersign(&requester_sk, &worker_vk, &state_bytes)
+            .unwrap();
 
         assert_eq!(receipt.body.sequence_number, chk_idx);
-        assert!(verifier.verify_and_append(&receipt, &worker_vk, &requester_vk).is_ok());
+        assert!(verifier
+            .verify_and_append(&receipt, &worker_vk, &requester_vk)
+            .is_ok());
     }
 
-    let head = verifier.get_chain_head("did:umcf:stream_worker", "did:umcf:stream_client").unwrap();
+    let head = verifier
+        .get_chain_head("did:umcf:stream_worker", "did:umcf:stream_client")
+        .unwrap();
     assert_eq!(head.0, 3);
 }
 
@@ -300,16 +360,29 @@ fn test_malicious_worker_replay_and_inflation_rejection() {
     };
 
     let mut receipt1 = SignedResourceReceipt::create_by_worker(body1, &worker_sk);
-    receipt1.countersign(&requester_sk, &worker_vk, output_bytes).unwrap();
-    assert!(verifier.verify_and_append(&receipt1, &worker_vk, &requester_vk).is_ok());
+    receipt1
+        .countersign(&requester_sk, &worker_vk, output_bytes)
+        .unwrap();
+    assert!(verifier
+        .verify_and_append(&receipt1, &worker_vk, &requester_vk)
+        .is_ok());
 
     // 1. Malicious Replay Attack: Replay receipt 1 again with same sequence_number
     let replay_err = verifier.verify_and_append(&receipt1, &worker_vk, &requester_vk);
-    assert!(matches!(replay_err, Err(LedgerError::InvalidSequenceNumber { expected: 2, actual: 1 })));
+    assert!(matches!(
+        replay_err,
+        Err(LedgerError::InvalidSequenceNumber {
+            expected: 2,
+            actual: 1
+        })
+    ));
 
     // 2. Resource Inflation Attack: Worker claims 100x GPU compute
     let inflation_err = SanityBoundsChecker::check_cpu_time(100_000_000, 10, 2);
-    assert!(matches!(inflation_err, Err(LedgerError::InflatedResourceClaim { .. })));
+    assert!(matches!(
+        inflation_err,
+        Err(LedgerError::InflatedResourceClaim { .. })
+    ));
 
     // 3. Output Hash Forgery: Worker reports output hash that does not match actual bytes
     let mut forged_body = receipt1.body.clone();
@@ -319,7 +392,10 @@ fn test_malicious_worker_replay_and_inflation_rejection() {
 
     let mut forged_receipt = SignedResourceReceipt::create_by_worker(forged_body, &worker_sk);
     let forge_err = forged_receipt.countersign(&requester_sk, &worker_vk, output_bytes);
-    assert!(matches!(forge_err, Err(LedgerError::OutputHashMismatch { .. })));
+    assert!(matches!(
+        forge_err,
+        Err(LedgerError::OutputHashMismatch { .. })
+    ));
 }
 
 // ============================================================================
@@ -333,7 +409,11 @@ fn test_ed25519_batch_signature_verification_throughput() {
 
     // Generate distinct signed receipts to measure verification throughput
     let count = if cfg!(debug_assertions) { 200 } else { 1_000 };
-    let min_rate = if cfg!(debug_assertions) { 150.0 } else { 2_000.0 };
+    let min_rate = if cfg!(debug_assertions) {
+        150.0
+    } else {
+        2_000.0
+    };
     let mut receipts = Vec::with_capacity(count);
     let sample_output = b"benchmark output chunk";
     let sample_output_hash = *blake3::hash(sample_output).as_bytes();
@@ -353,7 +433,8 @@ fn test_ed25519_batch_signature_verification_throughput() {
             output_blake3: sample_output_hash,
         };
         let mut r = SignedResourceReceipt::create_by_worker(body, &worker_sk);
-        r.countersign(&requester_sk, &worker_vk, sample_output).unwrap();
+        r.countersign(&requester_sk, &worker_vk, sample_output)
+            .unwrap();
         receipts.push(r);
     }
 
@@ -414,7 +495,9 @@ fn test_manual_receipt_explorer_schema_and_dual_signature_modal() {
     };
 
     let mut receipt = SignedResourceReceipt::create_by_worker(body, &worker_sk);
-    receipt.countersign(&requester_sk, &worker_vk, output_data).unwrap();
+    receipt
+        .countersign(&requester_sk, &worker_vk, output_data)
+        .unwrap();
 
     // Verify serializability for Svelte 5 / Flutter frontend consumption
     let json_str = serde_json::to_string_pretty(&receipt).expect("JSON serialization failed");
@@ -423,8 +506,11 @@ fn test_manual_receipt_explorer_schema_and_dual_signature_modal() {
     assert!(json_str.contains("worker_signature"));
     assert!(json_str.contains("requester_countersignature"));
 
-    let deserialized: SignedResourceReceipt = serde_json::from_str(&json_str).expect("JSON deserialization failed");
+    let deserialized: SignedResourceReceipt =
+        serde_json::from_str(&json_str).expect("JSON deserialization failed");
     assert_eq!(deserialized.receipt_id, receipt.receipt_id);
     assert!(deserialized.verify_worker_signature(&worker_vk).is_ok());
-    assert!(deserialized.verify_requester_countersignature(&requester_vk).is_ok());
+    assert!(deserialized
+        .verify_requester_countersignature(&requester_vk)
+        .is_ok());
 }

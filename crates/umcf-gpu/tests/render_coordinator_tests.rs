@@ -41,7 +41,8 @@ fn test_unit_hilbert_and_center_spiral_tile_generation_non_multiple_resolutions(
         shader_module: dummy_shader(),
     };
 
-    let coordinator = DistributedRenderCoordinator::new(spec).expect("coordinator creation must succeed");
+    let coordinator =
+        DistributedRenderCoordinator::new(spec).expect("coordinator creation must succeed");
     assert_eq!(coordinator.tiles.len(), 135);
 
     // Verify center-spiral ordering: first tile must be closest to center (960, 540)
@@ -238,10 +239,22 @@ fn test_unit_compositor_blit_exact_pixel_placement_and_exr_export() {
 
     // Exact pixel checks
     assert_eq!(compositor.get_pixel_rgba8(0, 0).unwrap(), [255, 0, 0, 255]);
-    assert_eq!(compositor.get_pixel_rgba8(127, 127).unwrap(), [255, 0, 0, 255]);
-    assert_eq!(compositor.get_pixel_rgba8(128, 0).unwrap(), [0, 255, 0, 255]);
-    assert_eq!(compositor.get_pixel_rgba8(0, 128).unwrap(), [0, 0, 255, 255]);
-    assert_eq!(compositor.get_pixel_rgba8(128, 128).unwrap(), [255, 255, 0, 255]);
+    assert_eq!(
+        compositor.get_pixel_rgba8(127, 127).unwrap(),
+        [255, 0, 0, 255]
+    );
+    assert_eq!(
+        compositor.get_pixel_rgba8(128, 0).unwrap(),
+        [0, 255, 0, 255]
+    );
+    assert_eq!(
+        compositor.get_pixel_rgba8(0, 128).unwrap(),
+        [0, 0, 255, 255]
+    );
+    assert_eq!(
+        compositor.get_pixel_rgba8(128, 128).unwrap(),
+        [255, 255, 0, 255]
+    );
 
     // Check OpenEXR export format
     let exr_data = compositor.export_openexr().expect("openexr export");

@@ -124,9 +124,7 @@ impl UmcfClient {
         }
 
         let error_text = String::from_utf8_lossy(&body_bytes).to_string();
-        Err(SdkError::Validation(format!(
-            "HTTP {status}: {error_text}"
-        )))
+        Err(SdkError::Validation(format!("HTTP {status}: {error_text}")))
     }
 
     // -----------------------------------------------------------------------
@@ -188,13 +186,26 @@ impl UmcfClient {
 
     pub async fn submit_gpu_render(&self, tiles: u32) -> Result<serde_json::Value, SdkError> {
         let url = format!("{}/api/v1/gpu/render", self.endpoint);
-        let resp = self.client.post(&url).json(&serde_json::json!({ "tiles": tiles })).send().await?;
+        let resp = self
+            .client
+            .post(&url)
+            .json(&serde_json::json!({ "tiles": tiles }))
+            .send()
+            .await?;
         Self::parse_response(resp).await
     }
 
-    pub async fn submit_media_transcode(&self, segments: u32) -> Result<serde_json::Value, SdkError> {
+    pub async fn submit_media_transcode(
+        &self,
+        segments: u32,
+    ) -> Result<serde_json::Value, SdkError> {
         let url = format!("{}/api/v1/media/transcode", self.endpoint);
-        let resp = self.client.post(&url).json(&serde_json::json!({ "segments": segments })).send().await?;
+        let resp = self
+            .client
+            .post(&url)
+            .json(&serde_json::json!({ "segments": segments }))
+            .send()
+            .await?;
         Self::parse_response(resp).await
     }
 
@@ -210,7 +221,12 @@ impl UmcfClient {
 
     pub async fn pull_model(&self, model_name: &str) -> Result<serde_json::Value, SdkError> {
         let url = format!("{}/api/v1/ai/models/pull", self.endpoint);
-        let resp = self.client.post(&url).json(&serde_json::json!({ "model": model_name })).send().await?;
+        let resp = self
+            .client
+            .post(&url)
+            .json(&serde_json::json!({ "model": model_name }))
+            .send()
+            .await?;
         Self::parse_response(resp).await
     }
 

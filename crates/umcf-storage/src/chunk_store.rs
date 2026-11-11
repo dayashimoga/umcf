@@ -25,7 +25,9 @@ pub const GEAR_TABLE: [u64; 256] = {
     let mut state = 0x2f928e469e32a67au64;
     let mut i = 0;
     while i < 256 {
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        state = state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         table[i] = state;
         i += 1;
     }
@@ -54,10 +56,8 @@ impl ChunkId {
     }
 
     pub fn from_hex(s: &str) -> Result<Self, StorageError> {
-        let bytes = hex::decode(s).map_err(|e| {
-            StorageError::ManifestCorrupted {
-                reason: format!("invalid chunk hex {s}: {e}"),
-            }
+        let bytes = hex::decode(s).map_err(|e| StorageError::ManifestCorrupted {
+            reason: format!("invalid chunk hex {s}: {e}"),
         })?;
         if bytes.len() != 32 {
             return Err(StorageError::ManifestCorrupted {
@@ -396,9 +396,12 @@ impl ContentAddressedChunkStore {
         }
 
         let nonce = STAGING_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let staging_path = self
-            .staging_dir
-            .join(format!(".staging.{}.{}.{}", chunk_id.to_hex(), now_us, nonce));
+        let staging_path = self.staging_dir.join(format!(
+            ".staging.{}.{}.{}",
+            chunk_id.to_hex(),
+            now_us,
+            nonce
+        ));
 
         {
             let mut file = File::create(&staging_path)?;
@@ -478,7 +481,8 @@ impl ContentAddressedChunkStore {
 
         for slice in slices {
             let chunk_len = slice.len() as u32;
-            let mut permit = quota_enforcer.try_reserve(chunk_len as u64, options.host_free_bytes)?;
+            let mut permit =
+                quota_enforcer.try_reserve(chunk_len as u64, options.host_free_bytes)?;
 
             let cid = self.store_chunk(slice, &mut permit, options.pinned)?;
 
@@ -589,9 +593,7 @@ impl ContentAddressedChunkStore {
                     let p = entry.path();
                     if p.is_dir() {
                         stack.push(p);
-                    } else if p.is_file()
-                        && p.extension().and_then(|s| s.to_str()) == Some("chk")
-                    {
+                    } else if p.is_file() && p.extension().and_then(|s| s.to_str()) == Some("chk") {
                         if let Some(file_name) = p.file_stem().and_then(|s| s.to_str()) {
                             if let Ok(cid) = ChunkId::from_hex(file_name) {
                                 if let Ok(meta) = p.metadata() {
@@ -678,7 +680,11 @@ impl ContentAddressedChunkStore {
     }
 
     /// Restores a corrupted chunk by writing verified healthy bytes directly to its on-disk path.
-    pub fn restore_corrupted_chunk(&self, chunk_id: &ChunkId, data: &[u8]) -> Result<(), StorageError> {
+    pub fn restore_corrupted_chunk(
+        &self,
+        chunk_id: &ChunkId,
+        data: &[u8],
+    ) -> Result<(), StorageError> {
         let path = self.chunk_path(chunk_id);
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;

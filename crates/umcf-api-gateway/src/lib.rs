@@ -15,4 +15,3 @@ pub use openapi::{generate_openapi_spec, serve_docs_html};
 pub use problem::{InvalidParam, Rfc9457ProblemDetails};
 pub use router::{create_router, GatewayState};
 pub use websocket::{handle_ws_stream, EventRingBuffer, JobEventRecord};
-

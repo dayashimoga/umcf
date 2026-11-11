@@ -64,7 +64,9 @@ fn test_tampered_binary_or_sbom_hash_rejected_by_provenance_verifier() {
     // Tampered binary (e.g. 1 bit modified) is rejected
     let mut tampered_binary = original_binary.to_vec();
     tampered_binary[0] ^= 0xFF;
-    let err = provenance.verify_binary_integrity(&tampered_binary).unwrap_err();
+    let err = provenance
+        .verify_binary_integrity(&tampered_binary)
+        .unwrap_err();
     assert!(matches!(err, AttestationError::DigestMismatch { .. }));
 
     // Tampered SBOM is rejected
@@ -179,19 +181,26 @@ fn test_cargo_deny_and_polyglot_dependency_license_compliance_gate() {
 #[test]
 fn test_dual_directory_reproducible_build_bit_exact_binary_comparison() {
     // Simulate deterministic outputs from build_dir_a and build_dir_b
-    let canonical_payload = b"\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00UMCF_DETERMINISTIC_RUNTIME_IMAGE";
+    let canonical_payload =
+        b"\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00UMCF_DETERMINISTIC_RUNTIME_IMAGE";
     let build_a = canonical_payload.to_vec();
     let build_b = canonical_payload.to_vec();
 
     let digest = compare_binary_digests(&build_a, &build_b);
     assert!(digest.is_ok());
-    assert_eq!(digest.unwrap(), blake3::hash(canonical_payload).to_hex().to_string());
+    assert_eq!(
+        digest.unwrap(),
+        blake3::hash(canonical_payload).to_hex().to_string()
+    );
 
     // Non-deterministic build is rejected
     let mut build_c = build_a.clone();
     build_c.push(0x42);
     let mismatch = compare_binary_digests(&build_a, &build_c);
-    assert!(matches!(mismatch, Err(AttestationError::DigestMismatch { .. })));
+    assert!(matches!(
+        mismatch,
+        Err(AttestationError::DigestMismatch { .. })
+    ));
 }
 
 #[test]
@@ -207,7 +216,8 @@ fn test_binary_contains_zero_host_workspace_path_strings() {
     assert!(verify_no_host_path_leak(clean_binary, &forbidden).is_ok());
 
     // Contaminated binary with build host path
-    let contaminated_binary = b"ELF_DATA\x00C:\\Users\\dayan\\AppData\\Local\\Temp\x00ENTRYPOINT\x00";
+    let contaminated_binary =
+        b"ELF_DATA\x00C:\\Users\\dayan\\AppData\\Local\\Temp\x00ENTRYPOINT\x00";
     let leak_err = verify_no_host_path_leak(contaminated_binary, &forbidden).unwrap_err();
     assert!(matches!(leak_err, AttestationError::HostPathLeak { .. }));
 }
@@ -241,7 +251,8 @@ fn test_peer_rejected_in_strict_verified_build_only_cluster() {
         false,
         "https://github.com/umcf/universal-mobile-compute-fabric",
         &authorized_keys
-    ).is_ok());
+    )
+    .is_ok());
 
     // Case 2: Strict mode with authorized release key PASS
     assert!(verify_peer_build_admission(
@@ -249,7 +260,8 @@ fn test_peer_rejected_in_strict_verified_build_only_cluster() {
         true,
         "https://github.com/umcf/universal-mobile-compute-fabric",
         &authorized_keys
-    ).is_ok());
+    )
+    .is_ok());
 
     // Case 3: Rogue key signature is rejected in strict mode
     let mut rogue_provenance = valid_peer_provenance.clone();
@@ -258,21 +270,30 @@ fn test_peer_rejected_in_strict_verified_build_only_cluster() {
         &rogue_provenance,
         true,
         "https://github.com/umcf/universal-mobile-compute-fabric",
-        &authorized_keys
-    ).unwrap_err();
-    assert!(matches!(rogue_err, AttestationError::ClusterAdmissionRejected(_)));
+        &authorized_keys,
+    )
+    .unwrap_err();
+    assert!(matches!(
+        rogue_err,
+        AttestationError::ClusterAdmissionRejected(_)
+    ));
 
     // Case 4: Mismatched source repo rejected
     let mut repo_mismatch_provenance = valid_peer_provenance.clone();
-    repo_mismatch_provenance.predicate.source_repo = "https://github.com/attacker/malicious-repo".to_string();
+    repo_mismatch_provenance.predicate.source_repo =
+        "https://github.com/attacker/malicious-repo".to_string();
     assert!(repo_mismatch_provenance.sign(&auth_release_sk).is_ok());
     let repo_err = verify_peer_build_admission(
         &repo_mismatch_provenance,
         true,
         "https://github.com/umcf/universal-mobile-compute-fabric",
-        &authorized_keys
-    ).unwrap_err();
-    assert!(matches!(repo_err, AttestationError::ClusterAdmissionRejected(_)));
+        &authorized_keys,
+    )
+    .unwrap_err();
+    assert!(matches!(
+        repo_err,
+        AttestationError::ClusterAdmissionRejected(_)
+    ));
 }
 
 // ============================================================================
@@ -293,7 +314,8 @@ fn test_full_release_sbom_generation_and_signature_verification() {
                 ecosystem: "cargo".to_string(),
                 license_spdx: "Apache-2.0 OR MIT".to_string(),
                 purl: "pkg:cargo/umcf-hwprobe@0.1.0".to_string(),
-                sha256: "3333333333333333333333333333333333333333333333333333333333333333".to_string(),
+                sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+                    .to_string(),
             },
             SbomPackage {
                 name: "umcf-gpu".to_string(),
@@ -301,7 +323,8 @@ fn test_full_release_sbom_generation_and_signature_verification() {
                 ecosystem: "cargo".to_string(),
                 license_spdx: "Apache-2.0 OR MIT".to_string(),
                 purl: "pkg:cargo/umcf-gpu@0.1.0".to_string(),
-                sha256: "4444444444444444444444444444444444444444444444444444444444444444".to_string(),
+                sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+                    .to_string(),
             },
         ],
     );
@@ -329,7 +352,12 @@ fn test_full_release_sbom_generation_and_signature_verification() {
 
 #[test]
 fn test_manual_sbom_and_licenses_viewer_schema() {
-    let args = vec!["version".to_string(), "--verify-provenance".to_string(), "--format".to_string(), "json".to_string()];
+    let args = vec![
+        "version".to_string(),
+        "--verify-provenance".to_string(),
+        "--format".to_string(),
+        "json".to_string(),
+    ];
     let (code, output, is_json) = run_cli(&args);
 
     assert_eq!(code.into_exit_code(), std::process::ExitCode::SUCCESS);

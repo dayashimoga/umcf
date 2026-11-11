@@ -9,17 +9,15 @@
 
 #![allow(clippy::unwrap_used)]
 
-use std::collections::BTreeMap;
 use ed25519_dalek::SigningKey;
 use rand_core::OsRng;
 use serde_json::json;
+use std::collections::BTreeMap;
 
 use umcf_manifest::error::ManifestError;
 use umcf_manifest::executor::{WorkflowExecutor, WorkflowRunState};
 use umcf_manifest::lockfile::Lockfile;
-use umcf_manifest::schema::{
-    ManifestMetadata, StepKind, WorkflowStep, WorkloadManifest,
-};
+use umcf_manifest::schema::{ManifestMetadata, StepKind, WorkflowStep, WorkloadManifest};
 use umcf_manifest::templates::TemplateCatalog;
 use umcf_manifest::validator::ManifestValidator;
 
@@ -50,7 +48,11 @@ outputs:
 "#;
 
     let parsed_yaml = WorkloadManifest::from_yaml_str(valid_yaml);
-    assert!(parsed_yaml.is_ok(), "Valid YAML failed: {:?}", parsed_yaml.err());
+    assert!(
+        parsed_yaml.is_ok(),
+        "Valid YAML failed: {:?}",
+        parsed_yaml.err()
+    );
     let manifest = parsed_yaml.unwrap();
     assert_eq!(manifest.metadata.name, "test-workflow");
 
@@ -67,12 +69,19 @@ steps:
     kind: wasm.mapreduce
 "#;
     let err_yaml = WorkloadManifest::from_yaml_str(invalid_yaml);
-    assert!(err_yaml.is_err(), "Expected deny_unknown_fields to reject unknown property");
+    assert!(
+        err_yaml.is_err(),
+        "Expected deny_unknown_fields to reject unknown property"
+    );
 
     // Test TOML parsing
     let toml_str = manifest.to_toml_str().expect("TOML serialization failed");
     let parsed_toml = WorkloadManifest::from_toml_str(&toml_str);
-    assert!(parsed_toml.is_ok(), "Valid TOML failed: {:?}", parsed_toml.err());
+    assert!(
+        parsed_toml.is_ok(),
+        "Valid TOML failed: {:?}",
+        parsed_toml.err()
+    );
 }
 
 #[test]
@@ -131,7 +140,10 @@ fn test_dag_cycle_detection_and_topological_stage_grouping() {
     };
 
     let result = ManifestValidator::validate(&cyclic_manifest);
-    assert!(matches!(result, Err(ManifestError::CyclicDependency { .. })));
+    assert!(matches!(
+        result,
+        Err(ManifestError::CyclicDependency { .. })
+    ));
 
     // 2. Test valid diamond DAG:
     //      A
@@ -277,7 +289,10 @@ fn test_lockfile_blake3_mismatch_rejected_under_frozen_lockfile() {
     tampered_manifest.steps[2].prompt_template = Some("Maliciously altered prompt!".to_string());
 
     let tampered_res = WorkflowExecutor::execute(&tampered_manifest, &params, Some(&lock), None);
-    assert!(matches!(tampered_res, Err(ManifestError::LockfileMismatch { .. })));
+    assert!(matches!(
+        tampered_res,
+        Err(ManifestError::LockfileMismatch { .. })
+    ));
 }
 
 // ============================================================================
@@ -365,13 +380,25 @@ fn test_workflow_resumption_reuses_cached_step_outputs_without_reexecution() {
     // Simulate prior run that completed steps 1 & 2 before being interrupted
     let mut prior_cached_outputs = BTreeMap::new();
     let mut step1_out = BTreeMap::new();
-    step1_out.insert("frames_cid".to_string(), "bafkrei-cached-frames-99".to_string());
-    step1_out.insert("output_cid".to_string(), "bafkrei-cached-frames-99".to_string());
+    step1_out.insert(
+        "frames_cid".to_string(),
+        "bafkrei-cached-frames-99".to_string(),
+    );
+    step1_out.insert(
+        "output_cid".to_string(),
+        "bafkrei-cached-frames-99".to_string(),
+    );
     prior_cached_outputs.insert("extract_keyframes".to_string(), step1_out);
 
     let mut step2_out = BTreeMap::new();
-    step2_out.insert("output_cid".to_string(), "bafkrei-cached-wasm-88".to_string());
-    step2_out.insert("output_text".to_string(), "Pre-cached visual descriptors".to_string());
+    step2_out.insert(
+        "output_cid".to_string(),
+        "bafkrei-cached-wasm-88".to_string(),
+    );
+    step2_out.insert(
+        "output_text".to_string(),
+        "Pre-cached visual descriptors".to_string(),
+    );
     prior_cached_outputs.insert("preprocess_wasm".to_string(), step2_out);
 
     let run_state = WorkflowRunState {
@@ -382,8 +409,14 @@ fn test_workflow_resumption_reuses_cached_step_outputs_without_reexecution() {
     let receipt = WorkflowExecutor::execute(&manifest, &params, None, Some(run_state)).unwrap();
 
     // Verify step caching semantics
-    assert_eq!(receipt.steps_cached, 2, "Steps 1 and 2 should have been reused from cache");
-    assert_eq!(receipt.steps_completed, 2, "Only steps 3 and 4 should have executed");
+    assert_eq!(
+        receipt.steps_cached, 2,
+        "Steps 1 and 2 should have been reused from cache"
+    );
+    assert_eq!(
+        receipt.steps_completed, 2,
+        "Only steps 3 and 4 should have executed"
+    );
     assert_eq!(receipt.run_id, "resumed-run-4091");
 }
 
@@ -400,7 +433,8 @@ fn test_hardware_execution_timings_hybrid_media_ai_pipeline() {
     params.insert("input_video".to_string(), json!("hardware_benchmark.mp4"));
 
     let start = std::time::Instant::now();
-    let receipt = WorkflowExecutor::execute(&manifest, &params, None, None).expect("Hardware benchmark run failed");
+    let receipt = WorkflowExecutor::execute(&manifest, &params, None, None)
+        .expect("Hardware benchmark run failed");
     let elapsed = start.elapsed();
 
     // Verify duration accounting
@@ -408,7 +442,9 @@ fn test_hardware_execution_timings_hybrid_media_ai_pipeline() {
     assert!(receipt.steps_completed == 4);
 
     // Verify hardware safety: available parallelism was queried and no thread panics
-    let cores = std::thread::available_parallelism().map(|p| p.get()).unwrap_or(1);
+    let cores = std::thread::available_parallelism()
+        .map(|p| p.get())
+        .unwrap_or(1);
     assert!(cores >= 1);
 }
 
@@ -435,7 +471,12 @@ fn test_manual_template_gallery_and_dag_schema_conformance() {
         let raw = TemplateCatalog::get_template(summary.name.as_str()).unwrap();
         let m = WorkloadManifest::from_yaml_str(raw).unwrap();
         for p in summary.parameters {
-            assert!(m.parameters.contains_key(p.as_str()), "Template {} missing declared parameter {}", summary.name, p);
+            assert!(
+                m.parameters.contains_key(p.as_str()),
+                "Template {} missing declared parameter {}",
+                summary.name,
+                p
+            );
         }
     }
 }

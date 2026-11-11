@@ -158,7 +158,8 @@ impl StrictQuotaEnforcer {
 
     /// Sets a new storage ceiling.
     pub fn set_configured_max_bytes(&self, new_max_bytes: u64) {
-        self.configured_max_bytes.store(new_max_bytes, Ordering::SeqCst);
+        self.configured_max_bytes
+            .store(new_max_bytes, Ordering::SeqCst);
     }
 
     /// Returns the currently committed used bytes on disk.
@@ -180,4 +181,3 @@ impl StrictQuotaEnforcer {
             .saturating_add(self.reserved_in_flight_bytes.load(Ordering::SeqCst))
     }
 }
-

@@ -1,8 +1,8 @@
 //! Authentication, mTLS & RBAC Bypass Audit (Vectors 6 through 11).
 
-use subtle::ConstantTimeEq;
 use crate::audit_logger::{SecurityAuditLedger, SecuritySeverity};
 use crate::error::RedteamError;
+use subtle::ConstantTimeEq;
 
 pub struct RbacAndCryptoAuditor;
 
@@ -27,7 +27,8 @@ impl RbacAndCryptoAuditor {
                 &format!("Untrusted or unpaired peer '{peer_did}' attempted mTLS connection"),
             );
             return Err(RedteamError::OperationRejected {
-                reason: "TlsHandshakeFailed: Peer certificate not in trusted mesh registry".to_string(),
+                reason: "TlsHandshakeFailed: Peer certificate not in trusted mesh registry"
+                    .to_string(),
             });
         }
         Ok(())
@@ -51,7 +52,8 @@ impl RbacAndCryptoAuditor {
                 &format!("Revoked node '{node_did}' attempted 0-RTT session resumption"),
             );
             return Err(RedteamError::OperationRejected {
-                reason: "TlsHandshakeFailed: Certificate has been revoked in cluster CRL".to_string(),
+                reason: "TlsHandshakeFailed: Certificate has been revoked in cluster CRL"
+                    .to_string(),
             });
         }
         Ok(())
@@ -75,7 +77,8 @@ impl RbacAndCryptoAuditor {
         }
 
         // GuestObserver and ReadOnly keys are forbidden from mutating operations
-        if is_mutating && (role == "GuestObserver" || role == "cluster:read" || role == "ViewOnly") {
+        if is_mutating && (role == "GuestObserver" || role == "cluster:read" || role == "ViewOnly")
+        {
             ledger.record_blocked_attack(
                 8,
                 "RBAC_UNAUTHORIZED_MUTATION",
@@ -109,7 +112,9 @@ impl RbacAndCryptoAuditor {
                 "StrictLocalOnly mode active: blocked external prompt activation transfer",
             );
             return Err(RedteamError::OperationRejected {
-                reason: "PrivacyEnclaveCircuitBreaker: StrictLocalOnly violates remote offload request".to_string(),
+                reason:
+                    "PrivacyEnclaveCircuitBreaker: StrictLocalOnly violates remote offload request"
+                        .to_string(),
             });
         }
         Ok(())
@@ -124,7 +129,9 @@ impl RbacAndCryptoAuditor {
         client_capability: &str,
         event_kind: &str,
     ) -> Result<(), RedteamError> {
-        if client_capability == "ViewOnly" && (event_kind == "InputEvent" || event_kind == "ClipboardSync") {
+        if client_capability == "ViewOnly"
+            && (event_kind == "InputEvent" || event_kind == "ClipboardSync")
+        {
             ledger.record_blocked_attack(
                 10,
                 "VIEW_ONLY_INPUT_HIJACK",
@@ -144,11 +151,7 @@ impl RbacAndCryptoAuditor {
     ///
     /// Verifies that secret comparisons use `subtle::ConstantTimeEq` to prevent
     /// cache and branch predictor timing side-channel attacks.
-    pub fn audit_vector_11_constant_time_eq(
-        a: &[u8],
-        b: &[u8],
-    ) -> bool {
+    pub fn audit_vector_11_constant_time_eq(a: &[u8], b: &[u8]) -> bool {
         a.ct_eq(b).into()
     }
 }
-

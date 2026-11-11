@@ -1,8 +1,8 @@
 //! ACID double-entry compute credit ledger, escrow management, and slashing penalties.
 
-use std::collections::{HashMap, HashSet};
 use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 use crate::error::LedgerError;
 use crate::meter::MeteredResourceVector;
@@ -121,18 +121,18 @@ pub struct PricingSchedule {
 impl Default for PricingSchedule {
     fn default() -> Self {
         Self {
-            base_task_fee_micro: 100,                     // 0.000100 UMCF
-            cpu_thread_sec_rate_micro: 500,               // 0.000500 UMCF / CPU-s
-            wasm_fuel_million_rate_micro: 200,            // 0.000200 UMCF / M-fuel
-            gpu_compute_sec_rate_micro: 5_000,            // 0.005000 UMCF / GPU-s
-            npu_compute_sec_rate_micro: 3_000,            // 0.003000 UMCF / NPU-s
-            vram_gib_sec_rate_micro: 1_000,               // 0.001000 UMCF / GiB-s
-            ai_prompt_1k_tokens_rate_micro: 1_000,        // 0.001000 UMCF / 1k prompt
-            ai_gen_1k_tokens_rate_micro: 4_000,           // 0.004000 UMCF / 1k gen
-            media_1k_frames_rate_micro: 2_500,            // 0.002500 UMCF / 1k frames
-            render_1m_pixels_rate_micro: 3_000,           // 0.003000 UMCF / Mpix
-            network_egress_gib_rate_micro: 10_000,        // 0.010000 UMCF / GiB
-            storage_gib_hour_rate_micro: 2_000,           // 0.002000 UMCF / GiB-hr
+            base_task_fee_micro: 100,              // 0.000100 UMCF
+            cpu_thread_sec_rate_micro: 500,        // 0.000500 UMCF / CPU-s
+            wasm_fuel_million_rate_micro: 200,     // 0.000200 UMCF / M-fuel
+            gpu_compute_sec_rate_micro: 5_000,     // 0.005000 UMCF / GPU-s
+            npu_compute_sec_rate_micro: 3_000,     // 0.003000 UMCF / NPU-s
+            vram_gib_sec_rate_micro: 1_000,        // 0.001000 UMCF / GiB-s
+            ai_prompt_1k_tokens_rate_micro: 1_000, // 0.001000 UMCF / 1k prompt
+            ai_gen_1k_tokens_rate_micro: 4_000,    // 0.004000 UMCF / 1k gen
+            media_1k_frames_rate_micro: 2_500,     // 0.002500 UMCF / 1k frames
+            render_1m_pixels_rate_micro: 3_000,    // 0.003000 UMCF / Mpix
+            network_egress_gib_rate_micro: 10_000, // 0.010000 UMCF / GiB
+            storage_gib_hour_rate_micro: 2_000,    // 0.002000 UMCF / GiB-hr
         }
     }
 }
@@ -143,19 +143,24 @@ impl PricingSchedule {
         let mut total = self.base_task_fee_micro;
 
         // CPU
-        total += (resources.cpu_thread_time_us as u128 * self.cpu_thread_sec_rate_micro) / 1_000_000;
+        total +=
+            (resources.cpu_thread_time_us as u128 * self.cpu_thread_sec_rate_micro) / 1_000_000;
 
         // WASM Fuel
-        total += (resources.wasm_fuel_consumed as u128 * self.wasm_fuel_million_rate_micro) / 1_000_000;
+        total +=
+            (resources.wasm_fuel_consumed as u128 * self.wasm_fuel_million_rate_micro) / 1_000_000;
 
         // GPU
-        total += (resources.gpu_compute_time_us as u128 * self.gpu_compute_sec_rate_micro) / 1_000_000;
+        total +=
+            (resources.gpu_compute_time_us as u128 * self.gpu_compute_sec_rate_micro) / 1_000_000;
 
         // NPU
-        total += (resources.npu_compute_time_us as u128 * self.npu_compute_sec_rate_micro) / 1_000_000;
+        total +=
+            (resources.npu_compute_time_us as u128 * self.npu_compute_sec_rate_micro) / 1_000_000;
 
         // VRAM Byte-Seconds (1 GiB = 1073741824 bytes)
-        total += (resources.vram_peak_byte_seconds as u128 * self.vram_gib_sec_rate_micro) / 1_073_741_824;
+        total += (resources.vram_peak_byte_seconds as u128 * self.vram_gib_sec_rate_micro)
+            / 1_073_741_824;
 
         // AI Tokens
         total += (resources.ai_prompt_tokens as u128 * self.ai_prompt_1k_tokens_rate_micro) / 1_000;
@@ -165,13 +170,16 @@ impl PricingSchedule {
         total += (resources.media_frames_encoded as u128 * self.media_1k_frames_rate_micro) / 1_000;
 
         // Render Pixels
-        total += (resources.render_pixels_completed as u128 * self.render_1m_pixels_rate_micro) / 1_000_000;
+        total += (resources.render_pixels_completed as u128 * self.render_1m_pixels_rate_micro)
+            / 1_000_000;
 
         // Network Egress
-        total += (resources.network_egress_bytes as u128 * self.network_egress_gib_rate_micro) / 1_073_741_824;
+        total += (resources.network_egress_bytes as u128 * self.network_egress_gib_rate_micro)
+            / 1_073_741_824;
 
         // Storage Byte-Hours (1 GiB-Hour = 1073741824 * 3600 byte-seconds)
-        total += (resources.storage_byte_seconds as u128 * self.storage_gib_hour_rate_micro) / (1_073_741_824 * 3600);
+        total += (resources.storage_byte_seconds as u128 * self.storage_gib_hour_rate_micro)
+            / (1_073_741_824 * 3600);
 
         total
     }
@@ -477,12 +485,12 @@ impl DoubleEntryCreditLedger {
         &mut self,
         job_id: &str,
     ) -> Result<u128, LedgerError> {
-        let escrow = self
-            .active_escrows
-            .remove(job_id)
-            .ok_or_else(|| LedgerError::EscrowNotFound {
-                job_id: job_id.to_string(),
-            })?;
+        let escrow =
+            self.active_escrows
+                .remove(job_id)
+                .ok_or_else(|| LedgerError::EscrowNotFound {
+                    job_id: job_id.to_string(),
+                })?;
 
         let refund_amount = escrow.remaining_balance;
         if refund_amount > 0 {
@@ -491,10 +499,7 @@ impl DoubleEntryCreditLedger {
                 tx_id,
                 timestamp_unix_ms: 1_731_322_000_000,
                 legs: vec![
-                    JournalLeg::debit(
-                        AccountKind::EscrowLocked(job_id.to_string()),
-                        refund_amount,
-                    ),
+                    JournalLeg::debit(AccountKind::EscrowLocked(job_id.to_string()), refund_amount),
                     JournalLeg::credit(
                         AccountKind::AvailableBalance(escrow.requester_account.clone()),
                         refund_amount,

@@ -58,7 +58,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--------------------------------------------------------------------------------");
 
     // Write final signed certification receipt
-    let p3_evidence_dir = root_path.join("artifacts").join("evidence").join("stage-08").join("p3");
+    let p3_evidence_dir = root_path
+        .join("artifacts")
+        .join("evidence")
+        .join("stage-08")
+        .join("p3");
     let p3_stage_dir = root_path.join("artifacts").join("stage-08").join("p3");
 
     fs::create_dir_all(&p3_evidence_dir)?;
@@ -82,4 +86,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 }
-

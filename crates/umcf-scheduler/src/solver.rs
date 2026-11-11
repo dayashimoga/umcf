@@ -56,14 +56,16 @@ impl ConstraintSolver {
         cluster: &'a [NodeCandidateProfile],
         local_node_id: &NodeId,
     ) -> Result<Vec<&'a NodeCandidateProfile>, UnschedulableReason> {
-        let is_private = task.constraints.hard.privacy_local_only || task.spec.is_private_ai_local_only;
+        let is_private =
+            task.constraints.hard.privacy_local_only || task.spec.is_private_ai_local_only;
         let mut feasible = Vec::with_capacity(cluster.len());
         let mut last_rejection_reason = None;
 
         for node in cluster {
             // 1. Privacy boundary: private tasks MUST remain strictly on local node
             if is_private && node.node_id != *local_node_id {
-                last_rejection_reason = Some(UnschedulableReason::PrivacyViolation(node.node_id.clone()));
+                last_rejection_reason =
+                    Some(UnschedulableReason::PrivacyViolation(node.node_id.clone()));
                 continue;
             }
 
@@ -71,23 +73,42 @@ impl ConstraintSolver {
             if node.thermal_regime == GuardRegime::PausedWaitCoolOrCharge
                 || node.thermal_regime == GuardRegime::EmergencyEvict
             {
-                last_rejection_reason = Some(UnschedulableReason::ThermalOrBatteryHalt(node.node_id.clone()));
+                last_rejection_reason = Some(UnschedulableReason::ThermalOrBatteryHalt(
+                    node.node_id.clone(),
+                ));
                 continue;
             }
 
             // 3. Allowed node roles
-            if !task.constraints.hard.allowed_node_roles.contains(&node.role) {
-                last_rejection_reason = Some(UnschedulableReason::DisallowedRole(format!("{:?}", node.role)));
+            if !task
+                .constraints
+                .hard
+                .allowed_node_roles
+                .contains(&node.role)
+            {
+                last_rejection_reason = Some(UnschedulableReason::DisallowedRole(format!(
+                    "{:?}",
+                    node.role
+                )));
                 continue;
             }
 
             // 4. Disallowed node blocklist
-            if task.constraints.hard.disallowed_node_ids.contains(&node.node_id) {
+            if task
+                .constraints
+                .hard
+                .disallowed_node_ids
+                .contains(&node.node_id)
+            {
                 continue;
             }
 
             // 5. Consented RAM requirement
-            let min_ram = task.constraints.hard.min_ram_bytes.max(task.spec.memory_bytes);
+            let min_ram = task
+                .constraints
+                .hard
+                .min_ram_bytes
+                .max(task.spec.memory_bytes);
             if node.available_ram_bytes < min_ram {
                 last_rejection_reason = Some(UnschedulableReason::InsufficientRam {
                     node_id: node.node_id.clone(),
@@ -126,7 +147,8 @@ impl ConstraintSolver {
                     .any(|s| s.eq_ignore_ascii_case(req_simd))
                 {
                     simd_ok = false;
-                    last_rejection_reason = Some(UnschedulableReason::MissingSimd(req_simd.clone()));
+                    last_rejection_reason =
+                        Some(UnschedulableReason::MissingSimd(req_simd.clone()));
                     break;
                 }
             }
@@ -163,13 +185,8 @@ impl ConstraintSolver {
             let is_local = node.node_id == *local_node_id;
             let link = node.get_link_to(local_node_id);
 
-            let cost = RooflineCostModel::estimate_cost(
-                task,
-                node,
-                is_local,
-                input_transfer_bytes,
-                &link,
-            );
+            let cost =
+                RooflineCostModel::estimate_cost(task, node, is_local, input_transfer_bytes, &link);
 
             // Select best backend on candidate node
             let backend = if let Some(req) = task.constraints.hard.required_backend {
@@ -239,7 +256,8 @@ impl ConstraintSolver {
         // 1. Validate DAG and obtain deterministic topological order
         let topo_order = dag.topological_sort()?;
 
-        let mut assignments: HashMap<String, PlacementDecision> = HashMap::with_capacity(topo_order.len());
+        let mut assignments: HashMap<String, PlacementDecision> =
+            HashMap::with_capacity(topo_order.len());
         let mut total_makespan_ms: f64 = 0.0;
 
         // 2. Schedule each task in topological order
@@ -254,10 +272,12 @@ impl ConstraintSolver {
                 // If parent task is placed on a different node, data must be transferred
                 if let Some(parent_placement) = assignments.get(&incoming_edge.from_task_id) {
                     if parent_placement.assigned_node_id != *local_node_id {
-                        input_transfer_bytes = input_transfer_bytes.saturating_add(incoming_edge.data_dependency_bytes);
+                        input_transfer_bytes = input_transfer_bytes
+                            .saturating_add(incoming_edge.data_dependency_bytes);
                     }
                 } else {
-                    input_transfer_bytes = input_transfer_bytes.saturating_add(incoming_edge.data_dependency_bytes);
+                    input_transfer_bytes =
+                        input_transfer_bytes.saturating_add(incoming_edge.data_dependency_bytes);
                 }
             }
 

@@ -19,16 +19,13 @@ pub enum AttestationError {
         actual: String,
     },
 
-    #[error("Prohibited or unapproved license detected: package '{package}' has license '{license}'")]
-    ProhibitedLicense {
-        package: String,
-        license: String,
-    },
+    #[error(
+        "Prohibited or unapproved license detected: package '{package}' has license '{license}'"
+    )]
+    ProhibitedLicense { package: String, license: String },
 
     #[error("Host workspace path leaked into binary: detected '{pattern}'")]
-    HostPathLeak {
-        pattern: String,
-    },
+    HostPathLeak { pattern: String },
 
     #[error("Cluster admission rejected for peer: {0}")]
     ClusterAdmissionRejected(String),
@@ -95,8 +92,12 @@ impl SlsaProvenance {
             }],
             predicate_type: "https://slsa.dev/provenance/v1.0".to_string(),
             predicate: SlsaPredicate {
-                builder_id: "https://github.com/umcf/universal-mobile-compute-fabric/actions/runner".to_string(),
-                build_type: "https://github.com/umcf/universal-mobile-compute-fabric/release-pipeline/v1".to_string(),
+                builder_id:
+                    "https://github.com/umcf/universal-mobile-compute-fabric/actions/runner"
+                        .to_string(),
+                build_type:
+                    "https://github.com/umcf/universal-mobile-compute-fabric/release-pipeline/v1"
+                        .to_string(),
                 source_repo: "https://github.com/umcf/universal-mobile-compute-fabric".to_string(),
                 commit_sha: commit_sha.into(),
                 source_date_epoch,
@@ -142,10 +143,14 @@ impl SlsaProvenance {
         })?;
 
         if sig_bytes.len() != 64 {
-            return Err(AttestationError::InvalidSignature("Signature must be 64 bytes".to_string()));
+            return Err(AttestationError::InvalidSignature(
+                "Signature must be 64 bytes".to_string(),
+            ));
         }
         if pub_bytes.len() != 32 {
-            return Err(AttestationError::InvalidSignature("Public key must be 32 bytes".to_string()));
+            return Err(AttestationError::InvalidSignature(
+                "Public key must be 32 bytes".to_string(),
+            ));
         }
 
         let mut sig_arr = [0u8; 64];
@@ -176,7 +181,9 @@ impl SlsaProvenance {
                 });
             }
         } else {
-            return Err(AttestationError::SerializationError("Empty subject list".to_string()));
+            return Err(AttestationError::SerializationError(
+                "Empty subject list".to_string(),
+            ));
         }
         Ok(())
     }
@@ -296,7 +303,10 @@ pub fn verify_no_host_path_leak(
     // Search binary bytes for substrings (converting valid ASCII windows)
     for forbidden in forbidden_roots {
         let pattern_bytes = forbidden.as_bytes();
-        if binary_bytes.windows(pattern_bytes.len()).any(|w| w == pattern_bytes) {
+        if binary_bytes
+            .windows(pattern_bytes.len())
+            .any(|w| w == pattern_bytes)
+        {
             return Err(AttestationError::HostPathLeak {
                 pattern: (*forbidden).to_string(),
             });
@@ -306,7 +316,10 @@ pub fn verify_no_host_path_leak(
 }
 
 /// Verifies that two independent clean builds produce bit-identical binary hashes.
-pub fn compare_binary_digests(binary_a: &[u8], binary_b: &[u8]) -> Result<String, AttestationError> {
+pub fn compare_binary_digests(
+    binary_a: &[u8],
+    binary_b: &[u8],
+) -> Result<String, AttestationError> {
     let hash_a = blake3::hash(binary_a).to_hex().to_string();
     let hash_b = blake3::hash(binary_b).to_hex().to_string();
     if hash_a != hash_b {
@@ -334,8 +347,13 @@ pub fn verify_peer_build_admission(
     peer_provenance.verify_signature()?;
 
     // 2. Signer public key must be in authorized Release Authority list
-    let pub_hex = peer_provenance.signer_public_key_hex.as_deref().unwrap_or("");
-    let is_authorized = authorized_public_keys.iter().any(|k| hex::encode(k.to_bytes()) == pub_hex);
+    let pub_hex = peer_provenance
+        .signer_public_key_hex
+        .as_deref()
+        .unwrap_or("");
+    let is_authorized = authorized_public_keys
+        .iter()
+        .any(|k| hex::encode(k.to_bytes()) == pub_hex);
     if !is_authorized {
         return Err(AttestationError::ClusterAdmissionRejected(
             "Peer provenance signed by unauthorized or unknown release key".to_string(),

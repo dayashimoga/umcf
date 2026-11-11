@@ -4,8 +4,8 @@
 //! (NVENC, VideoToolbox, MediaCodec, QSV, AMF, VAAPI, CPU fallbacks) using fast
 //! in-memory synthetic verification tests (< 40 ms) to filter out ghost drivers.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Supported video and audio codecs across UMCF.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -103,7 +103,9 @@ impl HardwareCodecProber {
     /// Run synthetic 5-frame 640x360 test encode to verify hardware driver functionality.
     /// Returns None if driver fails initialization (ghost driver).
     #[must_use]
-    pub fn verify_candidate_synthetic(candidate: &CandidateCodec) -> Option<CodecCapabilityDescriptor> {
+    pub fn verify_candidate_synthetic(
+        candidate: &CandidateCodec,
+    ) -> Option<CodecCapabilityDescriptor> {
         // Fast 5-frame synthetic verification (< 40 ms)
         if !candidate.simulated_driver_functional {
             return None; // Ghost driver filtered out!
@@ -130,7 +132,10 @@ impl HardwareCodecProber {
         let mut verified = Vec::new();
 
         for candidate in candidates {
-            let key = format!("{}_{:?}_{:?}", candidate.encoder_name, candidate.codec, candidate.direction);
+            let key = format!(
+                "{}_{:?}_{:?}",
+                candidate.encoder_name, candidate.codec, candidate.direction
+            );
             if let Some(desc) = self.cached_probes.get(&key) {
                 verified.push(desc.clone());
             } else if let Some(desc) = Self::verify_candidate_synthetic(&candidate) {

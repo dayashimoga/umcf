@@ -158,7 +158,9 @@ impl LocalEncryptedVault {
                 .map_err(|e| IdentityError::StorageError(e.to_string()))?;
         }
 
-        let temp_path = self.path.with_extension(format!("tmp.{}", std::process::id()));
+        let temp_path = self
+            .path
+            .with_extension(format!("tmp.{}", std::process::id()));
         std::fs::write(&temp_path, &buffer)
             .map_err(|e| IdentityError::StorageError(e.to_string()))?;
 

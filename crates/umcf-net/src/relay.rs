@@ -76,22 +76,13 @@ pub enum RelayFrame {
         message: String,
     },
     /// Client requests forwarding of an encrypted payload to `dst_did`.
-    SendPacket {
-        dst_did: String,
-        payload: Vec<u8>,
-    },
+    SendPacket { dst_did: String, payload: Vec<u8> },
     /// Relay delivers an encrypted payload from `src_did`.
-    RecvPacket {
-        src_did: String,
-        payload: Vec<u8>,
-    },
+    RecvPacket { src_did: String, payload: Vec<u8> },
     /// Connection heartbeat.
     KeepAlive,
     /// Protocol or quota error diagnostic.
-    RelayError {
-        code: u16,
-        message: String,
-    },
+    RelayError { code: u16, message: String },
 }
 
 impl RelayFrame {
@@ -111,11 +102,16 @@ impl RelayFrame {
     /// Verifies the cryptographic signature of a `BindNodeDid` frame against its embedded `did:key`.
     pub fn verify_bind(&self, cluster_id: &str) -> Result<bool, NetError> {
         match self {
-            Self::BindNodeDid { did, nonce, signature } => {
+            Self::BindNodeDid {
+                did,
+                nonce,
+                signature,
+            } => {
                 let pk_bytes = DidKey::to_ed25519_bytes(did)
                     .map_err(|e| NetError::RelayAuthFailed(format!("Invalid DID format: {e}")))?;
-                let verifying_key = VerifyingKey::from_bytes(&pk_bytes)
-                    .map_err(|e| NetError::RelayAuthFailed(format!("Invalid verifying key: {e}")))?;
+                let verifying_key = VerifyingKey::from_bytes(&pk_bytes).map_err(|e| {
+                    NetError::RelayAuthFailed(format!("Invalid verifying key: {e}"))
+                })?;
                 let msg = compute_bind_signing_bytes(cluster_id, did, *nonce);
                 Ok(NodeKeypair::verify_with_key(&verifying_key, &msg, signature).is_ok())
             }
@@ -128,7 +124,11 @@ impl RelayFrame {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut body = Vec::new();
         let frame_type = match self {
-            Self::BindNodeDid { did, nonce, signature } => {
+            Self::BindNodeDid {
+                did,
+                nonce,
+                signature,
+            } => {
                 let did_bytes = did.as_bytes();
                 body.extend_from_slice(&(did_bytes.len() as u16).to_be_bytes());
                 body.extend_from_slice(did_bytes);
@@ -136,7 +136,11 @@ impl RelayFrame {
                 body.extend_from_slice(signature);
                 FRAME_TYPE_BIND
             }
-            Self::BindAck { success, assigned_client_id, message } => {
+            Self::BindAck {
+                success,
+                assigned_client_id,
+                message,
+            } => {
                 body.push(if *success { 1 } else { 0 });
                 body.extend_from_slice(&assigned_client_id.to_be_bytes());
                 let msg_bytes = message.as_bytes();
@@ -215,13 +219,23 @@ impl RelayFrame {
                     .map_err(|e| NetError::RelayProtocol(format!("Invalid UTF-8 DID: {e}")))?;
                 let offset = 2 + did_len;
                 let nonce = u64::from_be_bytes([
-                    body[offset], body[offset + 1], body[offset + 2], body[offset + 3],
-                    body[offset + 4], body[offset + 5], body[offset + 6], body[offset + 7],
+                    body[offset],
+                    body[offset + 1],
+                    body[offset + 2],
+                    body[offset + 3],
+                    body[offset + 4],
+                    body[offset + 5],
+                    body[offset + 6],
+                    body[offset + 7],
                 ]);
                 let mut signature = [0u8; 64];
                 signature.copy_from_slice(&body[offset + 8..offset + 72]);
 
-                Ok(Self::BindNodeDid { did, nonce, signature })
+                Ok(Self::BindNodeDid {
+                    did,
+                    nonce,
+                    signature,
+                })
             }
             FRAME_TYPE_BIND_ACK => {
                 if body.len() < 1 + 8 + 2 {
@@ -238,24 +252,37 @@ impl RelayFrame {
                 let message = String::from_utf8(body[11..11 + msg_len].to_vec())
                     .map_err(|e| NetError::RelayProtocol(format!("Invalid UTF-8 message: {e}")))?;
 
-                Ok(Self::BindAck { success, assigned_client_id, message })
+                Ok(Self::BindAck {
+                    success,
+                    assigned_client_id,
+                    message,
+                })
             }
             FRAME_TYPE_SEND => {
                 if body.len() < 2 {
-                    return Err(NetError::RelayProtocol("Truncated SendPacket header".into()));
+                    return Err(NetError::RelayProtocol(
+                        "Truncated SendPacket header".into(),
+                    ));
                 }
                 let dst_len = u16::from_be_bytes([body[0], body[1]]) as usize;
                 if body.len() < 2 + dst_len + 4 {
-                    return Err(NetError::RelayProtocol("Truncated SendPacket dst_did".into()));
+                    return Err(NetError::RelayProtocol(
+                        "Truncated SendPacket dst_did".into(),
+                    ));
                 }
                 let dst_did = String::from_utf8(body[2..2 + dst_len].to_vec())
                     .map_err(|e| NetError::RelayProtocol(format!("Invalid UTF-8 dst_did: {e}")))?;
                 let offset = 2 + dst_len;
                 let payload_len = u32::from_be_bytes([
-                    body[offset], body[offset + 1], body[offset + 2], body[offset + 3],
+                    body[offset],
+                    body[offset + 1],
+                    body[offset + 2],
+                    body[offset + 3],
                 ]) as usize;
                 if body.len() < offset + 4 + payload_len {
-                    return Err(NetError::RelayProtocol("Truncated SendPacket payload".into()));
+                    return Err(NetError::RelayProtocol(
+                        "Truncated SendPacket payload".into(),
+                    ));
                 }
                 let payload = body[offset + 4..offset + 4 + payload_len].to_vec();
 
@@ -263,20 +290,29 @@ impl RelayFrame {
             }
             FRAME_TYPE_RECV => {
                 if body.len() < 2 {
-                    return Err(NetError::RelayProtocol("Truncated RecvPacket header".into()));
+                    return Err(NetError::RelayProtocol(
+                        "Truncated RecvPacket header".into(),
+                    ));
                 }
                 let src_len = u16::from_be_bytes([body[0], body[1]]) as usize;
                 if body.len() < 2 + src_len + 4 {
-                    return Err(NetError::RelayProtocol("Truncated RecvPacket src_did".into()));
+                    return Err(NetError::RelayProtocol(
+                        "Truncated RecvPacket src_did".into(),
+                    ));
                 }
                 let src_did = String::from_utf8(body[2..2 + src_len].to_vec())
                     .map_err(|e| NetError::RelayProtocol(format!("Invalid UTF-8 src_did: {e}")))?;
                 let offset = 2 + src_len;
                 let payload_len = u32::from_be_bytes([
-                    body[offset], body[offset + 1], body[offset + 2], body[offset + 3],
+                    body[offset],
+                    body[offset + 1],
+                    body[offset + 2],
+                    body[offset + 3],
                 ]) as usize;
                 if body.len() < offset + 4 + payload_len {
-                    return Err(NetError::RelayProtocol("Truncated RecvPacket payload".into()));
+                    return Err(NetError::RelayProtocol(
+                        "Truncated RecvPacket payload".into(),
+                    ));
                 }
                 let payload = body[offset + 4..offset + 4 + payload_len].to_vec();
 
@@ -290,14 +326,18 @@ impl RelayFrame {
                 let code = u16::from_be_bytes([body[0], body[1]]);
                 let msg_len = u16::from_be_bytes([body[2], body[3]]) as usize;
                 if body.len() < 4 + msg_len {
-                    return Err(NetError::RelayProtocol("Truncated RelayError message".into()));
+                    return Err(NetError::RelayProtocol(
+                        "Truncated RelayError message".into(),
+                    ));
                 }
                 let message = String::from_utf8(body[4..4 + msg_len].to_vec())
                     .map_err(|e| NetError::RelayProtocol(format!("Invalid UTF-8 message: {e}")))?;
 
                 Ok(Self::RelayError { code, message })
             }
-            other => Err(NetError::RelayProtocol(format!("Unknown frame type 0x{other:02X}"))),
+            other => Err(NetError::RelayProtocol(format!(
+                "Unknown frame type 0x{other:02X}"
+            ))),
         }
     }
 }
@@ -339,7 +379,11 @@ pub struct UmcfRelayServer {
 
 impl UmcfRelayServer {
     /// Starts a new `UmcfRelayServer` listening on `bind_addr`.
-    pub async fn start(cluster_id: &str, bind_addr: SocketAddr, max_bytes_per_minute: u64) -> Result<Self, NetError> {
+    pub async fn start(
+        cluster_id: &str,
+        bind_addr: SocketAddr,
+        max_bytes_per_minute: u64,
+    ) -> Result<Self, NetError> {
         let socket = Arc::new(UdpSocket::bind(bind_addr).await.map_err(NetError::Io)?);
         let listen_addr = socket.local_addr().map_err(NetError::Io)?;
         let cancel_token = tokio_util::sync::CancellationToken::new();
@@ -571,15 +615,21 @@ impl HybridUdpRelaySocket {
 
             // Read Ack
             let mut buf = [0u8; 1024];
-            let (len, _) = tokio::time::timeout(Duration::from_millis(500), socket.recv_from(&mut buf))
-                .await
-                .map_err(|_| NetError::Timeout("Relay bind timed out".into()))?
-                .map_err(NetError::Io)?;
+            let (len, _) =
+                tokio::time::timeout(Duration::from_millis(500), socket.recv_from(&mut buf))
+                    .await
+                    .map_err(|_| NetError::Timeout("Relay bind timed out".into()))?
+                    .map_err(NetError::Io)?;
 
             let resp = RelayFrame::from_bytes(&buf[..len])?;
             match resp {
                 RelayFrame::BindAck { success: true, .. } => {}
-                other => return Err(NetError::RelayAuthFailed(format!("Unexpected bind response: {:?}", other))),
+                other => {
+                    return Err(NetError::RelayAuthFailed(format!(
+                        "Unexpected bind response: {:?}",
+                        other
+                    )))
+                }
             }
         }
 
@@ -599,12 +649,11 @@ impl HybridUdpRelaySocket {
         let path = *self.active_path.read().await;
 
         match path {
-            PathType::DirectLan | PathType::DirectWanPunched => {
-                self.socket
-                    .send_to(payload, self.peer_direct_addr)
-                    .await
-                    .map_err(NetError::Io)
-            }
+            PathType::DirectLan | PathType::DirectWanPunched => self
+                .socket
+                .send_to(payload, self.peer_direct_addr)
+                .await
+                .map_err(NetError::Io),
             PathType::RelayedE2ee => {
                 let r_addr = self.relay_addr.ok_or_else(|| {
                     NetError::RelayProtocol("No relay configured for RelayedE2ee path".into())
@@ -614,7 +663,10 @@ impl HybridUdpRelaySocket {
                     payload: payload.to_vec(),
                 };
                 let bytes = frame.to_bytes();
-                self.socket.send_to(&bytes, r_addr).await.map_err(NetError::Io)?;
+                self.socket
+                    .send_to(&bytes, r_addr)
+                    .await
+                    .map_err(NetError::Io)?;
                 Ok(payload.len())
             }
         }
@@ -623,11 +675,16 @@ impl HybridUdpRelaySocket {
     /// Receives a datagram, automatically unwrapping relay framing if arrived from relay.
     pub async fn recv_datagram(&self, buf: &mut [u8]) -> Result<(usize, PathType), NetError> {
         let mut raw = [0u8; 65536];
-        let (len, src) = self.socket.recv_from(&mut raw).await.map_err(NetError::Io)?;
+        let (len, src) = self
+            .socket
+            .recv_from(&mut raw)
+            .await
+            .map_err(NetError::Io)?;
 
         // Check if arrived from relay
         if Some(src) == self.relay_addr {
-            if let Ok(RelayFrame::RecvPacket { payload, .. }) = RelayFrame::from_bytes(&raw[..len]) {
+            if let Ok(RelayFrame::RecvPacket { payload, .. }) = RelayFrame::from_bytes(&raw[..len])
+            {
                 let copy_len = payload.len().min(buf.len());
                 buf[..copy_len].copy_from_slice(&payload[..copy_len]);
                 return Ok((copy_len, PathType::RelayedE2ee));

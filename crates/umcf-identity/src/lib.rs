@@ -96,7 +96,11 @@ mod tests {
 
         // 1. Initial state: vault doesn't exist
         assert!(!vault.exists());
-        assert!(vault.load_identity().await.expect("load on empty").is_none());
+        assert!(vault
+            .load_identity()
+            .await
+            .expect("load on empty")
+            .is_none());
 
         // 2. Store new identity
         let initial_keypair = NodeKeypair::generate();
@@ -318,7 +322,8 @@ mod tests {
         let bob = NodeKeypair::generate();
 
         // Simulated RFC 8446 TLS 1.3 keying exporter (32 bytes derived from session)
-        let tls_exporter = blake3::derive_key("EXPORTER-UMCF-ATTEST-v1", b"tls-session-secret-alice-bob");
+        let tls_exporter =
+            blake3::derive_key("EXPORTER-UMCF-ATTEST-v1", b"tls-session-secret-alice-bob");
         let hardware_fp = *blake3::hash(b"arm64-16gb-vulkan-qualcomm").as_bytes();
 
         // 1. Challenger (Alice) generates attestation challenge
@@ -327,12 +332,8 @@ mod tests {
         assert_ne!(challenge.challenge_nonce, [0u8; 32]);
 
         // 2. Prover (Bob) generates attestation proof
-        let proof = MutualAttestationProtocol::create_proof(
-            &bob,
-            &challenge,
-            tls_exporter,
-            hardware_fp,
-        );
+        let proof =
+            MutualAttestationProtocol::create_proof(&bob, &challenge, tls_exporter, hardware_fp);
         assert_eq!(proof.prover_did, bob.did_key());
         assert_eq!(proof.challenge_nonce, challenge.challenge_nonce);
         assert_eq!(proof.tls_exporter_binding, tls_exporter);
@@ -395,12 +396,8 @@ mod tests {
         let hardware_fp = *blake3::hash(b"intel-x86_64-32gb").as_bytes();
 
         let challenge = MutualAttestationProtocol::create_challenge(&alice);
-        let legitimate_proof = MutualAttestationProtocol::create_proof(
-            &bob,
-            &challenge,
-            tls_exporter,
-            hardware_fp,
-        );
+        let legitimate_proof =
+            MutualAttestationProtocol::create_proof(&bob, &challenge, tls_exporter, hardware_fp);
 
         let now_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -408,7 +405,8 @@ mod tests {
             .as_millis() as u64;
 
         // 1. Fault: MITM relay attack (attacker forwards proof over a different TLS connection)
-        let mitm_tls_exporter = blake3::derive_key("EXPORTER-UMCF-ATTEST-v1", b"tls-session-mitm-eve");
+        let mitm_tls_exporter =
+            blake3::derive_key("EXPORTER-UMCF-ATTEST-v1", b"tls-session-mitm-eve");
         let mitm_res = MutualAttestationProtocol::verify_proof(
             &legitimate_proof,
             &challenge,
@@ -430,7 +428,10 @@ mod tests {
             5000,
             now_ms,
         );
-        assert!(matches!(replay_res, Err(IdentityError::AttestationFailed(_))));
+        assert!(matches!(
+            replay_res,
+            Err(IdentityError::AttestationFailed(_))
+        ));
 
         // 3. Fault: Sender DID impersonation (Eve claims she sent Bob's proof)
         let impersonate_res = MutualAttestationProtocol::verify_proof(
@@ -441,7 +442,10 @@ mod tests {
             5000,
             now_ms,
         );
-        assert!(matches!(impersonate_res, Err(IdentityError::SenderMismatch { .. })));
+        assert!(matches!(
+            impersonate_res,
+            Err(IdentityError::SenderMismatch { .. })
+        ));
 
         // 4. Fault: CRL revoked certificate rejection
         let ca = ClusterCa::generate("mesh-test-cluster").expect("generate ca");
@@ -464,7 +468,10 @@ mod tests {
         );
 
         let check_res = crl.check_certificate(&cert);
-        assert!(matches!(check_res, Err(IdentityError::CertificateRevoked { .. })));
+        assert!(matches!(
+            check_res,
+            Err(IdentityError::CertificateRevoked { .. })
+        ));
     }
 
     #[tokio::test]

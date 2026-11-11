@@ -53,16 +53,34 @@ fn test_rgb_to_nv12_and_p010_bt709_shader_color_accuracy() {
     assert_eq!(uv_plane.len(), width * (height / 2));
 
     // White: Y should be ~255, U ~128, V ~128
-    assert!(y_plane[0] >= 250, "White Y luma must be ~255, got {}", y_plane[0]);
-    assert_eq!(uv_plane[0], 128, "White U chroma must be 128, got {}", uv_plane[0]);
-    assert_eq!(uv_plane[1], 128, "White V chroma must be 128, got {}", uv_plane[1]);
+    assert!(
+        y_plane[0] >= 250,
+        "White Y luma must be ~255, got {}",
+        y_plane[0]
+    );
+    assert_eq!(
+        uv_plane[0], 128,
+        "White U chroma must be 128, got {}",
+        uv_plane[0]
+    );
+    assert_eq!(
+        uv_plane[1], 128,
+        "White V chroma must be 128, got {}",
+        uv_plane[1]
+    );
 
     // Red: Y = 0.2126 * 255 ~= 54, U ~= -0.1146 * 255 + 128 ~= 99, V = 0.5 * 255 + 128 ~= 255
     let red_y = y_plane[2];
-    assert!((red_y as i32 - 54).abs() <= 2, "Red Y luma should be ~54, got {red_y}");
+    assert!(
+        (red_y as i32 - 54).abs() <= 2,
+        "Red Y luma should be ~54, got {red_y}"
+    );
     let red_u = uv_plane[2];
     let red_v = uv_plane[3];
-    assert!((red_u as i32 - 99).abs() <= 2, "Red U should be ~99, got {red_u}");
+    assert!(
+        (red_u as i32 - 99).abs() <= 2,
+        "Red U should be ~99, got {red_u}"
+    );
     assert!(red_v >= 250, "Red V should be ~255, got {red_v}");
 
     // 2. 10-bit P010 conversion
@@ -72,7 +90,11 @@ fn test_rgb_to_nv12_and_p010_bt709_shader_color_accuracy() {
     assert_eq!(p010_uv.len(), width * (height / 2));
 
     // White P010 upper 10 bits: (1023 << 6) = 65472
-    assert!(p010_y[0] >= 64000, "10-bit White Y must be >= 64000, got {}", p010_y[0]);
+    assert!(
+        p010_y[0] >= 64000,
+        "10-bit White Y must be >= 64000, got {}",
+        p010_y[0]
+    );
 }
 
 /// [UNIT] Test single-frame VBV buffer sizing and zero B-frame configuration.
@@ -114,7 +136,10 @@ fn test_on_demand_idr_atomic_trigger_emits_keyframe_immediately() {
     // Frame 0: Initial frame must be IDR
     let f0 = encoder.encode_frame(&dummy_frame).expect("encode 0");
     assert!(f0.is_idr, "frame 0 must be IDR keyframe");
-    assert!(!f0.header_annexb.is_empty(), "frame 0 must contain parameter sets (SPS/PPS)");
+    assert!(
+        !f0.header_annexb.is_empty(),
+        "frame 0 must contain parameter sets (SPS/PPS)"
+    );
 
     // Frame 1: Standard P-frame
     let f1 = encoder.encode_frame(&dummy_frame).expect("encode 1");
@@ -125,8 +150,14 @@ fn test_on_demand_idr_atomic_trigger_emits_keyframe_immediately() {
 
     // Frame 2: Must be immediate IDR keyframe
     let f2 = encoder.encode_frame(&dummy_frame).expect("encode 2");
-    assert!(f2.is_idr, "frame 2 must be an instantaneous IDR keyframe after trigger");
-    assert!(!f2.header_annexb.is_empty(), "triggered IDR must include parameter sets");
+    assert!(
+        f2.is_idr,
+        "frame 2 must be an instantaneous IDR keyframe after trigger"
+    );
+    assert!(
+        !f2.header_annexb.is_empty(),
+        "triggered IDR must include parameter sets"
+    );
 
     // Frame 3: Resumes standard P-frames
     let f3 = encoder.encode_frame(&dummy_frame).expect("encode 3");
@@ -143,14 +174,23 @@ fn test_opus_lowdelay_5ms_audio_packetizer() {
 
     let mut prev_pts = 0u64;
     for i in 0..100 {
-        let pkt = capturer.packetize_pcm_stereo(&pcm_stereo_frame).expect("packetize");
+        let pkt = capturer
+            .packetize_pcm_stereo(&pcm_stereo_frame)
+            .expect("packetize");
         assert_eq!(pkt.duration_ms, 5);
         assert_eq!(pkt.sample_count, 240);
         assert!(pkt.fec_enabled);
-        assert_eq!(pkt.opus_payload[0], 0x79, "TOC byte must indicate hybrid FEC stereo");
+        assert_eq!(
+            pkt.opus_payload[0], 0x79,
+            "TOC byte must indicate hybrid FEC stereo"
+        );
 
         if i > 0 {
-            assert_eq!(pkt.pts_us - prev_pts, 5000, "PTS must increase by exactly 5000 us (5 ms)");
+            assert_eq!(
+                pkt.pts_us - prev_pts,
+                5000,
+                "PTS must increase by exactly 5000 us (5 ms)"
+            );
         }
         prev_pts = pkt.pts_us;
     }
@@ -210,7 +250,9 @@ fn test_simulation_dynamic_resolution_and_bitrate_reconfiguration() {
     let mut encoder = ZeroLatencyVideoEncoder::new(cfg).expect("encoder");
 
     // Phase 1: 1080p @ 20 Mbps
-    encoder.reconfigure_bitrate(20_000).expect("reconfigure bitrate");
+    encoder
+        .reconfigure_bitrate(20_000)
+        .expect("reconfigure bitrate");
     assert_eq!(encoder.config.target_bitrate_kbps, 20_000);
     assert_eq!(encoder.config.vbv_buffer_size_kb, 400);
 
@@ -220,8 +262,12 @@ fn test_simulation_dynamic_resolution_and_bitrate_reconfiguration() {
     assert_eq!(enc1080.frame_seq, 0);
 
     // Phase 2: Dynamic downscale to 720p @ 4 Mbps without restarting session
-    capturer.reconfigure(1280, 720, 60).expect("reconfigure capturer");
-    encoder.reconfigure_bitrate(4_000).expect("reconfigure bitrate");
+    capturer
+        .reconfigure(1280, 720, 60)
+        .expect("reconfigure capturer");
+    encoder
+        .reconfigure_bitrate(4_000)
+        .expect("reconfigure bitrate");
     assert_eq!(encoder.config.target_bitrate_kbps, 4_000);
     assert_eq!(encoder.config.vbv_buffer_size_kb, 80);
 
@@ -273,7 +319,8 @@ fn test_manual_host_stream_settings_ui_schema_and_preview() {
     assert!(json_cfg.contains("max_b_frames"));
     assert!(json_cfg.contains("rc_lookahead"));
 
-    let deserialized: LowLatencyEncoderConfig = serde_json::from_str(&json_cfg).expect("deserialize config");
+    let deserialized: LowLatencyEncoderConfig =
+        serde_json::from_str(&json_cfg).expect("deserialize config");
     assert_eq!(deserialized.codec, MediaCodecId::Av1);
     assert_eq!(deserialized.max_b_frames, 0);
 }

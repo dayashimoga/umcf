@@ -1,8 +1,8 @@
 //! Minimized seed corpus runner for offline regression verification across all 15 targets.
 
-use serde::{Deserialize, Serialize};
 use crate::error::FuzzError;
 use crate::targets::FuzzTargets;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CorpusRunSummary {
@@ -29,7 +29,10 @@ impl CorpusRunner {
             ("single_ff", vec![0xFF]),
             ("single_7f", vec![0x7F]),
             ("truncated_3_bytes", vec![0x01, 0x02, 0x03]),
-            ("truncated_7_bytes", vec![0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00]),
+            (
+                "truncated_7_bytes",
+                vec![0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00],
+            ),
         ];
 
         // 4. Length-prefix allocation bomb: claims 2^62 bytes (0x4000_0000_0000_0000)
@@ -56,8 +59,8 @@ impl CorpusRunner {
         // 8. Synthetic GGUF valid magic with corrupted tensor count
         let mut gguf_bomb = Vec::new();
         gguf_bomb.extend_from_slice(&0x46554747u32.to_le_bytes()); // "GGUF"
-        gguf_bomb.extend_from_slice(&3u32.to_le_bytes());          // version 3
-        gguf_bomb.extend_from_slice(&1_000_000u64.to_le_bytes());  // 1M tensors (bomb)
+        gguf_bomb.extend_from_slice(&3u32.to_le_bytes()); // version 3
+        gguf_bomb.extend_from_slice(&1_000_000u64.to_le_bytes()); // 1M tensors (bomb)
         gguf_bomb.extend_from_slice(&5u64.to_le_bytes());
         corpus.push(("gguf_tensor_count_bomb", gguf_bomb));
 
@@ -68,10 +71,17 @@ impl CorpusRunner {
         corpus.push(("wasm_invalid_version", wasm_bad_ver));
 
         // 10. Valid JSON object
-        corpus.push(("valid_json", b"{\"model\":\"llama-3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}".to_vec()));
+        corpus.push((
+            "valid_json",
+            b"{\"model\":\"llama-3\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"
+                .to_vec(),
+        ));
 
         // 11. Malformed JSON with unclosed string
-        corpus.push(("malformed_json_unclosed", b"{\"model\":\"incomplete...".to_vec()));
+        corpus.push((
+            "malformed_json_unclosed",
+            b"{\"model\":\"incomplete...".to_vec(),
+        ));
 
         corpus
     }
@@ -88,16 +98,43 @@ impl CorpusRunner {
             ("03_wasm_bytecode", FuzzTargets::fuzz_03_wasm_bytecode),
             ("04_scheduler_dag", FuzzTargets::fuzz_04_scheduler_dag),
             ("05_gguf_header", FuzzTargets::fuzz_05_gguf_header),
-            ("06_llama_tokenizer_grammar", FuzzTargets::fuzz_06_llama_tokenizer_grammar),
-            ("07_ai_activation_rpc", FuzzTargets::fuzz_07_ai_activation_rpc),
+            (
+                "06_llama_tokenizer_grammar",
+                FuzzTargets::fuzz_06_llama_tokenizer_grammar,
+            ),
+            (
+                "07_ai_activation_rpc",
+                FuzzTargets::fuzz_07_ai_activation_rpc,
+            ),
             ("08_openai_json_body", FuzzTargets::fuzz_08_openai_json_body),
-            ("09_wgsl_shader_sandbox", FuzzTargets::fuzz_09_wgsl_shader_sandbox),
-            ("10_render_tile_packet", FuzzTargets::fuzz_10_render_tile_packet),
-            ("11_media_segment_metadata", FuzzTargets::fuzz_11_media_segment_metadata),
-            ("12_stream_rtp_fec_and_input", FuzzTargets::fuzz_12_stream_rtp_fec_and_input),
-            ("13_storage_dag_and_erasure_shard", FuzzTargets::fuzz_13_storage_dag_and_erasure_shard),
-            ("14_workload_manifest_yaml_toml", FuzzTargets::fuzz_14_workload_manifest_yaml_toml),
-            ("15_resource_receipt_and_market_order", FuzzTargets::fuzz_15_resource_receipt_and_market_order),
+            (
+                "09_wgsl_shader_sandbox",
+                FuzzTargets::fuzz_09_wgsl_shader_sandbox,
+            ),
+            (
+                "10_render_tile_packet",
+                FuzzTargets::fuzz_10_render_tile_packet,
+            ),
+            (
+                "11_media_segment_metadata",
+                FuzzTargets::fuzz_11_media_segment_metadata,
+            ),
+            (
+                "12_stream_rtp_fec_and_input",
+                FuzzTargets::fuzz_12_stream_rtp_fec_and_input,
+            ),
+            (
+                "13_storage_dag_and_erasure_shard",
+                FuzzTargets::fuzz_13_storage_dag_and_erasure_shard,
+            ),
+            (
+                "14_workload_manifest_yaml_toml",
+                FuzzTargets::fuzz_14_workload_manifest_yaml_toml,
+            ),
+            (
+                "15_resource_receipt_and_market_order",
+                FuzzTargets::fuzz_15_resource_receipt_and_market_order,
+            ),
         ];
 
         for (target_name, target_fn) in target_functions {

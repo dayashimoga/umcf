@@ -151,7 +151,10 @@ pub fn create_router(state: Arc<GatewayState>) -> Router {
         .route("/api/v1/stream/sessions", post(handle_stream_sessions))
         // Storage routes
         .route("/api/v1/storage/objects", put(handle_put_storage_object))
-        .route("/api/v1/storage/objects/:cid", get(handle_get_storage_object))
+        .route(
+            "/api/v1/storage/objects/:cid",
+            get(handle_get_storage_object),
+        )
         .route("/api/v1/storage/pins", post(handle_create_pin))
         .with_state(state)
 }
@@ -292,12 +295,10 @@ async fn handle_cancel_job(
     require_scope(&headers, &state.auth, CapabilityScope::JobsSubmit).await?;
 
     let mut jobs = state.jobs.write().await;
-    let job = jobs
-        .get_mut(&id)
-        .ok_or_else(|| GatewayError::NotFound {
-            resource: "Job".to_string(),
-            id: id.clone(),
-        })?;
+    let job = jobs.get_mut(&id).ok_or_else(|| GatewayError::NotFound {
+        resource: "Job".to_string(),
+        id: id.clone(),
+    })?;
 
     if let Some(obj) = job.as_object_mut() {
         obj.insert("status".to_string(), json!("Cancelled"));
@@ -319,12 +320,15 @@ async fn handle_ws_events(
     State(state): State<Arc<GatewayState>>,
 ) -> Response {
     // Check since_seq from query param or Last-Event-ID header
-    let since_seq = params.since_seq.or_else(|| {
-        headers
-            .get("Last-Event-ID")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|v| v.parse::<u64>().ok())
-    }).unwrap_or(0);
+    let since_seq = params
+        .since_seq
+        .or_else(|| {
+            headers
+                .get("Last-Event-ID")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.parse::<u64>().ok())
+        })
+        .unwrap_or(0);
 
     let ring = Arc::clone(&state.ring_buffer);
     ws.on_upgrade(move |socket| handle_ws_stream(socket, ring, id, since_seq))
@@ -438,7 +442,10 @@ async fn handle_embeddings(
     Json(body): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>, GatewayError> {
     require_scope(&headers, &state.auth, CapabilityScope::AiInference).await?;
-    let model = body.get("model").and_then(|v| v.as_str()).unwrap_or("text-embedding-3-small");
+    let model = body
+        .get("model")
+        .and_then(|v| v.as_str())
+        .unwrap_or("text-embedding-3-small");
 
     Ok(Json(json!({
         "object": "list",
@@ -458,7 +465,13 @@ async fn handle_gpu_render(
     Json(_body): Json<serde_json::Value>,
 ) -> Result<Response, GatewayError> {
     require_scope(&headers, &state.auth, CapabilityScope::GpuRender).await?;
-    let job_id = format!("render-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis());
+    let job_id = format!(
+        "render-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis()
+    );
     Ok((
         StatusCode::ACCEPTED,
         Json(json!({ "job_id": job_id, "status": "Queued", "tiles": 16 })),
@@ -472,7 +485,13 @@ async fn handle_media_transcode(
     Json(_body): Json<serde_json::Value>,
 ) -> Result<Response, GatewayError> {
     require_scope(&headers, &state.auth, CapabilityScope::MediaTranscode).await?;
-    let job_id = format!("transcode-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis());
+    let job_id = format!(
+        "transcode-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis()
+    );
     Ok((
         StatusCode::ACCEPTED,
         Json(json!({ "job_id": job_id, "status": "Queued", "segments": 8 })),
@@ -486,7 +505,13 @@ async fn handle_stream_sessions(
     Json(_body): Json<serde_json::Value>,
 ) -> Result<Response, GatewayError> {
     require_scope(&headers, &state.auth, CapabilityScope::StreamConnect).await?;
-    let session_id = format!("stream-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis());
+    let session_id = format!(
+        "stream-{}",
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis()
+    );
     Ok((
         StatusCode::CREATED,
         Json(json!({
@@ -548,7 +573,10 @@ async fn handle_get_storage_object(
         StatusCode::OK,
         [
             (CONTENT_TYPE, "application/octet-stream"),
-            (axum::http::header::CONTENT_LENGTH, data.len().to_string().as_str()),
+            (
+                axum::http::header::CONTENT_LENGTH,
+                data.len().to_string().as_str(),
+            ),
         ],
         data,
     )

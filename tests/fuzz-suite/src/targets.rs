@@ -1,8 +1,10 @@
 //! 15 Dedicated Fuzz Target Handlers for untrusted input parsers and FFI boundaries.
 
-use std::panic::{catch_unwind, AssertUnwindSafe};
-use crate::bounded_reader::{check_nesting_depth, BoundedSliceReader, MAX_ALLOCATION_BYTES, MAX_RECURSION_DEPTH};
+use crate::bounded_reader::{
+    check_nesting_depth, BoundedSliceReader, MAX_ALLOCATION_BYTES, MAX_RECURSION_DEPTH,
+};
 use crate::error::FuzzError;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 
 pub struct FuzzTargets;
 
@@ -16,7 +18,8 @@ impl FuzzTargets {
             let mut reader = BoundedSliceReader::new(data);
             let magic = reader.read_u32_le()?;
             let msg_type = reader.read_u16_le()?;
-            let _payload = reader.read_length_prefixed_slice("P2PWireFrame", MAX_ALLOCATION_BYTES)?;
+            let _payload =
+                reader.read_length_prefixed_slice("P2PWireFrame", MAX_ALLOCATION_BYTES)?;
             Ok(magic != 0 && msg_type > 0)
         }))
         .map_err(|_| FuzzError::PanicTrapped {
@@ -81,7 +84,8 @@ impl FuzzTargets {
                     limit_bytes: 10_000,
                 });
             }
-            let _edges = reader.read_length_prefixed_slice("SchedulerDagEdges", MAX_ALLOCATION_BYTES)?;
+            let _edges =
+                reader.read_length_prefixed_slice("SchedulerDagEdges", MAX_ALLOCATION_BYTES)?;
             Ok(true)
         }))
         .map_err(|_| FuzzError::PanicTrapped {
@@ -160,7 +164,8 @@ impl FuzzTargets {
                     limit_bytes: MAX_ALLOCATION_BYTES,
                 });
             }
-            let _tensors = reader.read_length_prefixed_slice("AiActivationRpcTensors", MAX_ALLOCATION_BYTES)?;
+            let _tensors = reader
+                .read_length_prefixed_slice("AiActivationRpcTensors", MAX_ALLOCATION_BYTES)?;
             Ok(layer_id < 128)
         }))
         .map_err(|_| FuzzError::PanicTrapped {
@@ -226,7 +231,8 @@ impl FuzzTargets {
                     limit_bytes: MAX_ALLOCATION_BYTES,
                 });
             }
-            let _pixels = reader.read_length_prefixed_slice("RenderTilePixels", MAX_ALLOCATION_BYTES)?;
+            let _pixels =
+                reader.read_length_prefixed_slice("RenderTilePixels", MAX_ALLOCATION_BYTES)?;
             Ok(width > 0 && height > 0)
         }))
         .map_err(|_| FuzzError::PanicTrapped {
@@ -244,7 +250,8 @@ impl FuzzTargets {
             let mut reader = BoundedSliceReader::new(data);
             let _pts = reader.read_u64_le()?;
             let _dts = reader.read_u64_le()?;
-            let _nal_slice = reader.read_length_prefixed_slice("MediaNalSlice", MAX_ALLOCATION_BYTES)?;
+            let _nal_slice =
+                reader.read_length_prefixed_slice("MediaNalSlice", MAX_ALLOCATION_BYTES)?;
             Ok(true)
         }))
         .map_err(|_| FuzzError::PanicTrapped {
@@ -348,4 +355,3 @@ impl FuzzTargets {
         })?
     }
 }
-

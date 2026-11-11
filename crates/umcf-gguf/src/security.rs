@@ -158,9 +158,9 @@ impl SignedModelAttestation {
         let sig = Signature::from_bytes(&self.signature.0);
         let payload = self.compute_signing_payload();
 
-        verifying_key
-            .verify(&payload, &sig)
-            .map_err(|e| StoreError::InvalidSignature(format!("signature verification failed: {e}")))
+        verifying_key.verify(&payload, &sig).map_err(|e| {
+            StoreError::InvalidSignature(format!("signature verification failed: {e}"))
+        })
     }
 }
 
@@ -317,7 +317,9 @@ impl ModelIntegrityVerifier {
         // 1. Verify attestation signature if supplied
         if let Some(ref att) = attestation {
             if att.model_id != *model_id {
-                return Err(StoreError::InvalidSignature("Attestation model_id mismatch".into()));
+                return Err(StoreError::InvalidSignature(
+                    "Attestation model_id mismatch".into(),
+                ));
             }
             att.verify()?;
         }
@@ -336,13 +338,13 @@ impl ModelIntegrityVerifier {
         let mut sorted_ranges: Vec<ByteRange> = Vec::with_capacity(inspection.tensors.len());
 
         for tensor in &inspection.tensors {
-            let abs_offset = data_offset
-                .checked_add(tensor.offset)
-                .ok_or_else(|| StoreError::CorruptedFile("tensor offset arithmetic overflow".into()))?;
+            let abs_offset = data_offset.checked_add(tensor.offset).ok_or_else(|| {
+                StoreError::CorruptedFile("tensor offset arithmetic overflow".into())
+            })?;
 
-            let abs_end = abs_offset
-                .checked_add(tensor.size_bytes)
-                .ok_or_else(|| StoreError::CorruptedFile("tensor end arithmetic overflow".into()))?;
+            let abs_end = abs_offset.checked_add(tensor.size_bytes).ok_or_else(|| {
+                StoreError::CorruptedFile("tensor end arithmetic overflow".into())
+            })?;
 
             // Out-of-bounds check
             if abs_end > file_size {

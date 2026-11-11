@@ -183,8 +183,7 @@ fn test_unit_numerical_sanity_probe_rejects_corrupted_gpu_output() {
     assert!(ok_res.is_ok(), "clean matmul execution must pass probe");
 
     // Case 2: Divergent result (error > 1e-2) fails probe
-    let err_divergent =
-        HardwareBackendSelector::run_backend_sanity_probe(&gpu, Some(0.05f32));
+    let err_divergent = HardwareBackendSelector::run_backend_sanity_probe(&gpu, Some(0.05f32));
     assert!(
         err_divergent.is_err(),
         "divergent matmul output must fail sanity probe"

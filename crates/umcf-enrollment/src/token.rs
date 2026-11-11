@@ -133,8 +133,7 @@ impl EnrollmentToken {
         let verifying_key = VerifyingKey::from_bytes(&self.issuer_public_key)
             .map_err(|_| EnrollmentError::InvalidSignature)?;
 
-        let mut signed_payload =
-            Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + digest.len());
+        let mut signed_payload = Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + digest.len());
         signed_payload.extend_from_slice(DOMAIN_SEPARATION_PREFIX);
         signed_payload.extend_from_slice(&digest);
 

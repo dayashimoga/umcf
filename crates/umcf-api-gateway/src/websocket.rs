@@ -98,8 +98,7 @@ impl EventRingBuffer {
         let buf = self.events.read().await;
         buf.iter()
             .filter(|ev| {
-                ev.seq > since_seq
-                    && job_id.map_or(true, |target_id| ev.job_id == target_id)
+                ev.seq > since_seq && job_id.map_or(true, |target_id| ev.job_id == target_id)
             })
             .cloned()
             .collect()
@@ -171,4 +170,3 @@ pub async fn handle_ws_stream(
         }
     }
 }
-

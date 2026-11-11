@@ -196,8 +196,7 @@ impl MutualAttestationProtocol {
             .map_err(|e| IdentityError::InvalidPublicKey(e.to_string()))?;
 
         // Format signed payload with domain separation prefix
-        let mut signed_payload =
-            Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + digest.len());
+        let mut signed_payload = Vec::with_capacity(DOMAIN_SEPARATION_PREFIX.len() + digest.len());
         signed_payload.extend_from_slice(DOMAIN_SEPARATION_PREFIX);
         signed_payload.extend_from_slice(&digest);
 

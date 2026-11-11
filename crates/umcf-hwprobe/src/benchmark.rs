@@ -52,8 +52,9 @@ pub struct BenchmarkScores {
 impl BenchmarkScores {
     /// Applies measured benchmark metrics to calibrate a `HardwareCapabilityDescriptor`.
     pub fn apply_to_descriptor(&self, descriptor: &mut HardwareCapabilityDescriptor) {
-        descriptor.memory.bandwidth_mbps =
-            umcf_core::units::MegabytesPerSec::from_mbps((self.memory_bandwidth_gbps * 1024.0) as u32);
+        descriptor.memory.bandwidth_mbps = umcf_core::units::MegabytesPerSec::from_mbps(
+            (self.memory_bandwidth_gbps * 1024.0) as u32,
+        );
 
         if let Some(net) = &self.network_scores {
             descriptor.network.estimated_bandwidth_mbps = net.burst_bandwidth_mbps as u32;
@@ -234,7 +235,9 @@ impl ComputeMicroBench {
 
         let mut state = seed ^ 0x5DEECE66D;
         for i in 0..(n * n) {
-            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             a[i] = ((state >> 32) as i32 % 100) as f32 * 0.01;
             b[i] = ((state >> 16) as i32 % 100) as f32 * 0.01;
         }
@@ -323,7 +326,9 @@ impl ComputeMicroBench {
         let mut read_buf = vec![0_u8; buffer_size];
 
         let read_start = Instant::now();
-        read_file.read_exact(&mut read_buf).map_err(HwProbeError::Io)?;
+        read_file
+            .read_exact(&mut read_buf)
+            .map_err(HwProbeError::Io)?;
         let read_duration = read_start.elapsed();
 
         let read_mbps = if read_duration.as_secs_f64() > 0.0 {
@@ -359,7 +364,10 @@ impl NetworkMicroBench {
             ));
         }
 
-        let mut sorted: Vec<f32> = rtt_samples.iter().map(|d| d.as_secs_f32() * 1000.0).collect();
+        let mut sorted: Vec<f32> = rtt_samples
+            .iter()
+            .map(|d| d.as_secs_f32() * 1000.0)
+            .collect();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         let min_rtt_ms = *sorted.first().unwrap_or(&0.0);
@@ -456,7 +464,10 @@ impl NetworkMicroBench {
         let len_bytes = (Self::PROBE_TRAIN_BYTES as u32).to_le_bytes();
 
         let burst_start = Instant::now();
-        writer.write_all(&len_bytes).await.map_err(HwProbeError::Io)?;
+        writer
+            .write_all(&len_bytes)
+            .await
+            .map_err(HwProbeError::Io)?;
         writer
             .write_all(&probe_train)
             .await
@@ -465,11 +476,16 @@ impl NetworkMicroBench {
 
         // Wait for 4-byte burst ACK
         let mut ack = [0u8; 4];
-        reader.read_exact(&mut ack).await.map_err(HwProbeError::Io)?;
+        reader
+            .read_exact(&mut ack)
+            .await
+            .map_err(HwProbeError::Io)?;
         let burst_duration = burst_start.elapsed();
 
         if ack != [0x55, 0xAA, 0x03, 0xFF] {
-            return Err(HwProbeError::Benchmark("Invalid burst probe ACK".to_string()));
+            return Err(HwProbeError::Benchmark(
+                "Invalid burst probe ACK".to_string(),
+            ));
         }
 
         Self::compute_scores(&rtt_samples, burst_duration, Self::PROBE_TRAIN_BYTES)
@@ -490,7 +506,10 @@ impl NetworkMicroBench {
     {
         for _ in 0..sample_count {
             let mut ping = [0u8; 4];
-            reader.read_exact(&mut ping).await.map_err(HwProbeError::Io)?;
+            reader
+                .read_exact(&mut ping)
+                .await
+                .map_err(HwProbeError::Io)?;
 
             let pong = [0x55, 0xAA, 0x02, ping[3]];
             writer.write_all(&pong).await.map_err(HwProbeError::Io)?;
@@ -499,11 +518,17 @@ impl NetworkMicroBench {
 
         // Read burst train
         let mut len_buf = [0u8; 4];
-        reader.read_exact(&mut len_buf).await.map_err(HwProbeError::Io)?;
+        reader
+            .read_exact(&mut len_buf)
+            .await
+            .map_err(HwProbeError::Io)?;
         let burst_len = u32::from_le_bytes(len_buf) as usize;
 
         let mut burst_data = vec![0u8; burst_len];
-        reader.read_exact(&mut burst_data).await.map_err(HwProbeError::Io)?;
+        reader
+            .read_exact(&mut burst_data)
+            .await
+            .map_err(HwProbeError::Io)?;
 
         // Send ACK
         let ack = [0x55, 0xAA, 0x03, 0xFF];
@@ -589,9 +614,8 @@ impl SignedHardwareAttestation {
             return Ok(false);
         }
 
-        let signature_bytes = Self::from_hex(&self.signature_hex).ok_or_else(|| {
-            HwProbeError::Attestation("Invalid signature hex string".to_string())
-        })?;
+        let signature_bytes = Self::from_hex(&self.signature_hex)
+            .ok_or_else(|| HwProbeError::Attestation("Invalid signature hex string".to_string()))?;
 
         let sig_arr: [u8; 64] = signature_bytes
             .as_slice()
@@ -611,12 +635,7 @@ impl SignedHardwareAttestation {
         let verifying_key = ed25519_dalek::VerifyingKey::from_bytes(&key_arr)
             .map_err(|e| HwProbeError::Attestation(format!("Invalid Ed25519 key: {e}")))?;
 
-        Ok(NodeKeypair::verify_with_key(
-            &verifying_key,
-            &payload_bytes,
-            &sig_arr,
-        )
-        .is_ok())
+        Ok(NodeKeypair::verify_with_key(&verifying_key, &payload_bytes, &sig_arr).is_ok())
     }
 
     /// Converts bytes to lowercase hexadecimal string.
@@ -640,7 +659,7 @@ impl SignedHardwareAttestation {
             .step_by(2)
             .map(|i| u8::from_str_radix(&s[i..i + 2], 16).ok())
             .collect()
-        }
+    }
 
     /// Produces canonical byte representation for cryptographic signing.
     fn canonical_payload_bytes(

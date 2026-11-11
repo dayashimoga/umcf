@@ -42,7 +42,10 @@ impl ActivationCodec {
     pub fn decode_f16_to_f32(bytes: &[u8]) -> Result<Vec<f32>, EngineError> {
         if bytes.len() % 2 != 0 {
             return Err(EngineError::InvalidInput {
-                reason: format!("FP16 byte slice length {} is not a multiple of 2", bytes.len()),
+                reason: format!(
+                    "FP16 byte slice length {} is not a multiple of 2",
+                    bytes.len()
+                ),
             });
         }
         let count = bytes.len() / 2;
@@ -229,7 +232,9 @@ impl RpcCapabilityToken {
         if self.expires_at_unix_s <= current_time_s {
             return false;
         }
-        self.permissions.iter().any(|p| p == "inference:worker" || p == "mesh:admin")
+        self.permissions
+            .iter()
+            .any(|p| p == "inference:worker" || p == "mesh:admin")
     }
 }
 
@@ -590,8 +595,7 @@ impl DistributedPipelineCoordinator {
 
         // Remove old worker, instantiate new worker on standby node
         self.workers.remove(failed_node_id);
-        let mut new_worker =
-            PipelineStageWorker::new(new_stage, self.session_id.clone());
+        let mut new_worker = PipelineStageWorker::new(new_stage, self.session_id.clone());
         new_worker.committed_step_idx = self.current_step_idx;
 
         self.workers.insert(standby_node_id.clone(), new_worker);

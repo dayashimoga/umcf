@@ -26,8 +26,15 @@ impl std::fmt::Display for CaptureTarget {
             Self::PrimaryMonitor => write!(f, "Primary Monitor"),
             Self::MonitorById(id) => write!(f, "Monitor #{id}"),
             Self::ApplicationWindow(hwnd) => write!(f, "Window 0x{hwnd:X}"),
-            Self::VirtualHeadlessDisplay { width, height, refresh_rate_hz } => {
-                write!(f, "Virtual Display ({width}x{height} @ {refresh_rate_hz}Hz)")
+            Self::VirtualHeadlessDisplay {
+                width,
+                height,
+                refresh_rate_hz,
+            } => {
+                write!(
+                    f,
+                    "Virtual Display ({width}x{height} @ {refresh_rate_hz}Hz)"
+                )
             }
         }
     }
@@ -285,9 +292,11 @@ impl ColorConverter {
                 y_plane[row_offset + x] = y_val << 6;
 
                 if (x % 2 == 0) && (y % 2 == 0) && (x + 1 < width) && (y + 1 < height) {
-                    let u_val = (((-117 * (r as i32) - 395 * (g as i32) + 512 * (b as i32)) >> 10) + 512)
+                    let u_val = (((-117 * (r as i32) - 395 * (g as i32) + 512 * (b as i32)) >> 10)
+                        + 512)
                         .clamp(0, 1023) as u16;
-                    let v_val = (((512 * (r as i32) - 465 * (g as i32) - 47 * (b as i32)) >> 10) + 512)
+                    let v_val = (((512 * (r as i32) - 465 * (g as i32) - 47 * (b as i32)) >> 10)
+                        + 512)
                         .clamp(0, 1023) as u16;
 
                     let uv_row = (y / 2) * width;

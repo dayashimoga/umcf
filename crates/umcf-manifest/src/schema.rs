@@ -1,8 +1,8 @@
 //! Workload manifest schema for `apiVersion: umcf.io/v1`.
 
-use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
 
 use crate::error::ManifestError;
 
@@ -229,4 +229,3 @@ impl WorkloadManifest {
         serde_json::to_string_pretty(self).map_err(|e| ManifestError::ParseError(e.to_string()))
     }
 }
-

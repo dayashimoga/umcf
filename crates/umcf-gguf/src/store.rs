@@ -685,9 +685,7 @@ impl ContentAddressedModelStore {
         let target_manifest_path = self.manifest_file_path(&model_id);
 
         if !target_model_path.exists() {
-            let temp_model_path = self
-                .staging_dir
-                .join(format!("{}.tmp", model_id.to_hex()));
+            let temp_model_path = self.staging_dir.join(format!("{}.tmp", model_id.to_hex()));
             fs::copy(path, &temp_model_path)?;
             fs::rename(temp_model_path, &target_model_path)?;
         }
@@ -793,11 +791,9 @@ impl ContentAddressedModelStore {
         let mut file = File::open(&model_path)?;
         file.seek(SeekFrom::Start(byte_range.offset))?;
 
-        let len = usize::try_from(byte_range.length).map_err(|_| {
-            StoreError::RangeOutOfBounds {
-                requested: byte_range,
-                total: manifest.total_size_bytes,
-            }
+        let len = usize::try_from(byte_range.length).map_err(|_| StoreError::RangeOutOfBounds {
+            requested: byte_range,
+            total: manifest.total_size_bytes,
         })?;
         let mut slice_buf = vec![0u8; len];
         file.read_exact(&mut slice_buf)?;

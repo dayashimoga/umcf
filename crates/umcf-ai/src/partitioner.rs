@@ -50,7 +50,10 @@ impl CandidateComputeNode {
         if self.is_on_battery && self.battery_percent < 20 {
             return false;
         }
-        if matches!(self.thermal_state, ThermalState::Serious | ThermalState::Critical) {
+        if matches!(
+            self.thermal_state,
+            ThermalState::Serious | ThermalState::Critical
+        ) {
             return false;
         }
         self.usable_memory_bytes > 0
@@ -174,8 +177,10 @@ impl DistributedLayerPartitioner {
         links: &NetworkLinkMatrix,
     ) -> Result<DistributedPartitionPlan, EngineError> {
         // 1. Filter eligible nodes
-        let eligible: Vec<&CandidateComputeNode> =
-            nodes.iter().filter(|n| n.is_eligible_for_compute()).collect();
+        let eligible: Vec<&CandidateComputeNode> = nodes
+            .iter()
+            .filter(|n| n.is_eligible_for_compute())
+            .collect();
 
         if eligible.is_empty() {
             return Err(EngineError::NoEligibleNodes {
@@ -355,9 +360,11 @@ impl DistributedLayerPartitioner {
                 let potential_head_weights = if is_end_of_model { head_weights } else { 0 };
                 let potential_head_scratch = if is_end_of_model { head_scratch } else { 0 };
 
-                let next_weights = stage_weights + block_weights[l as usize] + potential_head_weights;
+                let next_weights =
+                    stage_weights + block_weights[l as usize] + potential_head_weights;
                 let next_kv = stage_kv + block_kv[l as usize];
-                let next_scratch = stage_scratch + block_scratch[l as usize] + potential_head_scratch;
+                let next_scratch =
+                    stage_scratch + block_scratch[l as usize] + potential_head_scratch;
                 let next_total = next_weights + next_kv + next_scratch;
 
                 if next_total <= node.usable_memory_bytes || layers_assigned == 0 {
@@ -505,7 +512,10 @@ impl RebalanceDetector {
                     }
                 }
                 None => {
-                    return Some(format!("Node {} disappeared from mesh telemetry", stage.node_id));
+                    return Some(format!(
+                        "Node {} disappeared from mesh telemetry",
+                        stage.node_id
+                    ));
                 }
             }
         }

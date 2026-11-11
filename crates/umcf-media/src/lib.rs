@@ -20,9 +20,7 @@ pub use adapter::{
     TranscodeRequest,
 };
 pub use error::MediaError;
-pub use fault_recovery::{
-    JobCheckpoint, SegmentFaultRecoveryManager, SegmentLifecycleStatus,
-};
+pub use fault_recovery::{JobCheckpoint, SegmentFaultRecoveryManager, SegmentLifecycleStatus};
 pub use prober::{
     AccelerationBackend, CandidateCodec, CodecCapabilityDescriptor, CodecDirection,
     HardwareCodecProber, MediaCodecId, PixelFormat,

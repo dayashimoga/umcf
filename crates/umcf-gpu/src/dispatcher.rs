@@ -109,7 +109,9 @@ impl BoundedVramAllocator {
         buffer.data.fill(0);
         buffer.is_zero_scrubbed = true;
 
-        self.allocated_bytes = self.allocated_bytes.saturating_sub(buffer.size_bytes as u64);
+        self.allocated_bytes = self
+            .allocated_bytes
+            .saturating_sub(buffer.size_bytes as u64);
         Ok(())
     }
 
@@ -257,12 +259,14 @@ impl GpuComputeDispatcher {
 
         // 1. Verify required buffer bindings exist
         for sb in &shader.storage_buffers {
-            let buf_id = bindings
-                .storage_buffers
-                .get(&sb.binding)
-                .ok_or_else(|| GpuError::InvalidInput {
-                    reason: format!("missing binding for storage buffer '{}' at @binding({})", sb.name, sb.binding),
-                })?;
+            let buf_id = bindings.storage_buffers.get(&sb.binding).ok_or_else(|| {
+                GpuError::InvalidInput {
+                    reason: format!(
+                        "missing binding for storage buffer '{}' at @binding({})",
+                        sb.name, sb.binding
+                    ),
+                }
+            })?;
 
             if self.allocator.get_buffer(*buf_id).is_none() {
                 return Err(GpuError::BufferNotFound { buffer_id: *buf_id });
@@ -283,22 +287,29 @@ impl GpuComputeDispatcher {
             if shader.has_loop_fuel_watchdog {
                 loop_fuel_exhausted = true;
             } else {
-                return Err(GpuError::ShaderLoopFuelExhausted { max_iterations: 100_000 });
+                return Err(GpuError::ShaderLoopFuelExhausted {
+                    max_iterations: 100_000,
+                });
             }
         }
 
         // Execute computation on bound storage buffers
-        if let Some(&out_buf_id) = bindings.storage_buffers.get(&1).or_else(|| bindings.storage_buffers.get(&0)) {
+        if let Some(&out_buf_id) = bindings
+            .storage_buffers
+            .get(&1)
+            .or_else(|| bindings.storage_buffers.get(&0))
+        {
             // Read input buffer data first if separate from output buffer to avoid aliased borrows
-            let in_buf_data: Option<Vec<u8>> = if let Some(&in_buf_id) = bindings.storage_buffers.get(&0) {
-                if in_buf_id != out_buf_id {
-                    self.allocator.get_buffer(in_buf_id).map(|b| b.data.clone())
+            let in_buf_data: Option<Vec<u8>> =
+                if let Some(&in_buf_id) = bindings.storage_buffers.get(&0) {
+                    if in_buf_id != out_buf_id {
+                        self.allocator.get_buffer(in_buf_id).map(|b| b.data.clone())
+                    } else {
+                        None
+                    }
                 } else {
                     None
-                }
-            } else {
-                None
-            };
+                };
 
             let buffer = self.allocator.get_mut_buffer_or_fail(out_buf_id)?;
 
@@ -306,7 +317,9 @@ impl GpuComputeDispatcher {
             let elem_count = buffer.size_bytes / 4;
             for i in 0..elem_count {
                 // BoundsCheckPolicy enforcement
-                if shader.bounds_policy == BoundsCheckPolicy::ReadZeroSkipWrite && i * 4 >= buffer.size_bytes {
+                if shader.bounds_policy == BoundsCheckPolicy::ReadZeroSkipWrite
+                    && i * 4 >= buffer.size_bytes
+                {
                     // Out-of-bounds write skipped
                     continue;
                 }
@@ -314,7 +327,12 @@ impl GpuComputeDispatcher {
                 // If input buffer 0 is bound, compute with it
                 let in_val = if let Some(ref data) = in_buf_data {
                     if (i + 1) * 4 <= data.len() {
-                        f32::from_le_bytes([data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]])
+                        f32::from_le_bytes([
+                            data[i * 4],
+                            data[i * 4 + 1],
+                            data[i * 4 + 2],
+                            data[i * 4 + 3],
+                        ])
                     } else {
                         // ReadZero policy on OOB
                         0.0f32
@@ -345,7 +363,9 @@ impl GpuComputeDispatcher {
         };
 
         if loop_fuel_exhausted {
-            return Err(GpuError::ShaderLoopFuelExhausted { max_iterations: 100_000 });
+            return Err(GpuError::ShaderLoopFuelExhausted {
+                max_iterations: 100_000,
+            });
         }
 
         Ok(ComputeExecutionReceipt {

@@ -9,7 +9,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum A11yError {
-    #[error("WCAG 2.1 AA Contrast Ratio Violation: required {required:.2}, measured {measured:.2}")]
+    #[error(
+        "WCAG 2.1 AA Contrast Ratio Violation: required {required:.2}, measured {measured:.2}"
+    )]
     ContrastViolation { required: f64, measured: f64 },
 
     #[error("I18n Key Parity Mismatch: locale '{locale}' is missing keys: {missing:?}")]
@@ -221,12 +223,12 @@ impl I18nCatalogVerifier {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FormFactorViewport {
-    SmallMobilePortrait, // 360x640
+    SmallMobilePortrait,  // 360x640
     LargeMobileLandscape, // 896x414
-    FoldableInner,       // 673x841
-    Tablet,              // 1024x768
-    StandardDesktop,     // 1440x900
-    Ultrawide4K,         // 3840x1600
+    FoldableInner,        // 673x841
+    Tablet,               // 1024x768
+    StandardDesktop,      // 1440x900
+    Ultrawide4K,          // 3840x1600
 }
 
 impl FormFactorViewport {
@@ -266,7 +268,8 @@ impl ResponsiveLayoutAuditor {
     ) -> Result<u32, A11yError> {
         let (width, _) = viewport.dimensions();
         // Scale min_width proportionally with text scaling
-        let scaled_card_width = (card_min_width as f64 * (scale_percent as f64 / 100.0)).round() as u32;
+        let scaled_card_width =
+            (card_min_width as f64 * (scale_percent as f64 / 100.0)).round() as u32;
 
         // In responsive layout:
         // On narrow viewports (< 600px), cards expand to 100% width minus padding (e.g. 32px)

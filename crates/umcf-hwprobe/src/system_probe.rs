@@ -84,7 +84,11 @@ impl SystemProber {
 
         // 4. Determine OS & DeviceClass
         let os = Self::detect_operating_system();
-        let device_class = Self::infer_device_class(os, power_thermal.battery_percent.is_some(), cpu.physical_cores);
+        let device_class = Self::infer_device_class(
+            os,
+            power_thermal.battery_percent.is_some(),
+            cpu.physical_cores,
+        );
 
         // 5. Build Accelerator Entries (Discrete/Integrated GPUs, NPUs, CPU SIMD)
         let accelerators = crate::accelerator_probe::AcceleratorProber::enumerate()?;

@@ -19,20 +19,11 @@ pub enum SoakError {
     },
 
     #[error("Handle count anomaly: expected <= {expected}, observed {actual}")]
-    HandleCountAnomaly {
-        expected: usize,
-        actual: usize,
-    },
+    HandleCountAnomaly { expected: usize, actual: usize },
 
     #[error("Soak cycle {cycle} execution failed: {reason}")]
-    SoakCycleFailed {
-        cycle: usize,
-        reason: String,
-    },
+    SoakCycleFailed { cycle: usize, reason: String },
 
     #[error("OLS regression calculation error: {reason}")]
-    RegressionError {
-        reason: String,
-    },
+    RegressionError { reason: String },
 }
-

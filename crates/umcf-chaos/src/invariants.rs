@@ -1,7 +1,7 @@
 //! Continuous Invariant Monitor verifying safety and liveness during chaos campaigns.
 
-use std::collections::{HashMap, HashSet};
 use crate::error::ChaosError;
+use std::collections::{HashMap, HashSet};
 
 /// Cluster Invariant Monitor.
 #[derive(Debug, Clone, Default)]
@@ -54,7 +54,11 @@ impl ClusterInvariantMonitor {
         }
 
         // Compare all views to the first view
-        let first_view: HashSet<_> = node_views.values().next().map(|v| v.iter().cloned().collect()).unwrap_or_default();
+        let first_view: HashSet<_> = node_views
+            .values()
+            .next()
+            .map(|v| v.iter().cloned().collect())
+            .unwrap_or_default();
         for (node, view) in node_views {
             let current_view: HashSet<_> = view.iter().cloned().collect();
             if current_view != first_view {
@@ -134,4 +138,3 @@ impl ClusterInvariantMonitor {
         Ok(())
     }
 }
-

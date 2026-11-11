@@ -116,4 +116,3 @@ Register-ArgumentCompleter -Native -CommandName umcf -ScriptBlock {
 "#
     .to_string()
 }
-

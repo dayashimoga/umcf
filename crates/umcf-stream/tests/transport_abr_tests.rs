@@ -42,7 +42,9 @@ fn test_mtu_packetizer_and_reed_solomon_fec_shard_reconstruction() {
         payload_annexb: payload_bytes,
     };
 
-    let packets = packetizer.packetize_frame(&meta, 12_500).expect("packetize");
+    let packets = packetizer
+        .packetize_frame(&meta, 12_500)
+        .expect("packetize");
     assert!(!packets.is_empty());
 
     // Verify all datagrams adhere to MTU limit (< 1200 bytes)
@@ -71,7 +73,10 @@ fn test_mtu_packetizer_and_reed_solomon_fec_shard_reconstruction() {
         }
     }
 
-    assert!(reassembled_frame.is_some(), "FEC must reconstruct frame despite dropped shard");
+    assert!(
+        reassembled_frame.is_some(),
+        "FEC must reconstruct frame despite dropped shard"
+    );
     let reassembled = reassembled_frame.unwrap();
     assert!(reassembled.len() >= frame_bytes);
     assert_eq!(&reassembled[0..5], &[0, 0, 0, 1, 0x67]);
@@ -99,7 +104,10 @@ fn test_delay_gradient_kalman_filter_detects_bufferbloat_before_loss() {
 
     // Must trigger PreemptiveBackoff before packet loss occurs!
     assert_eq!(state, AbrState::PreemptiveBackoff);
-    assert!(bitrate < 11_000, "bitrate must decrease by 20% on backoff, got {bitrate}");
+    assert!(
+        bitrate < 11_000,
+        "bitrate must decrease by 20% on backoff, got {bitrate}"
+    );
 }
 
 /// [UNIT] Test ABR state machine bitrate backoff and resolution downshift.
@@ -118,7 +126,10 @@ fn test_abr_state_machine_bitrate_backoff_and_resolution_downshift() {
     let (bitrate2, res2, state2) = abr.on_packet_feedback(2000, 4000, 0.10, 200);
     assert!(bitrate2 < 3500);
     assert_eq!(state2, AbrState::ResolutionDownshift);
-    assert_eq!(res2.height, 720, "must step down to 720p60 when bitrate < 3.5 Mbps");
+    assert_eq!(
+        res2.height, 720,
+        "must step down to 720p60 when bitrate < 3.5 Mbps"
+    );
 
     // Clean stable headroom for 5.0 seconds (50 samples @ 100ms)
     let mut current_res = res2;
@@ -128,7 +139,10 @@ fn test_abr_state_machine_bitrate_backoff_and_resolution_downshift() {
         current_res = res;
     }
 
-    assert_eq!(current_res.height, 1080, "resolution must restore to 1080p after 5s stable headroom");
+    assert_eq!(
+        current_res.height, 1080,
+        "resolution must restore to 1080p after 5s stable headroom"
+    );
 }
 
 /// [UNIT] Test PLI throttling and NACK selection by RTT.
@@ -189,7 +203,9 @@ fn test_end_to_end_barcode_timestamp_glass_to_glass_latency_under_25ms() {
         let encoded = encoder.encode_frame(&frame).expect("encode");
 
         // 3. Packetize datagrams + FEC
-        let packets = packetizer.packetize_frame(&encoded, frame.timestamp_us).expect("packetize");
+        let packets = packetizer
+            .packetize_frame(&encoded, frame.timestamp_us)
+            .expect("packetize");
 
         // 4. Transport datagrams into Jitter Buffer
         let mut reassembled = None;
@@ -233,7 +249,9 @@ fn test_live_stream_under_5_percent_packet_loss_fec_recovery() {
     for seq in 0..total_frames {
         let frame = capturer.capture_frame().expect("capture");
         let encoded = encoder.encode_frame(&frame).expect("encode");
-        let packets = packetizer.packetize_frame(&encoded, seq * 16_666).expect("packetize");
+        let packets = packetizer
+            .packetize_frame(&encoded, seq * 16_666)
+            .expect("packetize");
 
         let mut delivered = Vec::new();
         for (i, p) in packets.into_iter().enumerate() {
@@ -273,24 +291,48 @@ fn test_simulation_gilbert_elliott_bursty_wifi_loss_and_abr_bandwidth_shaping() 
 
     // Step 1: 25 Mbps high bandwidth
     for i in 0..20 {
-        let (bitrate, _, _) = abr.on_packet_feedback((i as u64) * 50_000, (i as u64) * 50_000 + 4000, 0.001, (i as u64) * 50);
+        let (bitrate, _, _) = abr.on_packet_feedback(
+            (i as u64) * 50_000,
+            (i as u64) * 50_000 + 4000,
+            0.001,
+            (i as u64) * 50,
+        );
         assert!(bitrate >= 20000);
     }
 
     // Step 2: Sudden bandwidth drop to 5 Mbps (queuing delay spikes by +10 ms)
     let mut low_bitrate = 0;
     for i in 20..30 {
-        let (bitrate, _, state) = abr.on_packet_feedback((i as u64) * 50_000, (i as u64) * 50_000 + 14000, 0.04, (i as u64) * 50);
+        let (bitrate, _, state) = abr.on_packet_feedback(
+            (i as u64) * 50_000,
+            (i as u64) * 50_000 + 14000,
+            0.04,
+            (i as u64) * 50,
+        );
         low_bitrate = bitrate;
-        assert!(matches!(state, AbrState::PreemptiveBackoff | AbrState::ResolutionDownshift | AbrState::Hold));
+        assert!(matches!(
+            state,
+            AbrState::PreemptiveBackoff | AbrState::ResolutionDownshift | AbrState::Hold
+        ));
     }
-    assert!(low_bitrate <= 5000, "ABR must adapt down to <= 5.0 Mbps, got {low_bitrate} kbps");
+    assert!(
+        low_bitrate <= 5000,
+        "ABR must adapt down to <= 5.0 Mbps, got {low_bitrate} kbps"
+    );
 
     // Step 3: Link recovers to 15 Mbps
     for i in 30..80 {
-        let _ = abr.on_packet_feedback((i as u64) * 50_000, (i as u64) * 50_000 + 4000, 0.0, (i as u64) * 50);
+        let _ = abr.on_packet_feedback(
+            (i as u64) * 50_000,
+            (i as u64) * 50_000 + 4000,
+            0.0,
+            (i as u64) * 50,
+        );
     }
-    assert!(abr.current_bitrate_kbps > low_bitrate, "ABR must ramp back up after link recovery");
+    assert!(
+        abr.current_bitrate_kbps > low_bitrate,
+        "ABR must ramp back up after link recovery"
+    );
 }
 
 /// [HW] Hardware/LAN streaming latency percentiles (P50/P95/P99).

@@ -391,7 +391,8 @@ impl ClusterRegistryState {
             let node_id = &remote_cap.node_id;
             match self.capabilities.get(node_id) {
                 None => {
-                    self.capabilities.insert(node_id.clone(), remote_cap.clone());
+                    self.capabilities
+                        .insert(node_id.clone(), remote_cap.clone());
                     summary.capabilities_updated += 1;
                 }
                 Some(existing) => {

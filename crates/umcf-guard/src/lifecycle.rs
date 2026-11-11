@@ -8,7 +8,9 @@ use tokio::sync::broadcast;
 use umcf_enrollment::ResourceConsentPolicy;
 
 /// Operational compute regimes enforced by the thermal and battery guard.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, Default)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, Default,
+)]
 pub enum GuardRegime {
     /// Normal operation: temperature < 38°C, battery >= min_battery_percent, power compliant.
     #[default]
@@ -204,35 +206,52 @@ impl ThermalBatteryGuard {
         // 1. Check Emergency Evacuate (>= 44°C)
         if temp >= self.config.emergency_temp_celsius {
             next_regime = GuardRegime::EmergencyEvict;
-            reason = format!("Temperature {temp:.1}°C >= critical limit {:.1}°C", self.config.emergency_temp_celsius);
+            reason = format!(
+                "Temperature {temp:.1}°C >= critical limit {:.1}°C",
+                self.config.emergency_temp_celsius
+            );
         }
         // 2. Check Paused (>= 41°C, low battery, or unplugged when charging required)
         else if temp >= self.config.pause_temp_celsius {
             next_regime = GuardRegime::PausedWaitCoolOrCharge;
-            reason = format!("Temperature {temp:.1}°C >= pause limit {:.1}°C", self.config.pause_temp_celsius);
+            reason = format!(
+                "Temperature {temp:.1}°C >= pause limit {:.1}°C",
+                self.config.pause_temp_celsius
+            );
         } else if self.require_charging && !is_charging {
             next_regime = GuardRegime::PausedWaitCoolOrCharge;
-            reason = "Device unplugged from AC wall power while policy requires charging".to_string();
+            reason =
+                "Device unplugged from AC wall power while policy requires charging".to_string();
         } else if battery < self.min_battery_percent {
             next_regime = GuardRegime::PausedWaitCoolOrCharge;
-            reason = format!("Battery {battery}% < minimum floor {}%", self.min_battery_percent);
+            reason = format!(
+                "Battery {battery}% < minimum floor {}%",
+                self.min_battery_percent
+            );
         }
         // 3. Regimes under hysteresis evaluation
         else {
             match prev_regime {
                 GuardRegime::EmergencyEvict => {
                     // Must cool down below pause_temp_celsius - cooling_deadband (e.g. 41 - 3 = 38°C)
-                    let resume_threshold = self.config.pause_temp_celsius - self.config.cooling_deadband_celsius;
+                    let resume_threshold =
+                        self.config.pause_temp_celsius - self.config.cooling_deadband_celsius;
                     if temp <= resume_threshold {
                         next_regime = GuardRegime::Throttled50;
-                        reason = format!("Cooled to {temp:.1}°C <= {:.1}°C after emergency evict", resume_threshold);
+                        reason = format!(
+                            "Cooled to {temp:.1}°C <= {:.1}°C after emergency evict",
+                            resume_threshold
+                        );
                     }
                 }
                 GuardRegime::PausedWaitCoolOrCharge => {
                     // Thermal recovery requires temp <= pause_temp - cooling_deadband (e.g. 41 - 3 = 38°C)
-                    let resume_temp = self.config.pause_temp_celsius - self.config.cooling_deadband_celsius;
+                    let resume_temp =
+                        self.config.pause_temp_celsius - self.config.cooling_deadband_celsius;
                     // Battery recovery requires battery >= min_battery + deadband (e.g. 20 + 3 = 23%)
-                    let resume_bat = self.min_battery_percent.saturating_add(self.config.battery_recharge_deadband_percent);
+                    let resume_bat = self
+                        .min_battery_percent
+                        .saturating_add(self.config.battery_recharge_deadband_percent);
 
                     let temp_recovered = temp <= resume_temp;
                     let power_recovered = !self.require_charging || is_charging;
@@ -241,10 +260,12 @@ impl ThermalBatteryGuard {
                     if temp_recovered && power_recovered && battery_recovered {
                         if temp < self.config.throttle_temp_celsius {
                             next_regime = GuardRegime::FullCapacity;
-                            reason = format!("Cooled to {temp:.1}°C and battery recharged to {battery}%", );
+                            reason = format!(
+                                "Cooled to {temp:.1}°C and battery recharged to {battery}%",
+                            );
                         } else {
                             next_regime = GuardRegime::Throttled50;
-                            reason = format!("Cooled to {temp:.1}°C; operating in Throttled50", );
+                            reason = format!("Cooled to {temp:.1}°C; operating in Throttled50",);
                         }
                     }
                 }
@@ -259,7 +280,10 @@ impl ThermalBatteryGuard {
                 GuardRegime::FullCapacity => {
                     if temp >= self.config.throttle_temp_celsius {
                         next_regime = GuardRegime::Throttled50;
-                        reason = format!("Temperature {temp:.1}°C >= throttle limit {:.1}°C", self.config.throttle_temp_celsius);
+                        reason = format!(
+                            "Temperature {temp:.1}°C >= throttle limit {:.1}°C",
+                            self.config.throttle_temp_celsius
+                        );
                     }
                 }
             }
@@ -287,10 +311,14 @@ impl ThermalBatteryGuard {
                     let _ = self.event_tx.send(NodeGuardEvent::ResumeWorkload);
                 }
                 GuardRegime::Throttled50 => {
-                    let _ = self.event_tx.send(NodeGuardEvent::ThrottleWorkload { throttle_percent: 50 });
+                    let _ = self.event_tx.send(NodeGuardEvent::ThrottleWorkload {
+                        throttle_percent: 50,
+                    });
                 }
                 GuardRegime::PausedWaitCoolOrCharge => {
-                    let _ = self.event_tx.send(NodeGuardEvent::SuspendWorkload { reason: reason.clone() });
+                    let _ = self.event_tx.send(NodeGuardEvent::SuspendWorkload {
+                        reason: reason.clone(),
+                    });
                 }
                 GuardRegime::EmergencyEvict => {
                     let _ = self.event_tx.send(NodeGuardEvent::EvacuateNode {
@@ -324,7 +352,9 @@ impl ThermalBatteryGuard {
             OsLifecycleSignal::TrimMemory(level) => match level {
                 TrimMemoryLevel::RunningCritical | TrimMemoryLevel::Complete => {
                     next_regime = GuardRegime::EmergencyEvict;
-                    reason = format!("OS onTrimMemory({level:?}) critical memory reclaim signal received");
+                    reason = format!(
+                        "OS onTrimMemory({level:?}) critical memory reclaim signal received"
+                    );
                 }
                 TrimMemoryLevel::RunningLow => {
                     if prev_regime == GuardRegime::FullCapacity {
@@ -379,7 +409,9 @@ impl ThermalBatteryGuard {
                     deadline_ms: 100,
                 });
             } else if next_regime == GuardRegime::PausedWaitCoolOrCharge {
-                let _ = self.event_tx.send(NodeGuardEvent::SuspendWorkload { reason: reason.clone() });
+                let _ = self.event_tx.send(NodeGuardEvent::SuspendWorkload {
+                    reason: reason.clone(),
+                });
             }
         }
 

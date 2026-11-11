@@ -319,8 +319,8 @@ impl ElectionCoordinator {
         }
 
         // 3. Grant vote if haven't voted yet or already voted for this candidate
-        let can_vote = self.voted_for.is_none()
-            || self.voted_for.as_deref() == Some(&req.candidate_did);
+        let can_vote =
+            self.voted_for.is_none() || self.voted_for.as_deref() == Some(&req.candidate_did);
 
         if can_vote {
             // If the local node is also an active Candidate, compare fitness to decide whether to yield

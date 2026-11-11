@@ -268,199 +268,221 @@ impl InputEventPacket {
             return Err(StreamError::TransportError("input packet too short".into()));
         }
 
-        let seq_no = u64::from_le_bytes(slice[0..8].try_into().map_err(|_| {
-            StreamError::TransportError("slice bounds mismatch".into())
-        })?);
-        let client_timestamp_us = u64::from_le_bytes(slice[8..16].try_into().map_err(|_| {
-            StreamError::TransportError("slice bounds mismatch".into())
-        })?);
+        let seq_no = u64::from_le_bytes(
+            slice[0..8]
+                .try_into()
+                .map_err(|_| StreamError::TransportError("slice bounds mismatch".into()))?,
+        );
+        let client_timestamp_us = u64::from_le_bytes(
+            slice[8..16]
+                .try_into()
+                .map_err(|_| StreamError::TransportError("slice bounds mismatch".into()))?,
+        );
         let event_type = slice[16];
         let payload = &slice[17..];
 
-        let event = match event_type {
-            1 => {
-                if payload.len() < 6 {
-                    return Err(StreamError::TransportError("invalid keyboard payload".into()));
+        let event =
+            match event_type {
+                1 => {
+                    if payload.len() < 6 {
+                        return Err(StreamError::TransportError(
+                            "invalid keyboard payload".into(),
+                        ));
+                    }
+                    let scancode = u16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let hid_usage = u16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let pressed = payload[4] != 0;
+                    let modifiers = payload[5];
+                    InputEvent::Keyboard {
+                        scancode,
+                        hid_usage,
+                        pressed,
+                        modifiers,
+                    }
                 }
-                let scancode = u16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let hid_usage = u16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let pressed = payload[4] != 0;
-                let modifiers = payload[5];
-                InputEvent::Keyboard {
-                    scancode,
-                    hid_usage,
-                    pressed,
-                    modifiers,
+                2 => {
+                    if payload.len() < 6 {
+                        return Err(StreamError::TransportError(
+                            "invalid mouse rel payload".into(),
+                        ));
+                    }
+                    let dx = i16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let dy = i16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let subpixel_dx = payload[4] as i8;
+                    let subpixel_dy = payload[5] as i8;
+                    InputEvent::MouseMoveRelative {
+                        dx,
+                        dy,
+                        subpixel_dx,
+                        subpixel_dy,
+                    }
                 }
-            }
-            2 => {
-                if payload.len() < 6 {
-                    return Err(StreamError::TransportError("invalid mouse rel payload".into()));
+                3 => {
+                    if payload.len() < 5 {
+                        return Err(StreamError::TransportError(
+                            "invalid mouse abs payload".into(),
+                        ));
+                    }
+                    let norm_x = u16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let norm_y = u16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let display_id = payload[4];
+                    InputEvent::MouseMoveAbsolute {
+                        norm_x,
+                        norm_y,
+                        display_id,
+                    }
                 }
-                let dx = i16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let dy = i16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let subpixel_dx = payload[4] as i8;
-                let subpixel_dy = payload[5] as i8;
-                InputEvent::MouseMoveRelative {
-                    dx,
-                    dy,
-                    subpixel_dx,
-                    subpixel_dy,
+                4 => {
+                    if payload.len() < 2 {
+                        return Err(StreamError::TransportError(
+                            "invalid mouse button payload".into(),
+                        ));
+                    }
+                    let button = payload[0];
+                    let pressed = payload[1] != 0;
+                    InputEvent::MouseButton { button, pressed }
                 }
-            }
-            3 => {
-                if payload.len() < 5 {
-                    return Err(StreamError::TransportError("invalid mouse abs payload".into()));
+                5 => {
+                    if payload.len() < 4 {
+                        return Err(StreamError::TransportError(
+                            "invalid mouse scroll payload".into(),
+                        ));
+                    }
+                    let wheel_x = i16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let wheel_y = i16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    InputEvent::MouseScroll { wheel_x, wheel_y }
                 }
-                let norm_x = u16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let norm_y = u16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let display_id = payload[4];
-                InputEvent::MouseMoveAbsolute {
-                    norm_x,
-                    norm_y,
-                    display_id,
+                6 => {
+                    if payload.len() < 10 {
+                        return Err(StreamError::TransportError("invalid touch payload".into()));
+                    }
+                    let pointer_id = payload[0];
+                    let phase = TouchPhase::from_u8(payload[1])
+                        .ok_or_else(|| StreamError::TransportError("invalid touch phase".into()))?;
+                    let norm_x = u16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let norm_y = u16::from_le_bytes(payload[4..6].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let pressure = u16::from_le_bytes(payload[6..8].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let radius = u16::from_le_bytes(payload[8..10].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    InputEvent::TouchEvent {
+                        pointer_id,
+                        phase,
+                        norm_x,
+                        norm_y,
+                        pressure,
+                        radius,
+                    }
                 }
-            }
-            4 => {
-                if payload.len() < 2 {
-                    return Err(StreamError::TransportError("invalid mouse button payload".into()));
+                7 => {
+                    if payload.len() < 14 {
+                        return Err(StreamError::TransportError("invalid stylus payload".into()));
+                    }
+                    let phase = StylusPhase::from_u8(payload[0]).ok_or_else(|| {
+                        StreamError::TransportError("invalid stylus phase".into())
+                    })?;
+                    let norm_x = u16::from_le_bytes(payload[1..3].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let norm_y = u16::from_le_bytes(payload[3..5].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let pressure = u16::from_le_bytes(payload[5..7].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let tilt_x = i16::from_le_bytes(payload[7..9].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let tilt_y = i16::from_le_bytes(payload[9..11].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let twist = u16::from_le_bytes(payload[11..13].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let flags = payload[13];
+                    let barrel_button = (flags & 0x01) != 0;
+                    let eraser = (flags & 0x02) != 0;
+                    InputEvent::StylusEvent {
+                        phase,
+                        norm_x,
+                        norm_y,
+                        pressure,
+                        tilt_x,
+                        tilt_y,
+                        twist,
+                        barrel_button,
+                        eraser,
+                    }
                 }
-                let button = payload[0];
-                let pressed = payload[1] != 0;
-                InputEvent::MouseButton { button, pressed }
-            }
-            5 => {
-                if payload.len() < 4 {
-                    return Err(StreamError::TransportError("invalid mouse scroll payload".into()));
+                8 => {
+                    if payload.len() < 17 {
+                        return Err(StreamError::TransportError(
+                            "invalid gamepad payload".into(),
+                        ));
+                    }
+                    let controller_idx = payload[0];
+                    let buttons_bitmask =
+                        u32::from_le_bytes(payload[1..5].try_into().map_err(|_| {
+                            StreamError::TransportError("slice bounds mismatch".into())
+                        })?);
+                    let stick_lx = i16::from_le_bytes(payload[5..7].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let stick_ly = i16::from_le_bytes(payload[7..9].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let stick_rx = i16::from_le_bytes(payload[9..11].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                    let stick_ry =
+                        i16::from_le_bytes(payload[11..13].try_into().map_err(|_| {
+                            StreamError::TransportError("slice bounds mismatch".into())
+                        })?);
+                    let left_trigger =
+                        u16::from_le_bytes(payload[13..15].try_into().map_err(|_| {
+                            StreamError::TransportError("slice bounds mismatch".into())
+                        })?);
+                    let right_trigger =
+                        u16::from_le_bytes(payload[15..17].try_into().map_err(|_| {
+                            StreamError::TransportError("slice bounds mismatch".into())
+                        })?);
+                    InputEvent::GamepadState {
+                        controller_idx,
+                        buttons_bitmask,
+                        left_stick: (stick_lx, stick_ly),
+                        right_stick: (stick_rx, stick_ry),
+                        left_trigger,
+                        right_trigger,
+                    }
                 }
-                let wheel_x = i16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let wheel_y = i16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                InputEvent::MouseScroll { wheel_x, wheel_y }
-            }
-            6 => {
-                if payload.len() < 10 {
-                    return Err(StreamError::TransportError("invalid touch payload".into()));
+                other => {
+                    return Err(StreamError::TransportError(format!(
+                        "unknown input event type {other}"
+                    )));
                 }
-                let pointer_id = payload[0];
-                let phase = TouchPhase::from_u8(payload[1])
-                    .ok_or_else(|| StreamError::TransportError("invalid touch phase".into()))?;
-                let norm_x = u16::from_le_bytes(payload[2..4].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let norm_y = u16::from_le_bytes(payload[4..6].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let pressure = u16::from_le_bytes(payload[6..8].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let radius = u16::from_le_bytes(payload[8..10].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                InputEvent::TouchEvent {
-                    pointer_id,
-                    phase,
-                    norm_x,
-                    norm_y,
-                    pressure,
-                    radius,
-                }
-            }
-            7 => {
-                if payload.len() < 14 {
-                    return Err(StreamError::TransportError("invalid stylus payload".into()));
-                }
-                let phase = StylusPhase::from_u8(payload[0])
-                    .ok_or_else(|| StreamError::TransportError("invalid stylus phase".into()))?;
-                let norm_x = u16::from_le_bytes(payload[1..3].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let norm_y = u16::from_le_bytes(payload[3..5].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let pressure = u16::from_le_bytes(payload[5..7].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let tilt_x = i16::from_le_bytes(payload[7..9].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let tilt_y = i16::from_le_bytes(payload[9..11].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let twist = u16::from_le_bytes(payload[11..13].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let flags = payload[13];
-                let barrel_button = (flags & 0x01) != 0;
-                let eraser = (flags & 0x02) != 0;
-                InputEvent::StylusEvent {
-                    phase,
-                    norm_x,
-                    norm_y,
-                    pressure,
-                    tilt_x,
-                    tilt_y,
-                    twist,
-                    barrel_button,
-                    eraser,
-                }
-            }
-            8 => {
-                if payload.len() < 17 {
-                    return Err(StreamError::TransportError("invalid gamepad payload".into()));
-                }
-                let controller_idx = payload[0];
-                let buttons_bitmask = u32::from_le_bytes(payload[1..5].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let stick_lx = i16::from_le_bytes(payload[5..7].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let stick_ly = i16::from_le_bytes(payload[7..9].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let stick_rx = i16::from_le_bytes(payload[9..11].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let stick_ry = i16::from_le_bytes(payload[11..13].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let left_trigger = u16::from_le_bytes(payload[13..15].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let right_trigger = u16::from_le_bytes(payload[15..17].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                InputEvent::GamepadState {
-                    controller_idx,
-                    buttons_bitmask,
-                    left_stick: (stick_lx, stick_ly),
-                    right_stick: (stick_rx, stick_ry),
-                    left_trigger,
-                    right_trigger,
-                }
-            }
-            other => {
-                return Err(StreamError::TransportError(format!(
-                    "unknown input event type {other}"
-                )));
-            }
-        };
+            };
 
         Ok(Self {
             seq_no,
@@ -544,21 +566,26 @@ impl HostFeedbackEvent {
                     return Err(StreamError::TransportError("invalid rumble payload".into()));
                 }
                 let controller_idx = payload[0];
-                let low_freq_motor = u16::from_le_bytes(payload[1..3].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let high_freq_motor = u16::from_le_bytes(payload[3..5].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let left_trigger_motor = u16::from_le_bytes(payload[5..7].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let right_trigger_motor = u16::from_le_bytes(payload[7..9].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let duration_ms = u16::from_le_bytes(payload[9..11].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
+                let low_freq_motor =
+                    u16::from_le_bytes(payload[1..3].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                let high_freq_motor =
+                    u16::from_le_bytes(payload[3..5].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                let left_trigger_motor =
+                    u16::from_le_bytes(payload[5..7].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                let right_trigger_motor =
+                    u16::from_le_bytes(payload[7..9].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                let duration_ms =
+                    u16::from_le_bytes(payload[9..11].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
                 Ok(Self::GamepadRumble {
                     controller_idx,
                     low_freq_motor,
@@ -574,12 +601,14 @@ impl HostFeedbackEvent {
                 }
                 let shape = CursorShapeType::from_u8(payload[0])
                     .ok_or_else(|| StreamError::TransportError("invalid cursor shape".into()))?;
-                let hotspot_x = u16::from_le_bytes(payload[1..3].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
-                let hotspot_y = u16::from_le_bytes(payload[3..5].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?);
+                let hotspot_x =
+                    u16::from_le_bytes(payload[1..3].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
+                let hotspot_y =
+                    u16::from_le_bytes(payload[3..5].try_into().map_err(|_| {
+                        StreamError::TransportError("slice bounds mismatch".into())
+                    })?);
                 Ok(Self::CursorShapeUpdate {
                     shape,
                     hotspot: (hotspot_x, hotspot_y),
@@ -587,23 +616,33 @@ impl HostFeedbackEvent {
             }
             3 => {
                 if payload.len() < 6 {
-                    return Err(StreamError::TransportError("invalid clipboard payload".into()));
+                    return Err(StreamError::TransportError(
+                        "invalid clipboard payload".into(),
+                    ));
                 }
-                let mime_len = u16::from_le_bytes(payload[0..2].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?) as usize;
+                let mime_len = u16::from_le_bytes(
+                    payload[0..2]
+                        .try_into()
+                        .map_err(|_| StreamError::TransportError("slice bounds mismatch".into()))?,
+                ) as usize;
                 if payload.len() < 2 + mime_len + 4 {
-                    return Err(StreamError::TransportError("truncated clipboard mime".into()));
+                    return Err(StreamError::TransportError(
+                        "truncated clipboard mime".into(),
+                    ));
                 }
                 let mime_type = std::str::from_utf8(&payload[2..2 + mime_len])
                     .map_err(|e| StreamError::TransportError(e.to_string()))?
                     .to_string();
                 let rest = &payload[2 + mime_len..];
-                let payload_len = u32::from_le_bytes(rest[0..4].try_into().map_err(|_| {
-                    StreamError::TransportError("slice bounds mismatch".into())
-                })?) as usize;
+                let payload_len = u32::from_le_bytes(
+                    rest[0..4]
+                        .try_into()
+                        .map_err(|_| StreamError::TransportError("slice bounds mismatch".into()))?,
+                ) as usize;
                 if rest.len() < 4 + payload_len {
-                    return Err(StreamError::TransportError("truncated clipboard data".into()));
+                    return Err(StreamError::TransportError(
+                        "truncated clipboard data".into(),
+                    ));
                 }
                 let clip_data = rest[4..4 + payload_len].to_vec();
                 Ok(Self::ClipboardSync {

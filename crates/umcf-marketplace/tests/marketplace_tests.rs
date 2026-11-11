@@ -54,7 +54,13 @@ fn test_double_entry_journal_rejects_unbalanced_legs_and_negative_balances() {
     };
     let err = ledger.commit_transaction(unbalanced_tx).unwrap_err();
     assert!(
-        matches!(err, LedgerError::UnbalancedTransaction { debits: 100, credits: 90 }),
+        matches!(
+            err,
+            LedgerError::UnbalancedTransaction {
+                debits: 100,
+                credits: 90
+            }
+        ),
         "Expected UnbalancedTransaction error, got {err:?}"
     );
 
@@ -75,8 +81,13 @@ fn test_double_entry_journal_rejects_unbalanced_legs_and_negative_balances() {
     );
 
     // 3. Mint funds to Alice, then balanced transfer succeeds
-    ledger.mint_initial_credits("alice", 1_000_000, "Seed alice").unwrap();
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance("alice".to_string())), 1_000_000);
+    ledger
+        .mint_initial_credits("alice", 1_000_000, "Seed alice")
+        .unwrap();
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance("alice".to_string())),
+        1_000_000
+    );
 
     let valid_tx = LedgerTransaction {
         tx_id: "tx-valid".to_string(),
@@ -89,8 +100,14 @@ fn test_double_entry_journal_rejects_unbalanced_legs_and_negative_balances() {
     };
     ledger.commit_transaction(valid_tx).unwrap();
 
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance("alice".to_string())), 600_000);
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance("bob".to_string())), 400_000);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance("alice".to_string())),
+        600_000
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance("bob".to_string())),
+        400_000
+    );
     assert!(ledger.verify_global_zero_sum_invariant());
 }
 
@@ -105,12 +122,22 @@ fn test_escrow_lock_partial_receipt_settlement_and_unused_refund_exact_math() {
     let job_id = "job-42";
 
     // Mint 10 UMCF (10,000,000 micro-credits)
-    ledger.mint_initial_credits(requester, 10_000_000, "Initial seed").unwrap();
+    ledger
+        .mint_initial_credits(requester, 10_000_000, "Initial seed")
+        .unwrap();
 
     // Lock 6 UMCF escrow for job-42
-    ledger.lock_job_escrow(requester, job_id, 6_000_000).unwrap();
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(requester.to_string())), 4_000_000);
-    assert_eq!(ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())), 6_000_000);
+    ledger
+        .lock_job_escrow(requester, job_id, 6_000_000)
+        .unwrap();
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(requester.to_string())),
+        4_000_000
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())),
+        6_000_000
+    );
 
     // Create a verified receipt for 2.5 UMCF of compute
     let output_data = b"compute results";
@@ -130,7 +157,7 @@ fn test_escrow_lock_partial_receipt_settlement_and_unused_refund_exact_math() {
                 gpu_compute_time_us: 400_000, // 0.4 sec @ 5000 = 2000 micro
                 npu_compute_time_us: 0,
                 vram_peak_byte_seconds: 0,
-                ai_prompt_tokens: 1_000, // 1k @ 1000 = 1000 micro
+                ai_prompt_tokens: 1_000,  // 1k @ 1000 = 1000 micro
                 ai_generated_tokens: 500, // 0.5k @ 4000 = 2000 micro
                 ai_layer_activations_transferred: 0,
                 media_frames_encoded: 0,
@@ -144,22 +171,40 @@ fn test_escrow_lock_partial_receipt_settlement_and_unused_refund_exact_math() {
         },
         &worker_sk,
     );
-    receipt.countersign(&requester_sk, &worker_vk, output_data).unwrap();
+    receipt
+        .countersign(&requester_sk, &worker_vk, output_data)
+        .unwrap();
 
     // Settle receipt: Base (100) + CPU (500) + GPU (2000) + Prompt (1000) + Gen (2000) = 5,600 micro
     let pricing = PricingSchedule::default();
-    let payout = ledger.settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk).unwrap();
+    let payout = ledger
+        .settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk)
+        .unwrap();
     assert_eq!(payout, 5600);
 
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(worker.to_string())), 5600);
-    assert_eq!(ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())), 6_000_000 - 5600);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(worker.to_string())),
+        5600
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())),
+        6_000_000 - 5600
+    );
 
     // Finalize job and refund unused escrow back to requester
-    let refund = ledger.finalize_job_and_refund_unused_escrow(job_id).unwrap();
+    let refund = ledger
+        .finalize_job_and_refund_unused_escrow(job_id)
+        .unwrap();
     assert_eq!(refund, 6_000_000 - 5600);
 
-    assert_eq!(ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())), 0);
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(requester.to_string())), 10_000_000 - 5600);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())),
+        0
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(requester.to_string())),
+        10_000_000 - 5600
+    );
 
     // Zero-sum invariant must hold exactly
     assert!(ledger.verify_global_zero_sum_invariant());
@@ -175,8 +220,12 @@ fn test_idempotent_receipt_settlement_prevents_double_payout() {
     let worker = "did:umcf:worker";
     let job_id = "job-idempotency";
 
-    ledger.mint_initial_credits(requester, 5_000_000, "Seed").unwrap();
-    ledger.lock_job_escrow(requester, job_id, 2_000_000).unwrap();
+    ledger
+        .mint_initial_credits(requester, 5_000_000, "Seed")
+        .unwrap();
+    ledger
+        .lock_job_escrow(requester, job_id, 2_000_000)
+        .unwrap();
 
     let output_data = b"once-only output";
     let mut receipt = SignedResourceReceipt::create_by_worker(
@@ -209,23 +258,32 @@ fn test_idempotent_receipt_settlement_prevents_double_payout() {
         },
         &worker_sk,
     );
-    receipt.countersign(&requester_sk, &worker_vk, output_data).unwrap();
+    receipt
+        .countersign(&requester_sk, &worker_vk, output_data)
+        .unwrap();
 
     let pricing = PricingSchedule::default();
 
     // 1st settlement succeeds
-    let payout1 = ledger.settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk).unwrap();
+    let payout1 = ledger
+        .settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk)
+        .unwrap();
     assert!(payout1 > 0);
 
     // 2nd settlement attempt with identical receipt MUST fail with ReceiptAlreadySettled
-    let err = ledger.settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk).unwrap_err();
+    let err = ledger
+        .settle_verified_receipt(&receipt, &pricing, &worker_vk, &requester_vk)
+        .unwrap_err();
     assert!(
         matches!(err, LedgerError::ReceiptAlreadySettled { .. }),
         "Expected ReceiptAlreadySettled, got {err:?}"
     );
 
     // Worker's balance must not be credited twice
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(worker.to_string())), payout1 as i128);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(worker.to_string())),
+        payout1 as i128
+    );
     assert!(ledger.verify_global_zero_sum_invariant());
 }
 
@@ -236,11 +294,19 @@ fn test_byzantine_verification_failure_evidence_slashes_provider_bond() {
     let requester = "did:umcf:victim_requester";
 
     // Setup: Mint funds to worker and deposit provider stake bond
-    ledger.mint_initial_credits(worker, 10_000_000, "Worker initial balance").unwrap();
+    ledger
+        .mint_initial_credits(worker, 10_000_000, "Worker initial balance")
+        .unwrap();
     ledger.deposit_provider_stake(worker, 5_000_000).unwrap();
 
-    assert_eq!(ledger.get_balance(&AccountKind::ProviderStakeBond(worker.to_string())), 5_000_000);
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(worker.to_string())), 5_000_000);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::ProviderStakeBond(worker.to_string())),
+        5_000_000
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(worker.to_string())),
+        5_000_000
+    );
 
     // Create Byzantine evidence: CorruptedTile detected in S6.P1.SP3
     let evidence = VerificationFailureEvidence {
@@ -258,11 +324,22 @@ fn test_byzantine_verification_failure_evidence_slashes_provider_bond() {
     // Slash 3,000,000 micro-credits:
     // - 1,000,000 micro-credits compensation to requester
     // - 2,000,000 micro-credits forfeited to SlashedPenaltyPool
-    ledger.slash_byzantine_worker(&evidence, 3_000_000, 1_000_000).unwrap();
+    ledger
+        .slash_byzantine_worker(&evidence, 3_000_000, 1_000_000)
+        .unwrap();
 
-    assert_eq!(ledger.get_balance(&AccountKind::ProviderStakeBond(worker.to_string())), 2_000_000);
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(requester.to_string())), 1_000_000);
-    assert_eq!(ledger.get_balance(&AccountKind::SlashedPenaltyPool), 2_000_000);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::ProviderStakeBond(worker.to_string())),
+        2_000_000
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(requester.to_string())),
+        1_000_000
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::SlashedPenaltyPool),
+        2_000_000
+    );
     assert!(ledger.verify_global_zero_sum_invariant());
 }
 
@@ -312,17 +389,25 @@ fn test_marketplace_matcher_respects_charging_wifi_and_privacy_constraints() {
     };
 
     // 1. Phone is discharging: match must fail
-    let err = engine.match_bid(&bid, &provider_sk, &requester_sk).unwrap_err();
+    let err = engine
+        .match_bid(&bid, &provider_sk, &requester_sk)
+        .unwrap_err();
     assert!(matches!(err, MarketError::NoMatchingOffer { .. }));
 
     // 2. Plug in phone to AC charger: match now succeeds
-    engine.update_device_status("phone-offer", true, true, 0).unwrap();
+    engine
+        .update_device_status("phone-offer", true, true, 0)
+        .unwrap();
     let contract = engine.match_bid(&bid, &provider_sk, &requester_sk).unwrap();
     assert_eq!(contract.offer_id, "phone-offer");
 
     // 3. Switch phone to cellular data: phone is immediately disqualified
-    engine.update_device_status("phone-offer", true, false, 0).unwrap();
-    let err2 = engine.match_bid(&bid, &provider_sk, &requester_sk).unwrap_err();
+    engine
+        .update_device_status("phone-offer", true, false, 0)
+        .unwrap();
+    let err2 = engine
+        .match_bid(&bid, &provider_sk, &requester_sk)
+        .unwrap_err();
     assert!(matches!(err2, MarketError::NoMatchingOffer { .. }));
 }
 
@@ -343,9 +428,15 @@ fn test_full_marketplace_lifecycle_ask_bid_match_escrow_execute_receipt_settle_r
     let job_id = "job-lifecycle-e2e";
 
     // 1. Setup: Mint 50 UMCF to requester and 10 UMCF stake to worker
-    ledger.mint_initial_credits(requester_node, 50_000_000, "Client seed").unwrap();
-    ledger.mint_initial_credits(worker_node, 10_000_000, "Worker seed").unwrap();
-    ledger.deposit_provider_stake(worker_node, 10_000_000).unwrap();
+    ledger
+        .mint_initial_credits(requester_node, 50_000_000, "Client seed")
+        .unwrap();
+    ledger
+        .mint_initial_credits(worker_node, 10_000_000, "Worker seed")
+        .unwrap();
+    ledger
+        .deposit_provider_stake(worker_node, 10_000_000)
+        .unwrap();
 
     // 2. Worker publishes Ask Offer
     let ask = ComputeAskOffer {
@@ -389,12 +480,22 @@ fn test_full_marketplace_lifecycle_ask_bid_match_escrow_execute_receipt_settle_r
 
     // 4. Match and seal dual-signed lease contract
     let contract = market.match_bid(&bid, &worker_sk, &requester_sk).unwrap();
-    contract.verify_signatures(&worker_vk, &requester_vk).unwrap();
+    contract
+        .verify_signatures(&worker_vk, &requester_vk)
+        .unwrap();
 
     // 5. Client locks Escrow in Ledger for the matched contract
-    ledger.lock_job_escrow(requester_node, job_id, contract.max_budget_micro).unwrap();
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(requester_node.to_string())), 30_000_000);
-    assert_eq!(ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())), 20_000_000);
+    ledger
+        .lock_job_escrow(requester_node, job_id, contract.max_budget_micro)
+        .unwrap();
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(requester_node.to_string())),
+        30_000_000
+    );
+    assert_eq!(
+        ledger.get_balance(&AccountKind::EscrowLocked(job_id.to_string())),
+        20_000_000
+    );
 
     // 6. Worker completes task, generates and dual-signs receipt
     let output_data = b"transcoded 4k video segment";
@@ -428,17 +529,34 @@ fn test_full_marketplace_lifecycle_ask_bid_match_escrow_execute_receipt_settle_r
         },
         &worker_sk,
     );
-    receipt.countersign(&requester_sk, &worker_vk, output_data).unwrap();
+    receipt
+        .countersign(&requester_sk, &worker_vk, output_data)
+        .unwrap();
 
     // 7. Settle receipt into worker balance
-    let payout = ledger.settle_verified_receipt(&receipt, &contract.agreed_pricing, &worker_vk, &requester_vk).unwrap();
+    let payout = ledger
+        .settle_verified_receipt(
+            &receipt,
+            &contract.agreed_pricing,
+            &worker_vk,
+            &requester_vk,
+        )
+        .unwrap();
     assert!(payout > 0);
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(worker_node.to_string())), payout as i128);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(worker_node.to_string())),
+        payout as i128
+    );
 
     // 8. Finalize job & refund remaining unused escrow
-    let refund = ledger.finalize_job_and_refund_unused_escrow(job_id).unwrap();
+    let refund = ledger
+        .finalize_job_and_refund_unused_escrow(job_id)
+        .unwrap();
     assert_eq!(refund, 20_000_000 - payout);
-    assert_eq!(ledger.get_balance(&AccountKind::AvailableBalance(requester_node.to_string())), 30_000_000 + refund as i128);
+    assert_eq!(
+        ledger.get_balance(&AccountKind::AvailableBalance(requester_node.to_string())),
+        30_000_000 + refund as i128
+    );
 
     // Total conservation holds
     assert!(ledger.verify_global_zero_sum_invariant());
@@ -452,7 +570,8 @@ fn test_concurrent_64_thread_settlements_preserve_global_zero_sum_invariant() {
     {
         let mut l = ledger.lock().unwrap();
         for i in 0..64 {
-            l.mint_initial_credits(&format!("user-{i}"), 10_000_000, "Initial seed").unwrap();
+            l.mint_initial_credits(&format!("user-{i}"), 10_000_000, "Initial seed")
+                .unwrap();
         }
     }
 
@@ -504,7 +623,9 @@ fn test_proptest_randomized_market_bids_asks_and_slashings_conserve_zero_sum() {
 
     // Seed 10 users with 1,000,000 micro-credits each
     for i in 0..num_users {
-        ledger.mint_initial_credits(&format!("sim-user-{i}"), 1_000_000, "seed").unwrap();
+        ledger
+            .mint_initial_credits(&format!("sim-user-{i}"), 1_000_000, "seed")
+            .unwrap();
     }
 
     let mut rng_seed: u64 = 42;
@@ -579,7 +700,11 @@ fn test_marketplace_matching_engine_throughput_benchmark() {
             provider_node_id: format!("did:umcf:provider-{i}"),
             cpu_cores: 4 + (i % 28) as u32,
             ram_mb: 8192 + (i % 64) as u64 * 1024,
-            gpu_backend: if i % 2 == 0 { Some("Vulkan".to_string()) } else { None },
+            gpu_backend: if i % 2 == 0 {
+                Some("Vulkan".to_string())
+            } else {
+                None
+            },
             vram_mb: if i % 2 == 0 { 8192 } else { 0 },
             npu_tops: (i % 50) as u32,
             available_storage_gb: 100,

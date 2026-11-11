@@ -4,9 +4,9 @@
 //! telemetry parsing, automatic hardware-to-software parameter translation,
 //! and clean process/context cancellation within <= 50 ms.
 
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
 use crate::error::MediaError;
@@ -55,15 +55,19 @@ impl TranscodeProgress {
         let frame = find_val("frame=").and_then(|v| v.parse().ok()).unwrap_or(0);
         let fps = find_val("fps=").and_then(|v| v.parse().ok()).unwrap_or(0.0);
         let q_factor = find_val("q=").and_then(|v| v.parse().ok()).unwrap_or(0.0);
-        let bitrate_kbps = find_val("bitrate=").map(|v| {
-            let num = v.trim_end_matches("kbits/s").trim_end_matches("kb/s");
-            num.parse().unwrap_or(0.0)
-        }).unwrap_or(0.0);
+        let bitrate_kbps = find_val("bitrate=")
+            .map(|v| {
+                let num = v.trim_end_matches("kbits/s").trim_end_matches("kb/s");
+                num.parse().unwrap_or(0.0)
+            })
+            .unwrap_or(0.0);
         let dropped_frames = find_val("drop=").and_then(|v| v.parse().ok()).unwrap_or(0);
-        let speed_factor = find_val("speed=").map(|v| {
-            let num = v.trim_end_matches('x');
-            num.parse().unwrap_or(1.0)
-        }).unwrap_or(1.0);
+        let speed_factor = find_val("speed=")
+            .map(|v| {
+                let num = v.trim_end_matches('x');
+                num.parse().unwrap_or(1.0)
+            })
+            .unwrap_or(1.0);
         let out_time_us = find_val("time=").map(parse_time_str_to_us).unwrap_or(0);
 
         if frame > 0 || fps > 0.0 || out_time_us > 0 {

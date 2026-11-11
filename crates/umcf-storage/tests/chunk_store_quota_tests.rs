@@ -34,7 +34,10 @@ fn test_fastcdc_chunking_shift_resilience_on_mid_file_insertion() {
     }
 
     let base_chunks = config.chunk_data(&base_data);
-    let base_cids: Vec<ChunkId> = base_chunks.iter().map(|&c| ChunkId::from_bytes(c)).collect();
+    let base_cids: Vec<ChunkId> = base_chunks
+        .iter()
+        .map(|&c| ChunkId::from_bytes(c))
+        .collect();
     let total_base = base_cids.len();
     assert!(total_base >= 20, "must produce at least 20 chunks");
 
@@ -44,7 +47,10 @@ fn test_fastcdc_chunking_shift_resilience_on_mid_file_insertion() {
     modified_data.splice(256..256, inserted_bytes);
 
     let modified_chunks = config.chunk_data(&modified_data);
-    let modified_cids: Vec<ChunkId> = modified_chunks.iter().map(|&c| ChunkId::from_bytes(c)).collect();
+    let modified_cids: Vec<ChunkId> = modified_chunks
+        .iter()
+        .map(|&c| ChunkId::from_bytes(c))
+        .collect();
 
     // Count identical matching chunks
     let mut reused_count = 0;
@@ -133,8 +139,13 @@ fn test_uncommitted_quota_permit_drop_releases_in_flight_bytes() {
     let host_free = 50 * 1024 * 1024;
 
     {
-        let permit = enforcer.try_reserve(4 * 1024 * 1024, host_free).expect("reserve");
-        assert_eq!(enforcer.reserved_in_flight_bytes.load(Ordering::SeqCst), 4 * 1024 * 1024);
+        let permit = enforcer
+            .try_reserve(4 * 1024 * 1024, host_free)
+            .expect("reserve");
+        assert_eq!(
+            enforcer.reserved_in_flight_bytes.load(Ordering::SeqCst),
+            4 * 1024 * 1024
+        );
         assert_eq!(enforcer.used_bytes.load(Ordering::SeqCst), 0);
         drop(permit); // Drop without commit
     }
@@ -157,7 +168,10 @@ fn test_host_os_free_space_floor_clamps_effective_quota() {
 
     // Case 2: Host free is at or below 2 GiB safety floor -> Rejected with HostSpaceExhausted
     let result = enforcer.try_reserve(1024, 1500 * 1024 * 1024);
-    assert!(matches!(result, Err(StorageError::HostSpaceExhausted { .. })));
+    assert!(matches!(
+        result,
+        Err(StorageError::HostSpaceExhausted { .. })
+    ));
 }
 
 /// [INT] Ingest, deduplicate, verify readback, and assert corrupted chunk rejection.
@@ -168,7 +182,8 @@ fn test_ingest_deduplicate_and_verify_readback_corrupted_chunk_rejected() {
     let enforcer = StrictQuotaEnforcer::new(100 * 1024 * 1024, 1024 * 1024);
     let host_free = 50 * 1024 * 1024;
 
-    let original_data = b"Universal Mobile Compute Fabric - Content Addressed Storage Test Payload 12345";
+    let original_data =
+        b"Universal Mobile Compute Fabric - Content Addressed Storage Test Payload 12345";
     let chunk_config = FastCdcConfig::custom(16, 32, 64);
 
     let options = IngestOptions {
@@ -194,7 +209,10 @@ fn test_ingest_deduplicate_and_verify_readback_corrupted_chunk_rejected() {
         .ingest_object(original_data, options, &enforcer)
         .expect("ingest 2");
     let used_after = enforcer.used_bytes.load(Ordering::SeqCst);
-    assert_eq!(used_before, used_after, "duplicate data must not consume quota");
+    assert_eq!(
+        used_before, used_after,
+        "duplicate data must not consume quota"
+    );
     assert_eq!(manifest1.chunk_refs, manifest2.chunk_refs);
 
     // Corrupt one chunk on disk and verify integrity verification catches it
@@ -206,7 +224,10 @@ fn test_ingest_deduplicate_and_verify_readback_corrupted_chunk_rejected() {
 
     let read_result = store.read_chunk(target_cid);
     assert!(
-        matches!(read_result, Err(StorageError::ChunkIntegrityMismatch { .. })),
+        matches!(
+            read_result,
+            Err(StorageError::ChunkIntegrityMismatch { .. })
+        ),
         "tampered chunk must be rejected with ChunkIntegrityMismatch"
     );
 }
@@ -222,8 +243,12 @@ fn test_quota_evicts_unpinned_cache_to_admit_new_pinned_write() {
     // Store 4 unpinned chunks of 2 KB each = 8 KB used (out of 10 KB quota)
     for i in 0..4 {
         let chunk_data = vec![i as u8; 2048];
-        let mut permit = enforcer.try_reserve(2048, host_free).expect("reserve unpinned");
-        store.store_chunk(&chunk_data, &mut permit, false).expect("store");
+        let mut permit = enforcer
+            .try_reserve(2048, host_free)
+            .expect("reserve unpinned");
+        store
+            .store_chunk(&chunk_data, &mut permit, false)
+            .expect("store");
     }
 
     assert_eq!(enforcer.used_bytes.load(Ordering::SeqCst), 8192);
@@ -250,9 +275,7 @@ fn test_simulation_crash_recovery_cleans_staging_files_and_reconciles_index() {
 
     // Simulate crash leaving 20 orphan .staging files
     for i in 0..20 {
-        let staging_file = store
-            .staging_dir
-            .join(format!(".staging.orphan_{}.chk", i));
+        let staging_file = store.staging_dir.join(format!(".staging.orphan_{}.chk", i));
         fs::write(staging_file, b"orphan incomplete payload").expect("write orphan");
     }
 
@@ -307,7 +330,8 @@ fn test_hardware_fastcdc_blake3_ingestion_throughput() {
     assert!(
         throughput_mb_s >= min_baseline,
         "throughput {:.2} MB/s fell below baseline {:.1} MB/s",
-        throughput_mb_s, min_baseline
+        throughput_mb_s,
+        min_baseline
     );
 }
 
@@ -335,7 +359,10 @@ fn test_manual_storage_quota_card_and_stacked_progress_ui_schema() {
     });
 
     assert_eq!(
-        schema["stacked_progress_categories"].as_array().unwrap().len(),
+        schema["stacked_progress_categories"]
+            .as_array()
+            .unwrap()
+            .len(),
         5
     );
     assert_eq!(

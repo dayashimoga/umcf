@@ -232,7 +232,10 @@ impl ModelFootprintEstimator {
 
         // 3. Compute and scratch buffer estimation
         // Activation scratch: 4 * ffn_len * ubatch_size + self_attention scratch
-        let ffn_len = u64::from(meta.feed_forward_length.unwrap_or(meta.embedding_length * 4));
+        let ffn_len = u64::from(
+            meta.feed_forward_length
+                .unwrap_or(meta.embedding_length * 4),
+        );
         let ubatch = u64::from(params.ubatch_size.max(1));
 
         // Flash attention reduces attention scratch from ctx^2 to chunked tile
@@ -296,7 +299,9 @@ impl HardwareCompatibilityValidator {
         // 1. Check quantization compatibility
         let mut unsupported = Vec::new();
         for t in &inspection.tensors {
-            if !caps.supported_quantizations.contains(&t.ggml_type) && !unsupported.contains(&t.ggml_type) {
+            if !caps.supported_quantizations.contains(&t.ggml_type)
+                && !unsupported.contains(&t.ggml_type)
+            {
                 unsupported.push(t.ggml_type);
             }
         }
@@ -316,7 +321,9 @@ impl HardwareCompatibilityValidator {
             let headroom = safe_available_memory.saturating_sub(required_bytes);
 
             // Determine optimal hardware acceleration backend
-            let backend = if caps.has_metal && (caps.os_platform == OsPlatform::MacOs || caps.os_platform == OsPlatform::Ios) {
+            let backend = if caps.has_metal
+                && (caps.os_platform == OsPlatform::MacOs || caps.os_platform == OsPlatform::Ios)
+            {
                 "Metal".to_string()
             } else if caps.has_cuda {
                 "CUDA".to_string()
@@ -345,7 +352,8 @@ impl HardwareCompatibilityValidator {
         } else {
             // Memory insufficient: Calculate cluster split requirement
             let num_layers = inspection.metadata.block_count as usize;
-            let min_nodes = ((required_bytes as f64) / (safe_available_memory.max(1) as f64)).ceil() as u32;
+            let min_nodes =
+                ((required_bytes as f64) / (safe_available_memory.max(1) as f64)).ceil() as u32;
             let min_nodes = min_nodes.max(2);
 
             let bottleneck = format!(

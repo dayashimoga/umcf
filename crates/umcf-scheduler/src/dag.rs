@@ -105,7 +105,11 @@ pub struct TaskNode {
 
 impl TaskNode {
     #[must_use]
-    pub fn new(task_id: impl Into<String>, spec: TaskSpec, constraints: PlacementConstraint) -> Self {
+    pub fn new(
+        task_id: impl Into<String>,
+        spec: TaskSpec,
+        constraints: PlacementConstraint,
+    ) -> Self {
         Self {
             task_id: task_id.into(),
             spec,

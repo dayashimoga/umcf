@@ -71,7 +71,12 @@ fn test_certify_v1_gate_scanner_detects_synthetic_todo_macro_or_unchecked_box() 
 fn test_documentation_internal_markdown_link_validator_zero_broken_links() {
     let root = get_workspace_root();
     let res = ReleaseAuditor::audit_gate_10_documentation_and_changelog(&root);
-    assert_eq!(res.status, GateStatus::Passed, "Required core documentation missing: {}", res.details);
+    assert_eq!(
+        res.status,
+        GateStatus::Passed,
+        "Required core documentation missing: {}",
+        res.details
+    );
 
     // Verify key architectural documents exist
     assert!(root.join("ENGINEERING_CONTRACT.md").exists());
@@ -120,8 +125,15 @@ fn test_full_10_gate_umcf_certify_v1_execution_passes() {
         authority_signature: String::new(),
     };
 
-    receipt.gates_passed = receipt.gates.iter().filter(|g| g.status == GateStatus::Passed).count();
-    assert_eq!(receipt.gates_passed, 10, "All 10 production release gates must pass");
+    receipt.gates_passed = receipt
+        .gates
+        .iter()
+        .filter(|g| g.status == GateStatus::Passed)
+        .count();
+    assert_eq!(
+        receipt.gates_passed, 10,
+        "All 10 production release gates must pass"
+    );
     assert!(receipt.is_fully_passed());
 
     receipt.sign(&signing_key);
@@ -186,13 +198,41 @@ fn test_full_cluster_cold_boot_and_workflow_execution_simulation() {
 fn test_final_hardware_certification_matrix_benchmark_verification() {
     // Validates empirical hardware tiers across CPU, GPU, NPU, and Network
     let hw_tiers = [
-        ("CPU x86_64 AVX2/AVX-512", "Intel Core Ultra 5 225H / AMD Zen 4", "Tier 1: Certified"),
-        ("CPU ARM64 NEON / DotProd", "Apple M1-M4 / Snapdragon 8 Gen 3", "Tier 1: Certified"),
-        ("GPU Vulkan 1.3 / SPIR-V", "Intel Arc / NVIDIA RTX / Adreno 750", "Tier 1: Certified"),
-        ("GPU Metal 3", "Apple Silicon M-Series / A17 Pro", "Tier 1: Certified"),
-        ("NPU Android NNAPI / QNN", "Snapdragon HTP / Hexagon NPU", "Tier 2: Certified"),
-        ("NPU Apple CoreML / ANE", "Apple Neural Engine 16-Core", "Tier 2: Certified"),
-        ("Network QUIC / UDP Mesh", "Wi-Fi 6 / 5G / LAN Loopback", "Tier 1: Certified"),
+        (
+            "CPU x86_64 AVX2/AVX-512",
+            "Intel Core Ultra 5 225H / AMD Zen 4",
+            "Tier 1: Certified",
+        ),
+        (
+            "CPU ARM64 NEON / DotProd",
+            "Apple M1-M4 / Snapdragon 8 Gen 3",
+            "Tier 1: Certified",
+        ),
+        (
+            "GPU Vulkan 1.3 / SPIR-V",
+            "Intel Arc / NVIDIA RTX / Adreno 750",
+            "Tier 1: Certified",
+        ),
+        (
+            "GPU Metal 3",
+            "Apple Silicon M-Series / A17 Pro",
+            "Tier 1: Certified",
+        ),
+        (
+            "NPU Android NNAPI / QNN",
+            "Snapdragon HTP / Hexagon NPU",
+            "Tier 2: Certified",
+        ),
+        (
+            "NPU Apple CoreML / ANE",
+            "Apple Neural Engine 16-Core",
+            "Tier 2: Certified",
+        ),
+        (
+            "Network QUIC / UDP Mesh",
+            "Wi-Fi 6 / 5G / LAN Loopback",
+            "Tier 1: Certified",
+        ),
     ];
 
     assert_eq!(hw_tiers.len(), 7);
@@ -229,6 +269,8 @@ fn test_manual_executive_sign_off_receipt_schema() {
     assert_eq!(signoff_schema["stages_completed"], 8);
     assert_eq!(signoff_schema["subphases_completed"], 72);
     assert_eq!(signoff_schema["test_pass_rate_percent"], 100.0);
-    assert_eq!(signoff_schema["executive_sign_off"], "APPROVED FOR PRODUCTION");
+    assert_eq!(
+        signoff_schema["executive_sign_off"],
+        "APPROVED FOR PRODUCTION"
+    );
 }
-

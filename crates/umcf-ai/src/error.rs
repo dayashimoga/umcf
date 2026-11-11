@@ -26,7 +26,9 @@ pub enum EngineError {
     #[error("batch allocation or index error: {reason}")]
     InvalidBatch { reason: String },
 
-    #[error("backend plugin signature mismatch for '{path}': expected BLAKE3 {expected}, got {actual}")]
+    #[error(
+        "backend plugin signature mismatch for '{path}': expected BLAKE3 {expected}, got {actual}"
+    )]
     BackendPluginSignatureMismatch {
         path: String,
         expected: String,

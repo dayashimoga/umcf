@@ -1,9 +1,9 @@
 //! Workflow DAG executor with step caching, resumption, and receipt generation.
 
-use std::collections::BTreeMap;
-use std::time::Instant;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
+use std::time::Instant;
 
 use crate::error::ManifestError;
 use crate::lockfile::Lockfile;
@@ -80,7 +80,12 @@ impl WorkflowExecutor {
         let run_id = prior_state
             .as_ref()
             .map(|s| s.run_id.clone())
-            .unwrap_or_else(|| format!("run-{}", blake3::hash(manifest.metadata.name.as_bytes()).to_hex()));
+            .unwrap_or_else(|| {
+                format!(
+                    "run-{}",
+                    blake3::hash(manifest.metadata.name.as_bytes()).to_hex()
+                )
+            });
 
         let mut step_outputs: BTreeMap<String, BTreeMap<String, String>> = prior_state
             .map(|s| s.completed_step_outputs)
@@ -101,9 +106,9 @@ impl WorkflowExecutor {
                     continue;
                 }
 
-                let step = step_map
-                    .get(step_id.as_str())
-                    .ok_or_else(|| ManifestError::ValidationError(format!("Step '{step_id}' missing in map")))?;
+                let step = step_map.get(step_id.as_str()).ok_or_else(|| {
+                    ManifestError::ValidationError(format!("Step '{step_id}' missing in map"))
+                })?;
 
                 // Execute the single step
                 let outputs = Self::execute_step(step, &evaluated_params, &step_outputs)?;
@@ -178,7 +183,10 @@ impl WorkflowExecutor {
                     .or_else(|| resolved_inputs.get("source_cid"))
                     .cloned()
                     .unwrap_or_default();
-                let cid = format!("bafkrei-transcode-{}", blake3::hash(src.as_bytes()).to_hex());
+                let cid = format!(
+                    "bafkrei-transcode-{}",
+                    blake3::hash(src.as_bytes()).to_hex()
+                );
                 outputs.insert("frames_cid".to_string(), cid.clone());
                 outputs.insert("output_cid".to_string(), cid);
             }
@@ -190,7 +198,10 @@ impl WorkflowExecutor {
                 hasher.update(inputs_repr.as_bytes());
                 let cid = format!("bafkrei-wasm-{}", hasher.finalize().to_hex());
                 outputs.insert("output_cid".to_string(), cid);
-                outputs.insert("output_text".to_string(), "Extracted 42 keyframes with high visual saliency.".to_string());
+                outputs.insert(
+                    "output_text".to_string(),
+                    "Extracted 42 keyframes with high visual saliency.".to_string(),
+                );
             }
             StepKind::AiInference => {
                 let prompt = if let Some(ref pt) = step.prompt_template {
@@ -200,7 +211,11 @@ impl WorkflowExecutor {
                 };
 
                 // Deterministic seed simulation: seed=42 + temp=0.0 produces identical output
-                let is_deterministic = step.sampling.as_ref().map(|s| s.temperature == Some(0.0) && s.seed == Some(42)).unwrap_or(false);
+                let is_deterministic = step
+                    .sampling
+                    .as_ref()
+                    .map(|s| s.temperature == Some(0.0) && s.seed == Some(42))
+                    .unwrap_or(false);
                 let text = if is_deterministic {
                     format!("Deterministic summary: {prompt}")
                 } else {
@@ -212,7 +227,11 @@ impl WorkflowExecutor {
                 outputs.insert("output_cid".to_string(), cid);
             }
             StepKind::GpuRender => {
-                let res = step.config.get("resolution").and_then(|v| v.as_str()).unwrap_or("3840x2160");
+                let res = step
+                    .config
+                    .get("resolution")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("3840x2160");
                 let cid = format!("bafkrei-gpu-{}", blake3::hash(res.as_bytes()).to_hex());
                 outputs.insert("tiles_cid".to_string(), cid.clone());
                 outputs.insert("output_cid".to_string(), cid);

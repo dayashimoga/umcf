@@ -288,7 +288,10 @@ impl ApiKeyValidator {
         raw_token: &str,
         required_scope: CapabilityScope,
     ) -> Result<ApiKeyRecord, GatewayError> {
-        let cleaned_token = raw_token.trim().strip_prefix("Bearer ").unwrap_or(raw_token.trim());
+        let cleaned_token = raw_token
+            .trim()
+            .strip_prefix("Bearer ")
+            .unwrap_or(raw_token.trim());
         if cleaned_token.is_empty() {
             return Err(GatewayError::MissingToken);
         }
@@ -315,7 +318,8 @@ impl ApiKeyValidator {
         }
 
         if !record.satisfies_scope(required_scope) {
-            let granted_strings: Vec<String> = record.scopes.iter().map(|s| s.to_string()).collect();
+            let granted_strings: Vec<String> =
+                record.scopes.iter().map(|s| s.to_string()).collect();
             return Err(GatewayError::InsufficientScope {
                 required: required_scope.to_string(),
                 granted: granted_strings,

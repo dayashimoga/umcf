@@ -200,14 +200,24 @@ impl ChatTemplateRenderer {
             }
             "chatml" | "qwen" => {
                 for msg in messages {
-                    out.push_str(&format!("<|im_start|>{}\n{}<|im_end|>\n", msg.role, msg.content));
+                    out.push_str(&format!(
+                        "<|im_start|>{}\n{}<|im_end|>\n",
+                        msg.role, msg.content
+                    ));
                 }
                 out.push_str("<|im_start|>assistant\n");
             }
             "gemma" => {
                 for msg in messages {
-                    let role = if msg.role == "assistant" { "model" } else { "user" };
-                    out.push_str(&format!("<start_of_turn>{}\n{}<end_of_turn>\n", role, msg.content));
+                    let role = if msg.role == "assistant" {
+                        "model"
+                    } else {
+                        "user"
+                    };
+                    out.push_str(&format!(
+                        "<start_of_turn>{}\n{}<end_of_turn>\n",
+                        role, msg.content
+                    ));
                 }
                 out.push_str("<start_of_turn>model\n");
             }
@@ -397,7 +407,11 @@ impl LocalOpenAiEngine {
                         role: None,
                         content: Some(tok.to_string()),
                     },
-                    finish_reason: if is_last { Some("stop".to_string()) } else { None },
+                    finish_reason: if is_last {
+                        Some("stop".to_string())
+                    } else {
+                        None
+                    },
                 }],
             };
             sse_lines.push(chunk.to_sse_line());
@@ -409,7 +423,10 @@ impl LocalOpenAiEngine {
     }
 
     /// Handles POST /v1/embeddings
-    pub fn generate_embeddings(&self, req: &EmbeddingRequest) -> Result<EmbeddingResponse, EngineError> {
+    pub fn generate_embeddings(
+        &self,
+        req: &EmbeddingRequest,
+    ) -> Result<EmbeddingResponse, EngineError> {
         let mut data = Vec::new();
         let dim = 128; // standard test dimension
 

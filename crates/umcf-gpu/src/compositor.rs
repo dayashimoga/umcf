@@ -4,8 +4,8 @@
 //! per-tile worker attribution, computes progressive BLAKE3 digests, and exports
 //! completed frames to OpenEXR, raw floats, or RGBA buffers.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::error::GpuError;
 use crate::render_coordinator::RenderPixelFormat;
@@ -69,7 +69,10 @@ impl FrameCompositor {
     /// Blit a completed tile packet directly into the master frame buffer.
     /// Emits a `ProgressiveFrameDelta` containing tile coordinates, worker attribution,
     /// and cryptographic BLAKE3 checksum.
-    pub fn blit_tile(&mut self, tile: &CompletedTilePacket) -> Result<ProgressiveFrameDelta, GpuError> {
+    pub fn blit_tile(
+        &mut self,
+        tile: &CompletedTilePacket,
+    ) -> Result<ProgressiveFrameDelta, GpuError> {
         if tile.pixel_format != self.pixel_format {
             return Err(GpuError::PixelFormatMismatch {
                 expected: format!("{:?}", self.pixel_format),
@@ -117,7 +120,8 @@ impl FrameCompositor {
         }
 
         self.completed_tile_count += 1;
-        self.tile_ownership.insert(tile.tile_id, tile.worker_id.clone());
+        self.tile_ownership
+            .insert(tile.tile_id, tile.worker_id.clone());
 
         let tile_checksum = *blake3::hash(&tile.pixels).as_bytes();
 
@@ -148,21 +152,24 @@ impl FrameCompositor {
         let idx = ((y * self.width + x) as usize) * bpp;
 
         match self.pixel_format {
-            RenderPixelFormat::Rgba8UnormSrgb => {
-                Ok([
-                    self.buffer[idx],
-                    self.buffer[idx + 1],
-                    self.buffer[idx + 2],
-                    self.buffer[idx + 3],
-                ])
-            }
+            RenderPixelFormat::Rgba8UnormSrgb => Ok([
+                self.buffer[idx],
+                self.buffer[idx + 1],
+                self.buffer[idx + 2],
+                self.buffer[idx + 3],
+            ]),
             RenderPixelFormat::Rgba16Float => {
                 // Approximate f16 to u8
                 let r = u16::from_le_bytes([self.buffer[idx], self.buffer[idx + 1]]);
                 let g = u16::from_le_bytes([self.buffer[idx + 2], self.buffer[idx + 3]]);
                 let b = u16::from_le_bytes([self.buffer[idx + 4], self.buffer[idx + 5]]);
                 let a = u16::from_le_bytes([self.buffer[idx + 6], self.buffer[idx + 7]]);
-                Ok([(r >> 8) as u8, (g >> 8) as u8, (b >> 8) as u8, (a >> 8) as u8])
+                Ok([
+                    (r >> 8) as u8,
+                    (g >> 8) as u8,
+                    (b >> 8) as u8,
+                    (a >> 8) as u8,
+                ])
             }
             RenderPixelFormat::Rgba32Float => {
                 let r = f32::from_le_bytes([
@@ -280,4 +287,3 @@ impl FrameCompositor {
         Ok(ppm)
     }
 }
-

@@ -43,11 +43,20 @@ fn test_unit_naga_ast_loop_fuel_watchdog_injection_nested_loops() {
         .validate_and_instrument("nested-loop-shader", wgsl_source)
         .expect("shader validation and instrumentation must succeed");
 
-    assert_eq!(validated.loop_count, 2, "must detect both loop and while loops");
+    assert_eq!(
+        validated.loop_count, 2,
+        "must detect both loop and while loops"
+    );
     assert!(validated.has_loop_fuel_watchdog);
-    assert!(validated.instrumented_source.contains("var _umcf_loop_fuel: u32 = 100000u;"));
-    assert!(validated.instrumented_source.contains("if (_umcf_loop_fuel == 0u) { break; }"));
-    assert!(validated.instrumented_source.contains("_umcf_loop_fuel -= 1u;"));
+    assert!(validated
+        .instrumented_source
+        .contains("var _umcf_loop_fuel: u32 = 100000u;"));
+    assert!(validated
+        .instrumented_source
+        .contains("if (_umcf_loop_fuel == 0u) { break; }"));
+    assert!(validated
+        .instrumented_source
+        .contains("_umcf_loop_fuel -= 1u;"));
 }
 
 #[test]
@@ -66,7 +75,11 @@ fn test_unit_shader_resource_limits_reject_excessive_workgroup_memory() {
         .expect_err("must reject total workgroup invocations > 1024");
 
     match err {
-        GpuError::ShaderResourceLimitExceeded { limit, requested, max_allowed } => {
+        GpuError::ShaderResourceLimitExceeded {
+            limit,
+            requested,
+            max_allowed,
+        } => {
             assert_eq!(limit, "total_workgroup_invocations");
             assert_eq!(requested, 2048);
             assert_eq!(max_allowed, 1024);
@@ -102,7 +115,11 @@ fn test_unit_vram_allocator_quota_enforcement_and_zero_scrub_on_recycle() {
         .expect_err("must fail quota ceiling");
 
     match quota_err {
-        GpuError::VramQuotaExceeded { requested_bytes, limit_bytes, .. } => {
+        GpuError::VramQuotaExceeded {
+            requested_bytes,
+            limit_bytes,
+            ..
+        } => {
             assert_eq!(requested_bytes, 12 * 1024 * 1024);
             assert_eq!(limit_bytes, 10 * 1024 * 1024);
         }
@@ -114,7 +131,9 @@ fn test_unit_vram_allocator_quota_enforcement_and_zero_scrub_on_recycle() {
         .alloc_buffer(4 * 1024 * 1024, BufferUsage::Storage)
         .expect("realloc 4 MiB");
 
-    let readback = allocator.read_buffer(buf2, 0, 1024).expect("read zeroed buffer");
+    let readback = allocator
+        .read_buffer(buf2, 0, 1024)
+        .expect("read zeroed buffer");
     assert!(
         readback.iter().all(|&b| b == 0),
         "recycled buffer must be zero-scrubbed without residual 0xDEADBEEF leak"
@@ -160,7 +179,10 @@ fn test_integration_vector_add_and_matrix_multiply_wgsl_dispatch_and_readback() 
         let f = (i as f32) + 1.0;
         in_bytes.extend_from_slice(&f.to_le_bytes());
     }
-    dispatcher.allocator_mut().write_buffer(in_id, 0, &in_bytes).unwrap();
+    dispatcher
+        .allocator_mut()
+        .write_buffer(in_id, 0, &in_bytes)
+        .unwrap();
 
     let mut bindings = KernelBindings::new();
     bindings.bind_storage(0, in_id);
@@ -239,7 +261,10 @@ fn test_integration_infinite_loop_shader_aborts_gracefully_with_diagnostic_flag(
 #[test]
 fn test_integration_out_of_bounds_buffer_read_returns_zero_and_write_is_skipped() {
     let mut dispatcher = GpuComputeDispatcher::new(32 * 1024 * 1024);
-    let sandbox = ShaderSandbox::new(ShaderResourceLimits::default(), BoundsCheckPolicy::ReadZeroSkipWrite);
+    let sandbox = ShaderSandbox::new(
+        ShaderResourceLimits::default(),
+        BoundsCheckPolicy::ReadZeroSkipWrite,
+    );
 
     let oob_wgsl = r#"
         @group(0) @binding(0) var<storage, read> in_small: array<f32>;
@@ -256,8 +281,14 @@ fn test_integration_out_of_bounds_buffer_read_returns_zero_and_write_is_skipped(
         .validate_and_instrument("oob-read-skip-write", oob_wgsl)
         .expect("validate");
 
-    let in_id = dispatcher.allocator_mut().alloc_buffer(16, BufferUsage::Storage).unwrap();
-    let out_id = dispatcher.allocator_mut().alloc_buffer(16, BufferUsage::Storage).unwrap();
+    let in_id = dispatcher
+        .allocator_mut()
+        .alloc_buffer(16, BufferUsage::Storage)
+        .unwrap();
+    let out_id = dispatcher
+        .allocator_mut()
+        .alloc_buffer(16, BufferUsage::Storage)
+        .unwrap();
 
     let mut bindings = KernelBindings::new();
     bindings.bind_storage(0, in_id);
@@ -286,7 +317,10 @@ fn test_simulation_100_concurrent_compute_dispatches_with_time_slicing() {
     "#;
     let shader = sandbox.validate_and_instrument("sim-shader", wgsl).unwrap();
 
-    let buf_id = dispatcher.allocator_mut().alloc_buffer(256, BufferUsage::Storage).unwrap();
+    let buf_id = dispatcher
+        .allocator_mut()
+        .alloc_buffer(256, BufferUsage::Storage)
+        .unwrap();
     let mut bindings = KernelBindings::new();
     bindings.bind_storage(0, buf_id);
 
@@ -314,9 +348,14 @@ fn test_hardware_native_compute_benchmark_and_dispatch_overhead() {
         @compute @workgroup_size(64, 1, 1)
         fn main() {}
     "#;
-    let shader = sandbox.validate_and_instrument("hw-bench-shader", wgsl).unwrap();
+    let shader = sandbox
+        .validate_and_instrument("hw-bench-shader", wgsl)
+        .unwrap();
 
-    let buf_id = dispatcher.allocator_mut().alloc_buffer(1024, BufferUsage::Storage).unwrap();
+    let buf_id = dispatcher
+        .allocator_mut()
+        .alloc_buffer(1024, BufferUsage::Storage)
+        .unwrap();
     let mut bindings = KernelBindings::new();
     bindings.bind_storage(0, buf_id);
 
@@ -346,4 +385,3 @@ fn test_manual_shader_sandbox_telemetry_and_ui_schema_inspection() {
     assert!(json.contains("max_storage_buffers"));
     assert!(json.contains("default_loop_fuel"));
 }
-

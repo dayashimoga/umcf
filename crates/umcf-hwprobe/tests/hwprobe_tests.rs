@@ -118,7 +118,10 @@ fn test_unit_parse_cgroup_v2_memory_max() {
         MemoryStorageProber::parse_cgroup_memory_max("1073741824"),
         Some(1_073_741_824)
     );
-    assert_eq!(MemoryStorageProber::parse_cgroup_memory_max("invalid"), None);
+    assert_eq!(
+        MemoryStorageProber::parse_cgroup_memory_max("invalid"),
+        None
+    );
     assert_eq!(MemoryStorageProber::parse_cgroup_memory_max(""), None);
 }
 
@@ -128,8 +131,14 @@ fn test_unit_parse_cgroup_v2_memory_current() {
         MemoryStorageProber::parse_cgroup_memory_current("536870912\n"),
         Some(536_870_912)
     );
-    assert_eq!(MemoryStorageProber::parse_cgroup_memory_current("0"), Some(0));
-    assert_eq!(MemoryStorageProber::parse_cgroup_memory_current("invalid"), None);
+    assert_eq!(
+        MemoryStorageProber::parse_cgroup_memory_current("0"),
+        Some(0)
+    );
+    assert_eq!(
+        MemoryStorageProber::parse_cgroup_memory_current("invalid"),
+        None
+    );
 }
 
 #[test]
@@ -189,14 +198,32 @@ fn test_unit_thermal_temp_mapping() {
 
 #[test]
 fn test_unit_pci_vendor_classification() {
-    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_NVIDIA), "NVIDIA");
-    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_AMD), "AMD");
-    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_INTEL), "Intel");
-    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_APPLE), "Apple");
-    assert_eq!(AcceleratorProber::classify_pci_vendor(PCI_VENDOR_QUALCOMM), "Qualcomm");
+    assert_eq!(
+        AcceleratorProber::classify_pci_vendor(PCI_VENDOR_NVIDIA),
+        "NVIDIA"
+    );
+    assert_eq!(
+        AcceleratorProber::classify_pci_vendor(PCI_VENDOR_AMD),
+        "AMD"
+    );
+    assert_eq!(
+        AcceleratorProber::classify_pci_vendor(PCI_VENDOR_INTEL),
+        "Intel"
+    );
+    assert_eq!(
+        AcceleratorProber::classify_pci_vendor(PCI_VENDOR_APPLE),
+        "Apple"
+    );
+    assert_eq!(
+        AcceleratorProber::classify_pci_vendor(PCI_VENDOR_QUALCOMM),
+        "Qualcomm"
+    );
     assert_eq!(AcceleratorProber::classify_pci_vendor(0x13B5), "ARM");
     assert_eq!(AcceleratorProber::classify_pci_vendor(0x1AE0), "Google");
-    assert_eq!(AcceleratorProber::classify_pci_vendor(0xFFFF), "Unknown Vendor");
+    assert_eq!(
+        AcceleratorProber::classify_pci_vendor(0xFFFF),
+        "Unknown Vendor"
+    );
 }
 
 #[test]
@@ -357,12 +384,13 @@ fn test_hw_required_cpu_simd_and_memory_probing() {
 #[test]
 fn test_manually_verified_live_system_probe_report_audit() {
     let node_id = NodeId("did:umcf:00001111222233334444555566667777".to_string());
-    let (descriptor, duration) = SystemProber::probe_all_with_duration(node_id)
-        .expect("probe all on live system");
+    let (descriptor, duration) =
+        SystemProber::probe_all_with_duration(node_id).expect("probe all on live system");
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let report_path = workspace_root.join("artifacts/evidence/stage-03/live_system_probe_report.json");
+    let report_path =
+        workspace_root.join("artifacts/evidence/stage-03/live_system_probe_report.json");
 
     if let Some(parent) = report_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -396,7 +424,10 @@ fn test_integration_accelerator_enumeration_live() {
         "Accelerator enumeration took too long in debug: {duration:?}"
     );
 
-    assert!(!accelerators.is_empty(), "must find at least one accelerator or CPU fallback");
+    assert!(
+        !accelerators.is_empty(),
+        "must find at least one accelerator or CPU fallback"
+    );
     for acc in &accelerators {
         assert!(!acc.name.is_empty(), "accelerator name must not be empty");
         assert!(acc.compute_units >= 1, "compute units must be >= 1");
@@ -419,32 +450,38 @@ fn test_simulation_cuda_rocm_absence_and_graceful_cpu_fallback() {
 fn test_hw_required_accelerator_enumeration() {
     let wgpu_adapters = GpuEnumerator::enumerate_wgpu_adapters()
         .expect("wgpu adapter query should succeed or return empty");
-    println!("Found {} hardware/software wgpu adapters", wgpu_adapters.len());
+    println!(
+        "Found {} hardware/software wgpu adapters",
+        wgpu_adapters.len()
+    );
 
-    let all_acc = AcceleratorProber::enumerate()
-        .expect("complete enumeration must succeed");
+    let all_acc = AcceleratorProber::enumerate().expect("complete enumeration must succeed");
     assert!(!all_acc.is_empty());
 }
 
 #[test]
 fn test_manually_verified_accelerator_enumeration_report_audit() {
-    let (accelerators, duration) = AcceleratorProber::enumerate_with_duration()
-        .expect("accelerator enumeration must succeed");
+    let (accelerators, duration) =
+        AcceleratorProber::enumerate_with_duration().expect("accelerator enumeration must succeed");
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let report_path = workspace_root.join("artifacts/evidence/stage-03/accelerator_enumeration_report.json");
+    let report_path =
+        workspace_root.join("artifacts/evidence/stage-03/accelerator_enumeration_report.json");
 
     if let Some(parent) = report_path.parent() {
         let _ = fs::create_dir_all(parent);
     }
 
-    let json_bytes = serde_json::to_vec_pretty(&accelerators).expect("serialize accelerators to json");
+    let json_bytes =
+        serde_json::to_vec_pretty(&accelerators).expect("serialize accelerators to json");
     fs::write(&report_path, &json_bytes).expect("write accelerator report");
 
     println!(
         "[Manually-Verified] Generated accelerator report with {} accelerators in {:?} at {:?}",
-        accelerators.len(), duration, report_path
+        accelerators.len(),
+        duration,
+        report_path
     );
     assert!(report_path.exists());
     assert!(!json_bytes.is_empty());
@@ -496,7 +533,10 @@ fn test_unit_int8_gemm_correctness_against_golden_reference() {
     let expected = ComputeMicroBench::reference_int8_gemm(&a, &b, n);
     let (actual, tops, checksum) = ComputeMicroBench::run_int8_gemm_with_inputs(&a, &b, n);
 
-    assert_eq!(actual, expected, "Quantized INT8 GEMM must exactly match reference");
+    assert_eq!(
+        actual, expected,
+        "Quantized INT8 GEMM must exactly match reference"
+    );
     assert!(tops > 0.0);
     assert!(checksum > 0);
 }
@@ -564,10 +604,16 @@ async fn test_integration_network_probe_train_async_duplex() {
         .await
         .expect("client probe train");
 
-    server_handle.await.expect("join server").expect("echo server finished");
+    server_handle
+        .await
+        .expect("join server")
+        .expect("echo server finished");
 
     assert_eq!(scores.rtt_samples_count, sample_count);
-    assert_eq!(scores.probe_train_bytes, NetworkMicroBench::PROBE_TRAIN_BYTES);
+    assert_eq!(
+        scores.probe_train_bytes,
+        NetworkMicroBench::PROBE_TRAIN_BYTES
+    );
     assert!(scores.burst_bandwidth_mbps > 0.0);
 }
 
@@ -608,8 +654,9 @@ fn test_integration_attestation_to_cluster_registry_crdt_sync() {
 
     scores.apply_to_descriptor(&mut capability);
 
-    let attestation = SignedHardwareAttestation::create(&keypair, capability.clone(), scores.clone(), 0xAABBCCDD)
-        .expect("create attestation");
+    let attestation =
+        SignedHardwareAttestation::create(&keypair, capability.clone(), scores.clone(), 0xAABBCCDD)
+            .expect("create attestation");
 
     assert!(attestation.verify().expect("verify attestation"));
 
@@ -617,7 +664,10 @@ fn test_integration_attestation_to_cluster_registry_crdt_sync() {
     let hlc = umcf_registry::HlcTimestamp::new(1_700_000_000_000, 1, 0x1234);
     registry.update_capabilities(node_id.clone(), attestation.capability.clone(), hlc);
 
-    let cap_entry = registry.capabilities.get(&node_id).expect("capability in registry");
+    let cap_entry = registry
+        .capabilities
+        .get(&node_id)
+        .expect("capability in registry");
     assert_eq!(cap_entry.node_id, node_id);
     assert_eq!(
         cap_entry.descriptor.memory.bandwidth_mbps.as_mbps(),
@@ -646,7 +696,9 @@ fn test_simulation_forged_or_tampered_attestation_rejection() {
 
     // 1. Tamper with benchmark scores (inflate GFLOPS to fake 99999.0)
     attestation.benchmark_scores.fp32_gflops = 99999.0;
-    assert!(!attestation.verify().expect("tampered scores must fail verification"));
+    assert!(!attestation
+        .verify()
+        .expect("tampered scores must fail verification"));
 
     // Revert scores
     attestation.benchmark_scores.fp32_gflops = 10.0;
@@ -655,7 +707,9 @@ fn test_simulation_forged_or_tampered_attestation_rejection() {
     // 2. Tamper with node ID
     let rogue_keypair = NodeKeypair::generate();
     attestation.node_id = rogue_keypair.node_id();
-    assert!(!attestation.verify().expect("tampered node_id must fail verification"));
+    assert!(!attestation
+        .verify()
+        .expect("tampered node_id must fail verification"));
 
     // Revert node_id
     attestation.node_id = keypair.node_id();
@@ -663,7 +717,9 @@ fn test_simulation_forged_or_tampered_attestation_rejection() {
     // 3. Corrupt signature hex
     let orig_sig = attestation.signature_hex.clone();
     attestation.signature_hex = "00".repeat(64);
-    assert!(!attestation.verify().expect("zeroed signature must fail verification"));
+    assert!(!attestation
+        .verify()
+        .expect("zeroed signature must fail verification"));
     attestation.signature_hex = orig_sig;
 
     // 4. Corrupt public key
@@ -675,11 +731,17 @@ fn test_simulation_forged_or_tampered_attestation_rejection() {
 #[test]
 fn test_hardware_required_real_cpu_gemm_and_stream_kernel() {
     let (gflops, checksum) = ComputeMicroBench::run_fp32_gemm(256, 12345);
-    println!("Host CPU FP32 GEMM: {:.2} GFLOPS (checksum: {checksum:016x})", gflops);
+    println!(
+        "Host CPU FP32 GEMM: {:.2} GFLOPS (checksum: {checksum:016x})",
+        gflops
+    );
     assert!(gflops >= 0.1);
 
     let (tops, int8_check) = ComputeMicroBench::run_int8_gemm(256, 54321);
-    println!("Host CPU INT8 GEMM: {:.2} TOPS (checksum: {int8_check:016x})", tops);
+    println!(
+        "Host CPU INT8 GEMM: {:.2} TOPS (checksum: {int8_check:016x})",
+        tops
+    );
     assert!(tops >= 0.2);
 
     let triad_bw = ComputeMicroBench::run_stream_triad(1_000_000);
@@ -701,7 +763,8 @@ fn test_manually_verified_signed_attestation_sample_export() {
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir.join("../..");
-    let out_path = workspace_root.join("artifacts/evidence/stage-03/signed_hardware_attestation_sample.json");
+    let out_path =
+        workspace_root.join("artifacts/evidence/stage-03/signed_hardware_attestation_sample.json");
 
     if let Some(parent) = out_path.parent() {
         let _ = fs::create_dir_all(parent);

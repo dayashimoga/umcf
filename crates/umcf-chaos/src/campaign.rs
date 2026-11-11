@@ -1,13 +1,13 @@
 //! Multi-campaign runner for executing deterministic seeded chaos scenarios.
 
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use crate::error::ChaosError;
 use crate::invariants::ClusterInvariantMonitor;
 use crate::nemesis::{
     ChaosRng, MemoryPressureOomNemesis, NetworkPartitionNemesis, NodeChurnNemesis,
     PacketImpairmentNemesis, ThermalAndBatteryStormNemesis,
 };
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChaosCampaignReport {
@@ -31,7 +31,11 @@ impl ChaosCampaignRunner {
     }
 
     /// Executes a single fully reproducible chaos campaign using the provided seed.
-    pub fn run_campaign(&self, campaign_id: u32, seed: u64) -> Result<ChaosCampaignReport, ChaosError> {
+    pub fn run_campaign(
+        &self,
+        campaign_id: u32,
+        seed: u64,
+    ) -> Result<ChaosCampaignReport, ChaosError> {
         let mut rng = ChaosRng::new(seed);
         let mut monitor = ClusterInvariantMonitor::new();
 
@@ -52,7 +56,11 @@ impl ChaosCampaignRunner {
             let group_b = &self.nodes[split_idx..];
             partition_nemesis.inject_symmetric_split(group_a, group_b);
         } else if self.nodes.len() >= 3 {
-            partition_nemesis.inject_asymmetric_bridge(&self.nodes[0], &self.nodes[1], &self.nodes[2]);
+            partition_nemesis.inject_asymmetric_bridge(
+                &self.nodes[0],
+                &self.nodes[1],
+                &self.nodes[2],
+            );
         }
 
         // 3. Packet Transmission & Impairment Check
@@ -82,7 +90,8 @@ impl ChaosCampaignRunner {
         // 6. Inject Memory Pressure: Trigger onTrimMemory eviction
         if self.nodes.len() > victim_count + 1 {
             let edge_node = &self.nodes[victim_count + 1];
-            let evicted = memory_nemesis.simulate_trim_memory_critical(edge_node, 128 * 1024 * 1024)?;
+            let evicted =
+                memory_nemesis.simulate_trim_memory_critical(edge_node, 128 * 1024 * 1024)?;
             bytes_evicted += evicted;
         }
 
@@ -113,7 +122,11 @@ impl ChaosCampaignRunner {
         for node in &self.nodes {
             converged_views.insert(node.clone(), self.nodes.clone());
         }
-        monitor.check_invariant_2_split_brain_convergence(&converged_views, convergence_ms, 5000)?;
+        monitor.check_invariant_2_split_brain_convergence(
+            &converged_views,
+            convergence_ms,
+            5000,
+        )?;
 
         Ok(ChaosCampaignReport {
             campaign_id,
@@ -138,4 +151,3 @@ impl ChaosCampaignRunner {
         Ok(reports)
     }
 }
-

@@ -186,7 +186,11 @@ impl LatencyRecorder {
         if self.samples.is_empty() {
             return (0.0, 0.0);
         }
-        let mut sorted: Vec<f64> = self.samples.iter().map(|d| d.as_micros() as f64 / 1000.0).collect();
+        let mut sorted: Vec<f64> = self
+            .samples
+            .iter()
+            .map(|d| d.as_micros() as f64 / 1000.0)
+            .collect();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         let p50_idx = ((sorted.len() as f64) * 0.50) as usize;
         let p99_idx = ((sorted.len() as f64) * 0.99) as usize;
@@ -304,7 +308,10 @@ impl BandwidthShaper {
 
     /// Record measured round-trip latency for a critical control ping.
     pub fn record_control_latency(&self, latency: Duration) {
-        let mut rec = self.latency_recorder.lock().unwrap_or_else(|e| e.into_inner());
+        let mut rec = self
+            .latency_recorder
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         rec.record(latency);
     }
 
@@ -336,14 +343,19 @@ impl BandwidthShaper {
                 priority: c.quic_priority(),
                 dscp: c.dscp_value(),
                 bytes_transmitted: self.counters[idx].bytes_transmitted.load(Ordering::Relaxed),
-                messages_transmitted: self.counters[idx].messages_transmitted.load(Ordering::Relaxed),
+                messages_transmitted: self.counters[idx]
+                    .messages_transmitted
+                    .load(Ordering::Relaxed),
                 queue_drops: self.counters[idx].queue_drops.load(Ordering::Relaxed),
             }
         })
         .collect();
 
         let (p50, p99) = {
-            let rec = self.latency_recorder.lock().unwrap_or_else(|e| e.into_inner());
+            let rec = self
+                .latency_recorder
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             rec.quantiles()
         };
 
@@ -362,11 +374,21 @@ impl BandwidthShaper {
         let snap = self.snapshot();
         let mut out = String::with_capacity(1024);
 
-        let _ = writeln!(out, "# HELP umcf_qos_rate_limit_bytes_per_sec Configured rate limit in bytes/sec");
+        let _ = writeln!(
+            out,
+            "# HELP umcf_qos_rate_limit_bytes_per_sec Configured rate limit in bytes/sec"
+        );
         let _ = writeln!(out, "# TYPE umcf_qos_rate_limit_bytes_per_sec gauge");
-        let _ = writeln!(out, "umcf_qos_rate_limit_bytes_per_sec {}", snap.rate_limit_bytes_per_sec);
+        let _ = writeln!(
+            out,
+            "umcf_qos_rate_limit_bytes_per_sec {}",
+            snap.rate_limit_bytes_per_sec
+        );
 
-        let _ = writeln!(out, "# HELP umcf_qos_bytes_transmitted_total Total bytes transmitted per QoS class");
+        let _ = writeln!(
+            out,
+            "# HELP umcf_qos_bytes_transmitted_total Total bytes transmitted per QoS class"
+        );
         let _ = writeln!(out, "# TYPE umcf_qos_bytes_transmitted_total counter");
         for c in &snap.classes {
             let _ = writeln!(
@@ -376,7 +398,10 @@ impl BandwidthShaper {
             );
         }
 
-        let _ = writeln!(out, "# HELP umcf_qos_messages_transmitted_total Total messages transmitted per QoS class");
+        let _ = writeln!(
+            out,
+            "# HELP umcf_qos_messages_transmitted_total Total messages transmitted per QoS class"
+        );
         let _ = writeln!(out, "# TYPE umcf_qos_messages_transmitted_total counter");
         for c in &snap.classes {
             let _ = writeln!(
@@ -386,7 +411,10 @@ impl BandwidthShaper {
             );
         }
 
-        let _ = writeln!(out, "# HELP umcf_qos_queue_drops_total Total messages dropped per QoS class");
+        let _ = writeln!(
+            out,
+            "# HELP umcf_qos_queue_drops_total Total messages dropped per QoS class"
+        );
         let _ = writeln!(out, "# TYPE umcf_qos_queue_drops_total counter");
         for c in &snap.classes {
             let _ = writeln!(
@@ -398,7 +426,11 @@ impl BandwidthShaper {
 
         let _ = writeln!(out, "# HELP umcf_qos_control_latency_p99_ms P99 latency for critical control heartbeats in ms");
         let _ = writeln!(out, "# TYPE umcf_qos_control_latency_p99_ms gauge");
-        let _ = writeln!(out, "umcf_qos_control_latency_p99_ms {:.3}", snap.control_latency_p99_ms);
+        let _ = writeln!(
+            out,
+            "umcf_qos_control_latency_p99_ms {:.3}",
+            snap.control_latency_p99_ms
+        );
 
         out
     }

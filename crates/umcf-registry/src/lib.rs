@@ -20,10 +20,8 @@ pub use crdt::{
     NodeCrdtEntry, NodeRecord, NodeStatus, RegistryDelta,
 };
 pub use error::RegistryError;
-pub use failover::{
-    CircuitBreaker, CircuitState, ControlPlaneTier, FailoverControlPlaneClient,
-};
-pub use hlc::{DEFAULT_MAX_DRIFT_MS, HlcError, HlcTimestamp, HybridLogicalClock};
+pub use failover::{CircuitBreaker, CircuitState, ControlPlaneTier, FailoverControlPlaneClient};
+pub use hlc::{HlcError, HlcTimestamp, HybridLogicalClock, DEFAULT_MAX_DRIFT_MS};
 pub use reconciliation::{reconcile_partition, IslandLeaderInfo, ReconciliationSummary};
 pub use store::{
     LocalRegistryStore, StoreStats, CAPABILITIES_TABLE, CERT_CRL_TABLE, CLUSTER_META_TABLE,
@@ -147,7 +145,9 @@ mod tests {
 
         // 4. Remote observation within drift ceiling advances clock monotonically
         let remote_valid = HlcTimestamp::new(1010, 5, 0x8765_4321);
-        let t5 = clock.observe_with_physical_time(&remote_valid, 1005).expect("observe valid");
+        let t5 = clock
+            .observe_with_physical_time(&remote_valid, 1005)
+            .expect("observe valid");
         assert_eq!(t5.wall_ms, 1010);
         assert_eq!(t5.logical, 6);
         assert!(t5 > t4);
@@ -156,7 +156,10 @@ mod tests {
         // 5. Remote observation exceeding 5,000 ms drift ceiling must be rejected
         let remote_drifted = HlcTimestamp::new(7000, 0, 0x8765_4321);
         let drift_res = clock.observe_with_physical_time(&remote_drifted, 1005);
-        assert!(matches!(drift_res, Err(HlcError::ClockDriftExceeded { .. })));
+        assert!(matches!(
+            drift_res,
+            Err(HlcError::ClockDriftExceeded { .. })
+        ));
     }
 
     #[test]
@@ -181,7 +184,9 @@ mod tests {
             hlc: HlcTimestamp::MIN,
         };
 
-        let node_ts = store.register_node(node_rec.clone()).expect("register node");
+        let node_ts = store
+            .register_node(node_rec.clone())
+            .expect("register node");
         assert!(node_ts > HlcTimestamp::MIN);
 
         // Verify retrieval
@@ -192,18 +197,26 @@ mod tests {
 
         // 2. Update Hardware Capabilities
         let hw_desc = sample_hardware(node_id_worker.clone());
-        let cap_ts = store.update_capabilities(hw_desc.clone()).expect("update caps");
+        let cap_ts = store
+            .update_capabilities(hw_desc.clone())
+            .expect("update caps");
         assert!(cap_ts > node_ts);
 
-        let retrieved_caps = store.get_capabilities(&node_id_worker).expect("caps must exist");
+        let retrieved_caps = store
+            .get_capabilities(&node_id_worker)
+            .expect("caps must exist");
         assert_eq!(retrieved_caps.cpu.physical_cores, 16);
 
         // 3. Update Consent Policy
         let consent_policy = sample_consent(node_id_worker.clone());
-        let consent_ts = store.update_consent(consent_policy.clone()).expect("update consent");
+        let consent_ts = store
+            .update_consent(consent_policy.clone())
+            .expect("update consent");
         assert!(consent_ts > cap_ts);
 
-        let retrieved_consent = store.get_consent(&node_id_worker).expect("consent must exist");
+        let retrieved_consent = store
+            .get_consent(&node_id_worker)
+            .expect("consent must exist");
         assert_eq!(retrieved_consent.max_cpu_percent, 80);
 
         // 4. Record CRL entry
@@ -307,12 +320,15 @@ mod tests {
         let id_b = NodeId::parse("did:umcf:00000000000000000nodeB").expect("id");
         let id_c = NodeId::parse("did:umcf:00000000000000000nodeC").expect("id");
 
-        let store_a = LocalRegistryStore::open_or_create(dir.path().join("db_a.redb"), cluster_id, &id_a)
-            .expect("store a");
-        let store_b = LocalRegistryStore::open_or_create(dir.path().join("db_b.redb"), cluster_id, &id_b)
-            .expect("store b");
-        let store_c = LocalRegistryStore::open_or_create(dir.path().join("db_c.redb"), cluster_id, &id_c)
-            .expect("store c");
+        let store_a =
+            LocalRegistryStore::open_or_create(dir.path().join("db_a.redb"), cluster_id, &id_a)
+                .expect("store a");
+        let store_b =
+            LocalRegistryStore::open_or_create(dir.path().join("db_b.redb"), cluster_id, &id_b)
+                .expect("store b");
+        let store_c =
+            LocalRegistryStore::open_or_create(dir.path().join("db_c.redb"), cluster_id, &id_c)
+                .expect("store c");
 
         // Concurrent mutation 1 on Node A: Node A registers itself and worker 1
         let w1_id = NodeId::parse("did:umcf:000000000000000worker1").expect("id");
@@ -346,7 +362,9 @@ mod tests {
             .expect("b caps w1");
 
         // Concurrent mutation 3 on Node C: Node C updates consent for worker 1 and revokes a certificate
-        store_c.update_consent(sample_consent(w1_id.clone())).expect("c consent w1");
+        store_c
+            .update_consent(sample_consent(w1_id.clone()))
+            .expect("c consent w1");
         store_c
             .revoke_certificate(RevokedCertificateEntry {
                 serial_number: "crl-serial-node-c-999".into(),
@@ -381,9 +399,11 @@ mod tests {
 
         for (perm_idx, deltas) in permutations.iter().enumerate() {
             let replica_path = dir.path().join(format!("replica_perm_{}.redb", perm_idx));
-            let replica_id = NodeId::parse(format!("did:umcf:replica{:017}", perm_idx)).expect("id");
-            let replica = LocalRegistryStore::open_or_create(&replica_path, cluster_id, &replica_id)
-                .expect("open replica");
+            let replica_id =
+                NodeId::parse(format!("did:umcf:replica{:017}", perm_idx)).expect("id");
+            let replica =
+                LocalRegistryStore::open_or_create(&replica_path, cluster_id, &replica_id)
+                    .expect("open replica");
 
             for d in *deltas {
                 replica.apply_delta(d).expect("apply delta");
@@ -559,7 +579,8 @@ mod tests {
             let node_hash = ((rnd >> 40) % 3) as u32 + 1; // 3 simulated replicas
             let ts = HlcTimestamp::new(wall_ms, logical, node_hash);
 
-            let node_id = NodeId::parse(format!("did:umcf:randomnode{:010}", node_num)).expect("id");
+            let node_id =
+                NodeId::parse(format!("did:umcf:randomnode{:010}", node_num)).expect("id");
 
             // Apply mutation randomly to State A or State B
             let target_is_a = (rnd & 1) == 0;
@@ -613,7 +634,8 @@ mod tests {
                 merge_ba.merge_state(&state_a);
 
                 assert_eq!(
-                    merge_ab, merge_ba,
+                    merge_ab,
+                    merge_ba,
                     "Commutativity violated at iteration {}!",
                     i + 1
                 );
@@ -622,7 +644,8 @@ mod tests {
                 let mut idempotent_a = state_a.clone();
                 idempotent_a.merge_state(&state_a);
                 assert_eq!(
-                    idempotent_a, state_a,
+                    idempotent_a,
+                    state_a,
                     "Idempotency violated on state A at iteration {}!",
                     i + 1
                 );
@@ -630,7 +653,8 @@ mod tests {
                 let mut idempotent_b = state_b.clone();
                 idempotent_b.merge_state(&state_b);
                 assert_eq!(
-                    idempotent_b, state_b,
+                    idempotent_b,
+                    state_b,
                     "Idempotency violated on state B at iteration {}!",
                     i + 1
                 );
@@ -665,7 +689,10 @@ mod tests {
         let mut assoc_2 = state_a.clone();
         assoc_2.merge_state(&b_plus_c);
 
-        assert_eq!(assoc_1, assoc_2, "Associativity law ((A + B) + C == A + (B + C)) violated!");
+        assert_eq!(
+            assoc_1, assoc_2,
+            "Associativity law ((A + B) + C == A + (B + C)) violated!"
+        );
 
         let elapsed = start_time.elapsed();
         println!(
@@ -728,10 +755,7 @@ mod tests {
             .sign_request("POST", path, body, ts_ms)
             .expect("sign headers");
 
-        assert_eq!(
-            headers.get("x-umcf-did").expect("did"),
-            node_id.as_str()
-        );
+        assert_eq!(headers.get("x-umcf-did").expect("did"), node_id.as_str());
         assert_eq!(
             headers.get("x-umcf-timestamp").expect("ts"),
             ts_ms.to_string().as_str()
@@ -801,7 +825,12 @@ mod tests {
 
         // Rejection of invalid protocols
         assert!(matches!(
-            CloudflareControlPlaneClient::new("ftp://invalid.com", "c1", Arc::clone(&keypair), node_id.clone()),
+            CloudflareControlPlaneClient::new(
+                "ftp://invalid.com",
+                "c1",
+                Arc::clone(&keypair),
+                node_id.clone()
+            ),
             Err(RegistryError::InvalidUrl(_))
         ));
     }
@@ -860,7 +889,10 @@ mod tests {
         }
         let _guard = ProcessGuard(Some(server_child));
 
-        assert!(ready, "Local control plane server failed to start within 3 seconds");
+        assert!(
+            ready,
+            "Local control plane server failed to start within 3 seconds"
+        );
 
         let keypair = Arc::new(NodeKeypair::generate());
         let node_id = NodeId::parse("did:umcf:00000000000000rust01").expect("id");
@@ -1104,7 +1136,10 @@ mod tests {
 
         // 3. Exactly one Master remains across the combined cluster
         let nodes_a = store_a.list_active_nodes();
-        let masters: Vec<_> = nodes_a.iter().filter(|n| n.role == NodeRole::Master).collect();
+        let masters: Vec<_> = nodes_a
+            .iter()
+            .filter(|n| n.role == NodeRole::Master)
+            .collect();
         assert_eq!(masters.len(), 1);
         assert_eq!(masters[0].node_id, master_a);
 

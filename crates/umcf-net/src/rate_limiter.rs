@@ -111,7 +111,12 @@ impl ReplayFilter {
     ///
     /// # Errors
     /// Returns `NetError::ReplayDetected` if duplicate or old packet.
-    pub fn check_and_update(&mut self, sender_did: &str, seq: u64, timestamp_ms: u64) -> Result<(), NetError> {
+    pub fn check_and_update(
+        &mut self,
+        sender_did: &str,
+        seq: u64,
+        timestamp_ms: u64,
+    ) -> Result<(), NetError> {
         if self.windows.len() >= MAX_TRACKED_IPS {
             self.windows.clear(); // Reset filter when limit exceeded to maintain bounded memory
         }
@@ -159,4 +164,3 @@ impl Default for ReplayFilter {
         Self::new()
     }
 }
-

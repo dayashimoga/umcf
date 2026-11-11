@@ -127,12 +127,11 @@ impl EphemeralScratchDir {
 
         // 2. Canonical check if the path exists
         if combined.exists() {
-            let canonical = fs::canonicalize(&combined).map_err(|e| {
-                WorkerError::SandboxPathTraversal {
+            let canonical =
+                fs::canonicalize(&combined).map_err(|e| WorkerError::SandboxPathTraversal {
                     attempted_path: attempted_str.clone(),
                     reason: format!("Failed to canonicalize path: {e}"),
-                }
-            })?;
+                })?;
 
             let canonical_root = fs::canonicalize(&self.task_root).map_err(|e| {
                 WorkerError::Io(format!("Failed to canonicalize scratch root: {e}"))
@@ -222,7 +221,10 @@ impl ArtifactStager {
         let mut hasher = blake3::Hasher::new();
         for file_path in &file_entries {
             let data = fs::read(file_path).map_err(|e| {
-                WorkerError::Io(format!("Failed to read output artifact {:?}: {e}", file_path))
+                WorkerError::Io(format!(
+                    "Failed to read output artifact {:?}: {e}",
+                    file_path
+                ))
             })?;
             hasher.update(&data);
         }
@@ -251,14 +253,12 @@ impl ArtifactStager {
     }
 
     fn collect_files_recursive(dir: &Path, files: &mut Vec<PathBuf>) -> Result<(), WorkerError> {
-        let read_dir = fs::read_dir(dir).map_err(|e| {
-            WorkerError::Io(format!("Failed to read dir {:?}: {e}", dir))
-        })?;
+        let read_dir = fs::read_dir(dir)
+            .map_err(|e| WorkerError::Io(format!("Failed to read dir {:?}: {e}", dir)))?;
 
         for entry in read_dir {
-            let entry = entry.map_err(|e| {
-                WorkerError::Io(format!("Failed to read entry in {:?}: {e}", dir))
-            })?;
+            let entry = entry
+                .map_err(|e| WorkerError::Io(format!("Failed to read entry in {:?}: {e}", dir)))?;
             let path = entry.path();
             if path.is_dir() {
                 Self::collect_files_recursive(&path, files)?;
@@ -317,12 +317,9 @@ impl WasmSandboxRunner {
         let t_start = Instant::now();
 
         // 1. Stage input into scratch directory and verify BLAKE3 hash
-        let _staged_path = self.stager.stage_input(
-            scratch,
-            "input.dat",
-            input_data,
-            input_hash,
-        )?;
+        let _staged_path = self
+            .stager
+            .stage_input(scratch, "input.dat", input_data, input_hash)?;
 
         // 2. Check for preemption before starting
         if let Some(token) = preemption_token {
@@ -344,7 +341,8 @@ impl WasmSandboxRunner {
 
         if input_text.contains("__SIMULATE_TRAVERSAL__") {
             // Attempt forbidden traversal escape
-            let traversal_result = scratch.validate_path_access(scratch.in_path(), "../../etc/passwd");
+            let traversal_result =
+                scratch.validate_path_access(scratch.in_path(), "../../etc/passwd");
             traversal_result?;
         }
 
@@ -449,7 +447,10 @@ impl NativeEngineRegistry {
         self.allowed_engines
             .read()
             .ok()
-            .and_then(|map| map.get(engine_id).map(|expected| expected.eq_ignore_ascii_case(code_hash)))
+            .and_then(|map| {
+                map.get(engine_id)
+                    .map(|expected| expected.eq_ignore_ascii_case(code_hash))
+            })
             .unwrap_or(false)
     }
 }

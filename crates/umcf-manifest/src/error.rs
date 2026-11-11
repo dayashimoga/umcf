@@ -27,11 +27,18 @@ pub enum ManifestError {
 
     /// A step references another step's output without declaring it in `depends_on`.
     #[error("Missing dependency: step '{step_id}' references output of step '{dependency_id}', but '{dependency_id}' is not in 'depends_on'")]
-    MissingDependency { step_id: String, dependency_id: String },
+    MissingDependency {
+        step_id: String,
+        dependency_id: String,
+    },
 
     /// Type mismatch in parameter value or variable interpolation.
     #[error("Type mismatch: parameter '{param_name}' expects {expected}, found {actual}")]
-    TypeMismatch { param_name: String, expected: String, actual: String },
+    TypeMismatch {
+        param_name: String,
+        expected: String,
+        actual: String,
+    },
 
     /// Duplicate step identifier within manifest.
     #[error("Duplicate step ID: '{step_id}'")]
@@ -39,7 +46,11 @@ pub enum ManifestError {
 
     /// Content hash mismatch under `--frozen-lockfile`.
     #[error("Lockfile mismatch under frozen lockfile: step '{step_id}' artifact hash changed (expected: {expected}, found: {actual})")]
-    LockfileMismatch { step_id: String, expected: String, actual: String },
+    LockfileMismatch {
+        step_id: String,
+        expected: String,
+        actual: String,
+    },
 
     /// Execution required frozen lockfile, but no lockfile was present.
     #[error("Missing lockfile: workflow execution requires frozen lockfile but no valid umcf.lock was provided")]
@@ -61,4 +72,3 @@ pub enum ManifestError {
     #[error("Execution error: {0}")]
     ExecutionError(String),
 }
-

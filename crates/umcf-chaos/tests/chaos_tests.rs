@@ -4,9 +4,9 @@
 
 use std::collections::HashMap;
 use umcf_chaos::{
-    ChaosCampaignRunner, ChaosError, ChaosRng, ClusterInvariantMonitor,
-    MemoryPressureOomNemesis, NetworkPartitionNemesis, NodeChurnNemesis,
-    NodeLifecycleState, RoutingMatrix, ThermalAndBatteryStormNemesis,
+    ChaosCampaignRunner, ChaosError, ChaosRng, ClusterInvariantMonitor, MemoryPressureOomNemesis,
+    NetworkPartitionNemesis, NodeChurnNemesis, NodeLifecycleState, RoutingMatrix,
+    ThermalAndBatteryStormNemesis,
 };
 
 // ============================================================================
@@ -15,7 +15,11 @@ use umcf_chaos::{
 
 #[test]
 fn test_asymmetric_network_partition_routing_matrix() {
-    let nodes = vec!["node-A".to_string(), "node-B".to_string(), "node-C".to_string()];
+    let nodes = vec![
+        "node-A".to_string(),
+        "node-B".to_string(),
+        "node-C".to_string(),
+    ];
     let routing = RoutingMatrix::new_all_connected(&nodes);
 
     // Initial state: fully connected
@@ -55,23 +59,38 @@ fn test_deterministic_prng_chaos_schedule_reproducibility() {
     // Boolean probability sanity
     let mut rng3 = ChaosRng::new(42);
     let trues = (0..1000).filter(|_| rng3.gen_bool(30)).count();
-    assert!((260..=340).contains(&trues), "trues={trues} outside expected 30% range");
+    assert!(
+        (260..=340).contains(&trues),
+        "trues={trues} outside expected 30% range"
+    );
 }
 
 #[test]
 fn test_invariant_monitor_detects_synthetic_split_brain_divergence() {
     let monitor = ClusterInvariantMonitor::new();
     let mut views = HashMap::new();
-    views.insert("node-1".to_string(), vec!["node-1".to_string(), "node-2".to_string()]);
+    views.insert(
+        "node-1".to_string(),
+        vec!["node-1".to_string(), "node-2".to_string()],
+    );
     // Node-3 is partitioned into minority view
     views.insert("node-3".to_string(), vec!["node-3".to_string()]);
 
     let res = monitor.check_invariant_2_split_brain_convergence(&views, 1500, 5000);
-    assert!(matches!(res, Err(ChaosError::InvariantViolation { invariant_id: 2, .. })));
+    assert!(matches!(
+        res,
+        Err(ChaosError::InvariantViolation {
+            invariant_id: 2,
+            ..
+        })
+    ));
 
     // Timeout violation check
     let res_timeout = monitor.check_invariant_2_split_brain_convergence(&views, 5500, 5000);
-    assert!(matches!(res_timeout, Err(ChaosError::SplitBrainConvergenceTimeout { .. })));
+    assert!(matches!(
+        res_timeout,
+        Err(ChaosError::SplitBrainConvergenceTimeout { .. })
+    ));
 }
 
 // ============================================================================
@@ -90,7 +109,11 @@ fn test_jepsen_style_majority_minority_split_brain_and_heal_under_load() {
     let mut nemesis = NetworkPartitionNemesis::new(&nodes);
 
     // Majority (0, 1, 2) vs Minority (3, 4)
-    let majority = ["node-0".to_string(), "node-1".to_string(), "node-2".to_string()];
+    let majority = [
+        "node-0".to_string(),
+        "node-1".to_string(),
+        "node-2".to_string(),
+    ];
     let minority = ["node-3".to_string(), "node-4".to_string()];
     nemesis.inject_symmetric_split(&majority, &minority);
 
@@ -139,7 +162,10 @@ fn test_mobile_background_freeze_30s_lease_expiry_and_requeue() {
     let now_ms = 1_000_000u64;
 
     churn.suspend_mobile_app_nap("node-ios-iphone", 30_000, now_ms);
-    assert_eq!(churn.node_states["node-ios-iphone"], NodeLifecycleState::SuspendedDoze);
+    assert_eq!(
+        churn.node_states["node-ios-iphone"],
+        NodeLifecycleState::SuspendedDoze
+    );
 
     // During suspension (< 30s), node is unresponsive
     assert!(!churn.is_node_responding("node-ios-iphone", now_ms + 10_000));
@@ -163,7 +189,9 @@ fn test_critical_memory_pressure_evicts_cache_and_migrates_worker_without_oom() 
 
     // Simulate Android onTrimMemory / Linux cgroup critical pressure
     let unpinned_cache_bytes = 256 * 1024 * 1024; // 256 MiB
-    let evicted = mem_nemesis.simulate_trim_memory_critical(node_id, unpinned_cache_bytes).unwrap();
+    let evicted = mem_nemesis
+        .simulate_trim_memory_critical(node_id, unpinned_cache_bytes)
+        .unwrap();
     assert_eq!(evicted, unpinned_cache_bytes);
     assert!(mem_nemesis.is_memory_critical(node_id));
 
@@ -191,8 +219,16 @@ fn test_25_seed_randomized_chaos_campaign_matrix_verifies_all_invariants() {
 
     assert_eq!(reports.len(), 25);
     for r in &reports {
-        assert!(r.passed, "Campaign {} failed: {}", r.campaign_id, r.description);
-        assert!(r.convergence_duration_ms <= 5000, "Convergence {} ms exceeded 5000 ms ceiling", r.convergence_duration_ms);
+        assert!(
+            r.passed,
+            "Campaign {} failed: {}",
+            r.campaign_id, r.description
+        );
+        assert!(
+            r.convergence_duration_ms <= 5000,
+            "Convergence {} ms exceeded 5000 ms ceiling",
+            r.convergence_duration_ms
+        );
         assert_eq!(r.invariants_verified, [true, true, true, true, true]);
     }
 }
