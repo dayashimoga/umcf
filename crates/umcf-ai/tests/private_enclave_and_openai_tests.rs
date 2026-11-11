@@ -346,3 +346,4 @@ fn test_manual_openai_curl_snippet_and_status_card_verification() {
     assert!(curl_snippet.contains("127.0.0.1:11435"));
     assert!(curl_snippet.contains("X-UMCF-Privacy-Mode: strict-local"));
 }
+

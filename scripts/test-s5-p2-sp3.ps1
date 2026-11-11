@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   Executes classified five-tier verification tests for Subphase S5.P2.SP3:
   - Unit: UTF-8 token assembler (emoji & CJK multi-byte splitting), KV-cache LCP matching, LRU eviction, context shifting preserving sink tokens, JSON Schema GBNF converter
@@ -252,3 +252,4 @@ if ($Json) {
 if (!$allPass) {
   exit 1
 }
+

@@ -96,3 +96,4 @@ vec1 = response.data[0].embedding
 vec2 = response.data[1].embedding
 print(f"Dimension: {len(vec1)}, Sample: {vec1[:3]}")
 ```
+

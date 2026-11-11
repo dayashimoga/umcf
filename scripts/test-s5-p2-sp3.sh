@@ -25,3 +25,4 @@ cargo test -p umcf-ai --test streaming_and_kv_tests test_manual_
 mkdir -p "$REPO_ROOT/artifacts/stage-05/p2" "$REPO_ROOT/artifacts/evidence/stage-05/p2"
 
 echo "=== S5.P2.SP3 Verification Complete: ALL PASS ==="
+

@@ -162,3 +162,4 @@ impl EphemeralInferenceSession {
 pub fn redact_enclave_text(text: &str, canary: &str) -> String {
     text.replace(canary, "[REDACTED_PRIVATE_ENCLAVE]")
 }
+

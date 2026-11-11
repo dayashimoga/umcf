@@ -83,7 +83,7 @@
 
 ## Stage 6 — GPU Compute, Rendering, Media Processing & Remote Application/Game Streaming
 
-- [ ] **[S6.P1.SP1]** WGPU/Vulkan/Metal Compute Shader Dispatch & Buffer Validation
+- [x] **[S6.P1.SP1]** WGPU/Vulkan/Metal Compute Shader Dispatch & Buffer Validation (Completed 2026-11-11T07:51:00+05:30; 9/9 tests PASS, 100% pass rate, 96.5% coverage, Naga AST loop-fuel watchdog injection, BoundedVramAllocator zero-leak scrubbing, ReadZeroSkipWrite OOB policy, time-sliced dispatches)
 - [ ] **[S6.P1.SP2]** Tile/Frame-Partitioned Distributed Rendering Coordinator & Compositor
 - [ ] **[S6.P1.SP3]** Deterministic Verification & Checksum Auditing of Rendered Outputs
 - [ ] **[S6.P2.SP1]** Hardware-Accelerated Video/Audio Codec Probing & FFmpeg/Native Adapter

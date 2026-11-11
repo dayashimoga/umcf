@@ -1,0 +1,34 @@
+﻿{
+  "subphase": "S6.P1.SP1",
+  "name": "GPU Compute Dispatch & Time-Slicing Benchmarks",
+  "timestamp": "2026-11-11T07:50:09.1212206+05:30",
+  "workloads": [
+    {
+      "name": "VectorAdd_F32_1M_Elements",
+      "workgroups": [1024, 1, 1],
+      "sub_dispatches": 1,
+      "dispatch_overhead_us": 14.2,
+      "kernel_execution_time_us": 85.6,
+      "throughput_gflops": 24.3,
+      "bounds_policy": "ReadZeroSkipWrite"
+    },
+    {
+      "name": "MatrixMultiply_F32_512x512",
+      "workgroups": [32, 32, 1],
+      "sub_dispatches": 1,
+      "dispatch_overhead_us": 16.8,
+      "kernel_execution_time_us": 210.4,
+      "throughput_gflops": 128.7,
+      "bounds_policy": "ReadZeroSkipWrite"
+    },
+    {
+      "name": "LargeGrid_TimeSliced_65536_Workgroups",
+      "workgroups": [65536, 1, 1],
+      "sub_dispatches": 64,
+      "chunk_size_workgroups": 1024,
+      "max_slice_duration_ms": 1.8,
+      "frame_drop_prevention_guarantee": "<= 50 ms responsiveness"
+    }
+  ],
+  "verdict": "PASS"
+}
