@@ -2404,6 +2404,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "soak-suite"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "umcf-chaos",
+ "umcf-core",
+ "umcf-guard",
+ "umcf-hwprobe",
+ "umcf-ledger",
+ "umcf-marketplace",
+ "umcf-proto",
+ "umcf-storage",
+]
+
+[[package]]
 name = "socket2"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

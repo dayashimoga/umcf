@@ -31,6 +31,7 @@ members = [
     "services/control-plane-cloudrun",
     "services/cloudrun_fallback",
     "tests/e2e-cluster",
+    "tests/soak",
 ]
 
 [workspace.package]

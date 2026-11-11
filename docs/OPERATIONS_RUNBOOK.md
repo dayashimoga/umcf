@@ -63,3 +63,20 @@ Mobile operating systems aggressively freeze background processes without issuin
    - Byzantine detection watchdog isolates the offending node DID.
    - Dual-entry credit ledger invokes `slash_byzantine_worker`.
    - Stake bond is transferred to `SlashedPenaltyPool`, and requester is reimbursed from escrow.
+
+---
+
+## 4. Resource Lifecycle Invariants & Soak Profiling Methodology
+
+### 4.1 Zero-Leak Mandate
+The UMCF daemon (`umcfd`) is designed to run indefinitely in the background. Continuous operations must adhere to zero net resource accumulation:
+1. **Heap Allocation Trend**: Ordinary Least Squares (OLS) slope of heap bytes over post-warmup cycles (`[2,000 .. 10,000]`) must satisfy $\beta \le 0.001\text{ bytes/cycle}$.
+2. **VRAM Buffer Invariant**: Every allocated compute or staging buffer in `wgpu`/Vulkan/Metal must be unmapped and dropped immediately post-dispatch; post-quiescence gauge counter must be exactly `0`.
+3. **Handle & FD Invariant**: File descriptors and OS process handles must return to baseline idle counts after workload completion.
+4. **Temporary File Sanitation**: Transcode segments and staging chunks must be unlinked upon job completion; orphan temp files must be exactly `0`.
+
+### 4.2 Quiescence Barrier Protocol
+During automated soak verification, metrics are sampled only after passing a `QuiescenceBarrier`:
+- Bounded wait (up to `1,000 ms`) for asynchronous drop tasks, garbage collection sweeps, and Tokio task join handles.
+- Prevents false-positive leak alarms caused by transient in-flight buffers during sample collection.
+

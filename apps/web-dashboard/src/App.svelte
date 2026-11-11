@@ -14,6 +14,7 @@
   import HostStreamSettingsCard from "./lib/components/stream/HostStreamSettingsCard.svelte";
   import TranscodePipelineView from "./lib/components/media/TranscodePipelineView.svelte";
   import ChaosDrawerCard from "./lib/components/cluster/ChaosDrawerCard.svelte";
+  import ResourceLeakDiagnosticsCard from "./lib/components/cluster/ResourceLeakDiagnosticsCard.svelte";
 
   const dashboard = createClusterDashboardState("umcf-edge-mesh");
 
@@ -444,9 +445,12 @@
       <ApiKeyManagerCard />
     {/if}
 
-    <!-- View 10: Chaos Engineering & Nemesis Injection -->
+    <!-- View 10: Chaos Engineering, Nemesis & Leak Diagnostics -->
     {#if currentRoute === 'chaos'}
-      <ChaosDrawerCard />
+      <div class="space-y-6">
+        <ChaosDrawerCard />
+        <ResourceLeakDiagnosticsCard />
+      </div>
     {/if}
   </main>
 </div>
