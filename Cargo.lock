@@ -3200,6 +3200,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "umcf-marketplace"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "ed25519-dalek",
+ "hex",
+ "proptest",
+ "rand_core 0.6.4",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tracing",
+ "umcf-core",
+ "umcf-ledger",
+]
+
+[[package]]
 name = "umcf-media"
 version = "0.1.0"
 dependencies = [

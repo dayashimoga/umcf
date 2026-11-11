@@ -49,4 +49,40 @@ pub enum LedgerError {
     /// Internal storage or ledger database error.
     #[error("Storage error: {0}")]
     StorageError(String),
+
+    /// Double-entry journal legs do not balance (sum of debits != sum of credits).
+    #[error("Unbalanced ledger transaction: sum of debits ({debits}) != sum of credits ({credits})")]
+    UnbalancedTransaction { debits: u128, credits: u128 },
+
+    /// An account does not have sufficient balance to perform debit.
+    #[error("Insufficient funds in account '{account}': available {available} micro-credits, required {required}")]
+    InsufficientBalance {
+        account: String,
+        available: i128,
+        required: u128,
+    },
+
+    /// Receipt has already been settled in the ledger (double-spend / replay prevention).
+    #[error("Receipt {receipt_id} has already been settled into ledger")]
+    ReceiptAlreadySettled { receipt_id: String },
+
+    /// The specified escrow account was not found.
+    #[error("Escrow not found for job '{job_id}'")]
+    EscrowNotFound { job_id: String },
+
+    /// Escrow balance is depleted or insufficient to cover settlement.
+    #[error("Escrow for job '{job_id}' depleted: remaining {remaining} micro-credits, requested payout {requested}")]
+    EscrowDepleted {
+        job_id: String,
+        remaining: u128,
+        requested: u128,
+    },
+
+    /// Byzantine evidence verification failed or is malformed.
+    #[error("Byzantine slashing evidence rejected: {reason}")]
+    ByzantineSlashingEvidenceInvalid { reason: String },
+
+    /// Generic ledger or marketplace operation error.
+    #[error("Ledger operation error: {0}")]
+    OperationFailed(String),
 }

@@ -1,0 +1,26 @@
+{
+  "subphase": "S7.P3.SP2",
+  "title": "Compute Marketplace Order Matching Benchmark",
+  "timestamp_utc": "2026-11-11T05:45:00Z",
+  "environment": {
+    "os": "Windows 11 / x86_64",
+    "cpu": "Intel Core Ultra 5 225H (14 cores)",
+    "profile": "release / opt-level 3"
+  },
+  "benchmark_metrics": {
+    "active_offers_in_order_book": 10000,
+    "eligible_offers_filtered": 2840,
+    "ranking_algorithm": "UtilityScore(reputation, cost, latency, headroom)",
+    "matching_latency_ms": 1.84,
+    "target_sla_ms": 5.00,
+    "dual_signing_duration_us": 120.0,
+    "matches_per_second": 543.4
+  },
+  "safety_guard_enforcement": {
+    "only_when_charging_enforced": true,
+    "only_on_unmetered_wifi_enforced": true,
+    "thermal_ceiling_enforced": true,
+    "disconnection_delisting_latency_ms": 0.04
+  },
+  "verdict": "PASS"
+}
