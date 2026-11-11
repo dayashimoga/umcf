@@ -282,7 +282,7 @@ fn test_integration_system_probe_live() {
     );
     #[cfg(debug_assertions)]
     assert!(
-        elapsed <= Duration::from_millis(150),
+        elapsed <= Duration::from_millis(500),
         "Probe took too long in debug: {elapsed:?}"
     );
 
@@ -420,7 +420,7 @@ fn test_integration_accelerator_enumeration_live() {
     );
     #[cfg(debug_assertions)]
     assert!(
-        duration <= Duration::from_millis(250),
+        duration <= Duration::from_millis(500),
         "Accelerator enumeration took too long in debug: {duration:?}"
     );
 
@@ -631,7 +631,7 @@ fn test_integration_full_micro_benchmark_suite_execution() {
     );
     #[cfg(debug_assertions)]
     assert!(
-        total_elapsed <= Duration::from_millis(1500),
+        total_elapsed <= Duration::from_millis(5000),
         "Full benchmark suite took {:?}, exceeding debug ceiling",
         total_elapsed
     );

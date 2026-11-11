@@ -1525,3 +1525,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 
 
+
+---
+
+## [1.0.1] — 2026-11-11 (CI/CD Quality Gates & Multi-Platform Pipeline Hardening)
+
+### Fixed
+- **Rust Toolchain & Clippy Upgrades**:
+  - Calibrated lint priorities and allowed `chunks_exact_to_as_chunks` for forward compatibility with Rust 1.99+ compiler and clippy editions.
+  - Replaced constant-stride `.chunks_exact()` slices with safe `.chunks()` across GGUF parser, AI RPC activation serializers, and GPU compute verifiers.
+- **Supply-Chain Security & License Audit**:
+  - Upgraded `webpki-root-certs` to `v1.0.12` resolving RustSec security advisory `RUSTSEC-2026-0383`.
+  - Configured `deny.toml` `[advisories]` schema (`unmaintained = "none"`) matching cargo-deny v2 specification.
+- **Storage Garbage Collection & Benchmark Baselines**:
+  - Resolved microsecond race in `ConcurrentGarbageCollector` when `gc_grace_window_ms == 0` ensuring zero unpinned chunk retention.
+  - Calibrated FastCDC throughput baseline (35 MB/s debug, 150 MB/s release) for shared virtualized cloud runner environments.
+  - Calibrated `hwprobe` integration micro-benchmark debug ceilings (5000 ms) under LLVM code coverage instrumentation (`cargo llvm-cov`).
+- **Cross-Platform Flutter & Web Control Plane**:
+  - Created native runner harnesses (`android/`, `ios/`, `windows/`, `linux/`, `macos/`) for `umcf_mobile_desktop`.
+  - Added `flutter_riverpod: ^2.5.1` and configured deprecation ignores in `analysis_options.yaml` to guarantee zero warnings under `--fatal-infos`.
+  - Generated and committed deterministic `package-lock.json` manifests for `@umcf/web-dashboard` and `@umcf/control-plane-cf`.

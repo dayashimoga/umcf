@@ -186,7 +186,8 @@ impl ConcurrentGarbageCollector {
         for meta in all_chunks {
             let chunk_id = &meta.chunk_id;
             let is_marked = marked_root_chunks.contains(chunk_id);
-            let is_in_grace_window = meta.created_at_us >= grace_cutoff_us;
+            let is_in_grace_window =
+                self.config.gc_grace_window_ms > 0 && meta.created_at_us >= grace_cutoff_us;
 
             if is_marked || is_in_grace_window {
                 live_retained += 1;
