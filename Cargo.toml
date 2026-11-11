@@ -23,6 +23,7 @@ members = [
     "crates/umcf-api-gateway",
     "crates/umcf-sdk",
     "crates/umcf-cli",
+    "crates/umcf-manifest",
     "crates/umcf-daemon",
     "services/control-plane-cloudrun",
     "services/cloudrun_fallback",
@@ -58,6 +59,9 @@ umcf-stream = { path = "crates/umcf-stream" }
 umcf-storage = { path = "crates/umcf-storage" }
 umcf-api-gateway = { path = "crates/umcf-api-gateway" }
 umcf-sdk = { path = "crates/umcf-sdk" }
+umcf-manifest = { path = "crates/umcf-manifest" }
+serde_yaml = "0.9.34"
+toml = "0.8.19"
 redb = "2.3.0"
 rayon = "1.12.0"
 smallvec = { version = "1.13.2", features = ["serde"] }

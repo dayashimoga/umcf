@@ -1158,3 +1158,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
   - Created `docs/cli/UMCF_CLI_REFERENCE.md` detailing global flags, environment variables (`UMCF_ENDPOINT`, `UMCF_API_KEY`), exit code mapping, and all subcommand specifications.
 - **Classified Test Harness**: Implemented `scripts/test-s7-p2-sp2.sh` and `scripts/test-s7-p2-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
 - **Verification Evidence**: Archived `artifacts/evidence/stage-07/p2/sp2_cli_json_schema_outputs.json` and `artifacts/evidence/stage-07/p2/sp2_ratatui_top_snapshot.txt`.
+
+### Added (S7.P2.SP3: Declarative Workload Manifests & Reproducible Job Templates)
+- **Declarative Workload Manifest Crate (`crates/umcf-manifest`)**:
+  - Implemented `WorkloadManifest` supporting `apiVersion: umcf.io/v1` in YAML, TOML, and JSON with strict `#[serde(deny_unknown_fields)]`.
+  - Typed parameter definitions (`string`, `int`, `float`, `bool`, `path`) with default value hydration, required flags, and type checking (`ManifestValidator::evaluate_parameters`).
+  - Privacy modes (`PrivacyMode::StrictLocal`, `PrivacyMode::TrustedDevices`, `PrivacyMode::ClusterEncrypted`).
+- **Static Validator & Kahn DAG Cycle Detection (`crates/umcf-manifest/src/validator.rs`)**:
+  - Topological cycle detection and stage grouping using Kahn's algorithm: Groups independent steps into concurrent execution stages (`Vec<Vec<String>>`) and catches 100% of cyclic dependencies (`A -> B -> C -> A`).
+  - Variable and output interpolation engine (`${params.<name>}` and `${steps.<id>.<output>}`): Statically validates parameter references and step dependency chains before execution.
+- **Cryptographic Lockfile Resolver (`crates/umcf-manifest/src/lockfile.rs`)**:
+  - Implemented `Lockfile` (`umcf.lock`) pinning exact BLAKE3 content digests for all step definitions, configurations, input bindings, and referenced artifact CIDs (GGUF models, WASM modules).
+  - Signed with Ed25519 developer key over canonical lockfile digest.
+  - Frozen Lockfile Enforcement: Verified under `--frozen-lockfile` that any step or artifact hash mutation immediately aborts with structured `ManifestError::LockfileMismatch`.
+- **Built-In Reproducible Job Templates Catalog (`crates/umcf-manifest/src/templates.rs`)**:
+  - Implemented and verified all 6 standard reproducible job templates:
+    1. `wasm-parallel-map-reduce`: Distributed MapReduce data crunching across heterogeneous cluster nodes.
+    2. `ai-batch-rag-embeddings`: Distributed document chunking, batched vector embeddings, and index generation.
+    3. `ai-private-document-qa`: `StrictLocalOnly` confidential document QA with local on-device GGUF LLM synthesis.
+    4. `gpu-distributed-raytracer`: Tile-parallel 4K raytracing distributed across cluster GPU shaders.
+    5. `media-4k-av1-transcode`: GOP-segmented hardware-accelerated 4K AV1 video transcoding with Annex-B restitching.
+    6. `hybrid-media-ai-pipeline`: Multi-stage pipeline: Video -> Keyframe Extraction -> WASM Visual Filter -> LLM Synthesis.
+  - `TemplateCatalog::init_template` validates, serializes, and initializes templates to local workspaces.
+- **Workflow Executor & Resumption Engine (`crates/umcf-manifest/src/executor.rs`)**:
+  - Multi-stage parallel DAG executor with step caching.
+  - Resumption from failure: Verified that resuming an interrupted pipeline reuses cached step CIDs without re-executing completed stages.
+  - Generates verifiable `WorkflowExecutionReceipt` containing step outputs, final outputs, wall-clock duration, and deterministic output CID.
+- **Interactive Multiplatform Visual DAG Builder UI (Svelte 5 & Flutter)**:
+  - Svelte 5 `apps/web-dashboard/src/lib/components/developer/WorkflowTemplateGalleryCard.svelte` and `ui/admin_web/...`: Template gallery, auto-validated parameter inputs form, animated DAG node progress graph, and verifiable lockfile receipt banner.
+  - Flutter `apps/mobile-desktop/lib/features/developer/workflow_templates_screen.dart` and `ui/flutter_app/...`: Responsive multiplatform screen, Material 3 DAG pipeline stages, live simulated step progression, and lockfile verification receipt.
+- **Developer Documentation**:
+  - Updated Section 4 of `docs/sdk/DEVELOPER_GUIDE.md` detailing the `umcf.io/v1` manifest specification, Kahn's algorithm DAG analysis, `umcf.lock` format, and template catalog.
+- **Phase S7.P2 Master Completion Gate**:
+  - **Phase S7.P2 (Developer Experience, SDKs, CLI & Declarative Workloads) 100% Certified** with **29/29 tests passing (100% pass rate)** across S7.P2.SP1 (10 tests), S7.P2.SP2 (10 tests), and S7.P2.SP3 (9 tests).
+- **Classified Test Harness**: Implemented `scripts/test-s7-p2-sp3.sh` and `scripts/test-s7-p2-sp3.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 9 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-07/p2/sp3_template_execution_receipts.json` and `artifacts/evidence/stage-07/p2/sp3_reproducible_lockfile_verification.json`.

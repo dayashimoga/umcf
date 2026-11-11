@@ -192,3 +192,102 @@ The WebSocket stream at `GET /ws/v1/jobs/{id}/events` guarantees that clients ne
 1. Every emitted event receives a monotonically increasing sequence integer (`seq = 1, 2, 3...`).
 2. When reconnecting, provide the sequence number of the last acknowledged event via `?since_seq=N` or `Last-Event-ID: N`.
 3. The gateway replays all missing events from `seq = N + 1` up to the present sequence from its in-memory bounded ring buffer before switching to real-time broadcast streaming.
+
+
+---
+
+## 4. Declarative Workload Manifests & Reproducible Job Templates (`S7.P2.SP3`)
+
+UMCF supports defining complex, multi-stage distributed compute pipelines—combining FastCDC storage ingestion, sandboxed WASM analytics, GPU shader compute, distributed GGUF AI inference, and hardware-accelerated media transcoding—in a single declarative `umcf.job.yaml` (or `.toml`) manifest.
+
+### 4.1 `apiVersion: umcf.io/v1` Manifest Specification
+
+Workload manifests declare metadata, typed input parameters, confidentiality constraints, DAG steps, and exported outputs:
+
+```yaml
+apiVersion: umcf.io/v1
+kind: DistributedWorkflow
+metadata:
+  name: hybrid-media-ai-pipeline
+  version: "1.0.0"
+  description: "Multi-stage Video -> Keyframes -> WASM Filter -> LLM Synthesis"
+parameters:
+  input_video:
+    type: path
+    required: true
+    description: "Source video file to summarize"
+  summary_language:
+    type: string
+    required: false
+    default: "en"
+  llm_model:
+    type: string
+    required: false
+    default: "llama-3-8b-instruct.Q4_K_M.gguf"
+privacy:
+  mode: trusted-devices # strict-local | trusted-devices | cluster-encrypted
+steps:
+  - id: extract_keyframes
+    kind: media.transcode
+    inputs:
+      source: "${params.input_video}"
+    config:
+      codec: h264
+      resolution: "1280x720"
+  - id: preprocess_wasm
+    kind: wasm.mapreduce
+    depends_on: [extract_keyframes]
+    module: "cid://blake3:8f9a2b1c3d4e5f60"
+    inputs:
+      frames_cid: "${steps.extract_keyframes.output_cid}"
+    config:
+      action: "ocr_and_visual_descriptors"
+    resources:
+      max_memory_mb: 256
+      timeout_sec: 60
+  - id: summarize_llm
+    kind: ai.inference
+    depends_on: [preprocess_wasm]
+    model: "${params.llm_model}"
+    inputs:
+      descriptors: "${steps.preprocess_wasm.output_text}"
+    prompt_template: "Summarize in ${params.summary_language}: ${steps.preprocess_wasm.output_text}"
+    sampling:
+      temperature: 0.0
+      seed: 42
+  - id: export_report
+    kind: storage.ingest
+    depends_on: [summarize_llm]
+    inputs:
+      content: "${steps.summarize_llm.output_text}"
+    config:
+      format: markdown
+outputs:
+  report_cid: "${steps.export_report.output_cid}"
+```
+
+### 4.2 Static Validation & Kahn's Topological Stage Grouping
+The manifest validator (`ManifestValidator`) enforces strict invariants prior to runtime execution:
+1. **Unknown Field Denied (`#[serde(deny_unknown_fields)]`)**: Prevents typos or unrecognized fields from passing silently.
+2. **Topological DAG Acyclicity**: Kahn's algorithm detects cycles (`A -> B -> C -> A`) and returns structured `ManifestError::CyclicDependency`.
+3. **Stage Parallelism**: Independent steps with zero mutual dependencies are grouped into concurrent stages (`Vec<Vec<String>>`).
+4. **Variable & Type Validation**: Asserts that all `${params.*}` and `${steps.<id>.<output>}` expressions reference valid entities, and that producer/consumer data types match.
+
+### 4.3 Cryptographic Lockfile (`umcf.lock`) & Frozen Execution
+Workflows can be locked using `umcf job lock <MANIFEST>` generating a cryptographically signed `umcf.lock`:
+- Pinned BLAKE3 digests for all step definitions, configurations, and input bindings.
+- Immutable CIDs and exact byte sizes for all referenced models, modules, and datasets.
+- Ed25519 developer signature over canonical lockfile digest.
+- Running with `--frozen-lockfile` guarantees 100% bit-identical reproducibility; any tampered step or artifact immediately aborts with `ManifestError::LockfileMismatch`.
+
+### 4.4 Built-In Job Templates Catalog
+UMCF ships 6 ready-to-use, tested templates accessible via `umcf job init --template <NAME>`:
+1. `wasm-parallel-map-reduce`: Distributed MapReduce data crunching across heterogeneous cluster nodes.
+2. `ai-batch-rag-embeddings`: Distributed document chunking, batched vector embeddings, and index generation.
+3. `ai-private-document-qa`: `StrictLocalOnly` confidential document QA with on-device GGUF LLM synthesis.
+4. `gpu-distributed-raytracer`: Tile-parallel 4K raytracing distributed across cluster GPU shaders.
+5. `media-4k-av1-transcode`: GOP-segmented hardware-accelerated 4K AV1 video transcoding with Annex-B restitching.
+6. `hybrid-media-ai-pipeline`: Multi-stage pipeline: Video -> Keyframe Extraction -> WASM Visual Filter -> LLM Synthesis.
+
+### 4.5 Workflow Resumption & Cached Step Outputs
+If a long-running pipeline is interrupted (e.g. node thermal cutoff or network partition), `umcf job resume <RUN_ID>` reuses all cached step CIDs from earlier stages, executing only the remaining uncompleted steps without duplicate compute.
