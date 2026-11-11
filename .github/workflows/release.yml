@@ -510,7 +510,7 @@ jobs:
 
       - name: Publish GitHub Release with All Independent Platform Assets
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.verify-release-gates.outputs.release_tag }}
           name: "UMCF ${{ needs.verify-release-gates.outputs.release_tag }}"
