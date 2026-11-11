@@ -1,0 +1,13 @@
+{
+  "name": "@umcf/web-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Svelte 5 Web & Admin Dashboard for Universal Mobile Compute Fabric (UMCF)",
+  "scripts": {
+    "check": "node ./scripts/check.mjs",
+    "test": "node --test ./test/dashboard.test.mjs",
+    "build": "node ./scripts/build.mjs"
+  }
+}
+

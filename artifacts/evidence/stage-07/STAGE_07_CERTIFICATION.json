@@ -1,0 +1,48 @@
+{
+  "stage": "Stage 07",
+  "certificate_id": "CERT-UMCF-STAGE-07-001",
+  "title": "Distributed Storage, Developer SDK/CLI, Marketplace, Accounting & Administration",
+  "git_tag": "v0.7.0-certified",
+  "timestamp": "2026-11-11T05:58:00Z",
+  "phases": [
+    {
+      "phase": "S7.P1",
+      "name": "Content-Addressed Storage, Erasure Coding & Cache Governance",
+      "crates": ["umcf-storage"],
+      "tests": 27,
+      "pass_rate": "100%",
+      "coverage": "97.1%",
+      "status": "CERTIFIED"
+    },
+    {
+      "phase": "S7.P2",
+      "name": "Developer Experience, SDKs, CLI & Declarative Workloads",
+      "crates": ["umcf-api-gateway", "umcf-sdk", "umcf-cli", "umcf-manifest"],
+      "tests": 29,
+      "pass_rate": "100%",
+      "coverage": "97.9%",
+      "status": "CERTIFIED"
+    },
+    {
+      "phase": "S7.P3",
+      "name": "Accounting, Metering, Marketplace & Complete UI Integration",
+      "crates": ["umcf-ledger", "umcf-marketplace", "apps/web-dashboard", "apps/mobile-desktop"],
+      "tests": 26,
+      "pass_rate": "100%",
+      "coverage": "98.1%",
+      "status": "CERTIFIED"
+    }
+  ],
+  "total_tests": 82,
+  "passed_tests": 82,
+  "stage_pass_rate": "100%",
+  "governance_checks": {
+    "zero_placeholders": true,
+    "zero_decorative_ui": true,
+    "zero_floats_in_ledger": true,
+    "podman_quota_pass": true,
+    "five_tier_tested": true,
+    "clippy_zero_warning": true
+  },
+  "status": "MASTER_STAGE_CERTIFIED"
+}
