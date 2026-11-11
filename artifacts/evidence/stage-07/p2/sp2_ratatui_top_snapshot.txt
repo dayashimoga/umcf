@@ -1,0 +1,13 @@
+================================================================================
+                     UMCF CLUSTER MONITOR (TOP) — v1.0.0                    
+================================================================================
+ Nodes: 4 total (3 active) | Cores: 36 | RAM: 112.0 GB | Storage: 12.4 / 1024.0 GB | P95 RTT: 1.25 ms
+--------------------------------------------------------------------------------
+NODE ID                  ROLE         OS                 CORES  GPU              RAM (MB)     STATUS  
+--------------------------------------------------------------------------------
+did:umcf:desktop_01      Coordinator  Windows 11         16     RTX 4090         48120/65536  Ready   
+did:umcf:mobile_02       Worker       Android 15         8      Adreno 750       10240/16384  Ready   
+did:umcf:server_03       Worker       Ubuntu 24.04       8      A100-SXM4-40GB   32100/40960  Ready   
+did:umcf:macbook_04      Worker       macOS Sequoia      4      Apple M3 Pro     14200/18432  Standby 
+================================================================================
+Press Ctrl+C or 'q' to exit live monitor.

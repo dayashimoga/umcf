@@ -5,17 +5,30 @@ edition.workspace = true
 license.workspace = true
 description = "Command-line interface (`umcf`) for Universal Mobile Compute Fabric diagnostics, protocol verification, and cluster scheduling"
 
+[lib]
+name = "umcf_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "umcf"
 path = "src/main.rs"
 
 [dependencies]
-umcf-coordinator = { path = "../umcf-coordinator" }
-umcf-core = { path = "../umcf-core" }
-umcf-proto = { path = "../umcf-proto" }
-umcf-scheduler = { path = "../umcf-scheduler" }
-umcf-worker = { path = "../umcf-worker" }
+umcf-core = { workspace = true }
+umcf-proto = { workspace = true }
+umcf-coordinator = { workspace = true }
+umcf-scheduler = { workspace = true }
+umcf-worker = { workspace = true }
+umcf-sdk = { workspace = true }
+umcf-api-gateway = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "rt", "macros", "net"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+qrcode = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
 
 [lints]
 workspace = true
-

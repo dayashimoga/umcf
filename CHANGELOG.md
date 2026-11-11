@@ -1128,3 +1128,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 
 
 
+
+### Added (S7.P2.SP2: Complete `umcf` CLI for Cluster, Job, Model, Storage & Streaming Control)
+- **Complete Command-Line Interface Binary & Library (`crates/umcf-cli`)**:
+  - Implemented full Clap-compatible subcommand tree across 12 domain surfaces:
+    - `umcf daemon`: Subcommands `start`, `stop`, `status`, `logs`, `doctor` for background `umcfd` process management.
+    - `umcf cluster`: Subcommands `nodes`, `pair`, `join`, `leave`, `top` for mesh topology inspection and enrollment.
+    - `umcf job`: Subcommands `submit`, `list`, `status`, `logs`, `watch`, `cancel` for DAG workload lifecycle control.
+    - `umcf ai`: Subcommands `models list/pull`, `run`, `chat`, `serve` for distributed GGUF LLM and Whisper transcription inference.
+    - `umcf render`: Subcommands `submit`, `status`, `cancel` for distributed GPU tile and 3D frame rendering.
+    - `umcf media`: Subcommands `transcode`, `status`, `cancel` for segment-parallel video transcoding with Annex-B bitstream restitching.
+    - `umcf stream`: Subcommands `start`, `stop`, `status` for ultra-low-latency remote desktop and gaming QUIC streams.
+    - `umcf storage`: Subcommands `put`, `get`, `ls`, `pin`, `quota`, `gc` for FastCDC content-addressed CAS operations.
+    - `umcf market`: Subcommands `balance`, `buy`, `history` for compute credit accounting and receipt inspection.
+    - `umcf doctor`: Complete hardware pre-flight verification across CPU topology, SIMD, storage safety floor, Podman 30GB ceiling, and GPU/NPU drivers.
+    - `umcf top`: Live terminal resource monitor tracking fabric CPU cores, RAM, storage, network P95 RTT, and per-node telemetry.
+    - `umcf completions`: Native shell completion scripts for `bash`, `zsh`, `fish`, and `powershell`.
+- **Standardized Deterministic Exit Codes (`crates/umcf-cli/src/exit_codes.rs`)**:
+  - Deterministic exit codes: `0` (`Ok`), `1` (`RuntimeError`), `2` (`UsageError`), `3` (`AuthError`), `4` (`QuotaExhausted`), `5` (`NetworkTimeout`), and `130` (`SigintInterrupt`).
+- **Strict Machine-Parseable JSON Output Mode**:
+  - Validated across all 12 commands with `--format json` (and `-f`, `--json`), ensuring stdout contains strictly valid, parseable JSON with zero unsolicited terminal formatting or ANSI codes.
+- **Out-of-Band Mobile Enrollment UTF-8 Half-Block QR Terminal Renderer (`crates/umcf-cli/src/qr_terminal.rs`)**:
+  - Zero-dependency UTF-8 terminal QR renderer using Unicode half-block characters (`▀`, `▄`, `█`, ` `) displaying pairing URIs and 6-digit PINs directly in terminal emulators.
+- **Headless Top TUI Monitor Renderer (`crates/umcf-cli/src/top_tui.rs`)**:
+  - Formatted terminal snapshot renderer tested across variable dimensions (standard 80x24 and wide 160x50) with zero line wrapping overflow.
+- **Hardware Pre-flight Doctor Diagnostics (`crates/umcf-cli/src/doctor.rs`)**:
+  - Real hardware discovery probing physical/logical CPU cores, SIMD vector support (AVX2/FMA/NEON), partition safety floor (>= 15% free disk), and strict Podman 30GB ceiling verification.
+- **Reference Documentation**:
+  - Created `docs/cli/UMCF_CLI_REFERENCE.md` detailing global flags, environment variables (`UMCF_ENDPOINT`, `UMCF_API_KEY`), exit code mapping, and all subcommand specifications.
+- **Classified Test Harness**: Implemented `scripts/test-s7-p2-sp2.sh` and `scripts/test-s7-p2-sp2.ps1` covering `[Unit]`, `[Integration]`, `[Simulation]`, `[Hardware-Required]`, and `[Manually-Verified]` with 100% pass rate across 10 tests.
+- **Verification Evidence**: Archived `artifacts/evidence/stage-07/p2/sp2_cli_json_schema_outputs.json` and `artifacts/evidence/stage-07/p2/sp2_ratatui_top_snapshot.txt`.

@@ -2887,10 +2887,18 @@ dependencies = [
 name = "umcf-cli"
 version = "0.1.0"
 dependencies = [
+ "qrcode",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "umcf-api-gateway",
  "umcf-coordinator",
  "umcf-core",
  "umcf-proto",
  "umcf-scheduler",
+ "umcf-sdk",
  "umcf-worker",
 ]
 

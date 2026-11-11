@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "subphase": "S7.P2.SP2",
+  "title": "UMCF CLI Canonical JSON Output Schemas & Concrete Execution Payloads",
+  "version": "1.0.0",
+  "timestamp": "2026-11-11T10:37:45Z",
+  "global_flags": {
+    "--endpoint": "http://127.0.0.1:8080",
+    "--api-key": "umcf_sk_test_demo_key",
+    "--format": "json",
+    "--quiet": false,
+    "--verbose": false,
+    "--dry-run": false
+  },
+  "deterministic_exit_codes": {
+    "Ok": 0,
+    "RuntimeError": 1,
+    "UsageError": 2,
+    "AuthError": 3,
+    "QuotaExhausted": 4,
+    "NetworkTimeout": 5,
+    "SigintInterrupt": 130
+  },
+  "command_payloads": {
+    "version": {
+      "command": "umcf --version --format json",
+      "exit_code": 0,
+      "output": {
+        "version": "0.1.0",
+        "protocol_version": 1,
+        "target": "universal-mobile-compute-fabric"
+      }
+    },
+    "daemon_status": {
+      "command": "umcf daemon status --format json",
+      "exit_code": 0,
+      "output": {
+        "daemon": "umcfd",
+        "status": "Running",
+        "pid": 4208,
+        "uptime_sec": 1420,
+        "endpoint": "http://127.0.0.1:8080"
+      }
+    },
+    "cluster_nodes": {
+      "command": "umcf cluster nodes --format json",
+      "exit_code": 0,
+      "output": [
+        {
+          "node_id": "did:umcf:desktop_01",
+          "role": "Coordinator",
+          "os": "Windows 11 x86_64",
+          "cpu_cores": 16,
+          "ram_total_mb": 65536,
+          "status": "Ready"
+        },
+        {
+          "node_id": "did:umcf:worker_02",
+          "role": "Worker",
+          "os": "Android 15 ARM64",
+          "cpu_cores": 8,
+          "ram_total_mb": 16384,
+          "status": "Ready"
+        }
+      ]
+    },
+    "cluster_pair": {
+      "command": "umcf cluster pair --format json",
+      "exit_code": 0,
+      "output": {
+        "pairing_uri": "umcf://pair/cluster-alpha?token=948201&pin=482019",
+        "pin": "482019",
+        "expires_in_sec": 300
+      }
+    },
+    "job_submit": {
+      "command": "umcf job submit --manifest pipeline.json --format json",
+      "exit_code": 0,
+      "output": {
+        "job_id": "job-wasm-1731321465000",
+        "manifest": "pipeline.json",
+        "status": "Running",
+        "priority": 10
+      }
+    },
+    "job_status": {
+      "command": "umcf job status job_4982 --format json",
+      "exit_code": 0,
+      "output": {
+        "job_id": "job_4982",
+        "status": "Running",
+        "progress_pct": 82.5,
+        "assigned_node": "did:umcf:desktop_01"
+      }
+    },
+    "job_logs": {
+      "command": "umcf job logs job_4982 --format json",
+      "exit_code": 0,
+      "output": {
+        "job_id": "job_4982",
+        "lines": [
+          "[00:00:01] Initialized task runtime sandbox",
+          "[00:00:02] FastCDC chunks loaded from cache (hit rate 100%)",
+          "[00:00:05] Execution step 1/1 complete (exit: 0)"
+        ]
+      }
+    },
+    "job_cancel": {
+      "command": "umcf job cancel job_4982 --format json",
+      "exit_code": 0,
+      "output": {
+        "job_id": "job_4982",
+        "status": "CANCELLED"
+      }
+    },
+    "ai_models": {
+      "command": "umcf ai models --format json",
+      "exit_code": 0,
+      "output": [
+        {
+          "name": "llama-3-8b-instruct.Q4_K_M.gguf",
+          "vram_required_mb": 4920,
+          "is_locally_resident": true
+        },
+        {
+          "name": "whisper-large-v3.Q5_K.gguf",
+          "vram_required_mb": 1024,
+          "is_locally_resident": true
+        }
+      ]
+    },
+    "ai_run": {
+      "command": "umcf ai run --model llama-3-8b-instruct --prompt \"Summarize telemetry\" --format json",
+      "exit_code": 0,
+      "output": {
+        "model": "llama-3-8b-instruct",
+        "prompt": "Summarize telemetry",
+        "response": "UMCF distributed AI inference pipeline online.",
+        "tokens_per_sec": 38.4,
+        "throughput_tok_per_sec": 38.4,
+        "tokens_evaluated": 128,
+        "ttft_ms": 14.2
+      }
+    },
+    "storage_put": {
+      "command": "umcf storage put dataset.bin --format json",
+      "exit_code": 0,
+      "output": {
+        "root_cid": "bafkrei-blake3-d9a8c7b6e5f4",
+        "cid": "bafkrei-blake3-d9a8c7b6e5f4",
+        "path": "dataset.bin",
+        "size_bytes": 1048576,
+        "redundancy": "RS(4, 2)"
+      }
+    },
+    "storage_pin": {
+      "command": "umcf storage pin bafkrei-blake3-d9a8c7b6e5f4 --format json",
+      "exit_code": 0,
+      "output": {
+        "cid": "bafkrei-blake3-d9a8c7b6e5f4",
+        "status": "PINNED",
+        "mode": "permanent"
+      }
+    },
+    "storage_quota": {
+      "command": "umcf storage quota --format json",
+      "exit_code": 0,
+      "output": {
+        "used_gb": 5.68,
+        "capacity_gb": 64.0,
+        "host_free_floor_gb": 2.0,
+        "reclaimable_gc_gb": 1.2
+      }
+    },
+    "storage_gc": {
+      "command": "umcf storage gc --format json",
+      "exit_code": 0,
+      "output": {
+        "gc_status": "COMPLETED",
+        "cycle_id": 42,
+        "swept_chunks": 18,
+        "reclaimed_mb": 742,
+        "bytes_freed": 778043392,
+        "corrupted_scrubbed": 0
+      }
+    },
+    "market_balance": {
+      "command": "umcf market balance --format json",
+      "exit_code": 0,
+      "output": {
+        "balance_credits": 1420.5,
+        "pending_settlement_credits": 12.0,
+        "currency": "UMCF-CREDITS"
+      }
+    },
+    "doctor": {
+      "command": "umcf doctor --format json",
+      "exit_code": 0,
+      "output": {
+        "total_checks": 6,
+        "passed": 6,
+        "warnings": 0,
+        "failures": 0,
+        "overall_status": "PASS",
+        "checks": [
+          {
+            "category": "CPU",
+            "name": "Logical Cores",
+            "status": "PASS",
+            "details": "16 hardware execution threads detected",
+            "recommendation": null
+          },
+          {
+            "category": "CPU",
+            "name": "Vector SIMD Acceleration",
+            "status": "PASS",
+            "details": "AVX2 / FMA instruction support detected",
+            "recommendation": null
+          },
+          {
+            "category": "Storage",
+            "name": "Host Partition Safety Floor",
+            "status": "PASS",
+            "details": "Free disk space >= 15% safety floor; atomic quota enforcer active",
+            "recommendation": null
+          },
+          {
+            "category": "Storage",
+            "name": "Podman 30 GB Ceiling",
+            "status": "PASS",
+            "details": "Container storage usage verified within 30 GiB limit",
+            "recommendation": null
+          },
+          {
+            "category": "Network",
+            "name": "QUIC UDP Transport",
+            "status": "PASS",
+            "details": "UDP socket creation and MTU discovery supported",
+            "recommendation": null
+          },
+          {
+            "category": "Accelerators",
+            "name": "GPU Shader & Graphics Backend",
+            "status": "PASS",
+            "details": "Vulkan/Metal/DirectX 12 hardware driver probed",
+            "recommendation": null
+          }
+        ]
+      }
+    }
+  }
+}
