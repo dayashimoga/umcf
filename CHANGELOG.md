@@ -1570,5 +1570,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Sem
 - **CI/CD & Coverage Instrumentation Stability**:
   - Calibrated `test_hardware_anchor_verification_overhead_under_30ms` (`120.0 ms` under debug/llvm-cov, `30.0 ms` in release) in `crates/umcf-media/tests/quality_and_recovery_tests.rs`.
   - Calibrated `test_hardware_fastcdc_blake3_ingestion_throughput` (`10.0 MB/s` under 513-test parallel debug contention, `150.0 MB/s` in release) in `crates/umcf-storage/tests/chunk_store_quota_tests.rs`.
+  - Calibrated `test_end_to_end_barcode_timestamp_glass_to_glass_latency_under_25ms` (`120.0 ms` debug ceiling under multi-crate llvm-cov parallel execution, `20.0 ms` in release) in `crates/umcf-stream/tests/transport_abr_tests.rs`.
   - Hardened Ubuntu `gcc-aarch64-linux-gnu` APT installation with retry loop and `--fix-missing` in `.github/workflows/ci-rust.yml` and `.github/workflows/release.yml`.
 
