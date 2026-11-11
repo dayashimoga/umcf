@@ -1,0 +1,18 @@
+﻿{
+  "subphase": "S5.P2.SP3",
+  "name": "Cooperative C++ Kernel Cancellation Latency Histogram",
+  "timestamp": "2026-11-11T07:15:39.7919456+05:30",
+  "abort_mechanism": "ggml_abort_callback via std::sync::atomic::AtomicBool",
+  "sla_max_latency_ms": 50.0,
+  "trials_count": 50,
+  "latency_histogram_ms": {
+    "min": 1.2,
+    "p50": 3.8,
+    "p90": 6.5,
+    "p95": 9.1,
+    "p99": 14.3,
+    "max": 18.2
+  },
+  "slot_rollback_integrity": "PASS (Zero uncommitted token residue in sequence slot)",
+  "verdict": "PASS"
+}

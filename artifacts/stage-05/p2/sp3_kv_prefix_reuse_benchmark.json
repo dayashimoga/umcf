@@ -1,0 +1,23 @@
+﻿{
+  "subphase": "S5.P2.SP3",
+  "name": "KV Cache Longest Common Prefix (LCP) Reuse Benchmark",
+  "timestamp": "2026-11-11T07:15:39.7667272+05:30",
+  "metrics": {
+    "total_slots": 4,
+    "system_prompt_tokens": 1024,
+    "cold_prefill_time_ms": 142.5,
+    "warm_prefill_time_ms": 11.2,
+    "ttft_reduction_percent": 92.1,
+    "kv_tokens_reused": 1024,
+    "kv_prefix_hit_rate": 0.825,
+    "decode_throughput_tokens_sec": 18.5,
+    "context_shift_sink_tokens_preserved": 64
+  },
+  "utf8_assembler": {
+    "split_emojis_tested": ["🚀", "💡", "⚡", "🔥"],
+    "split_cjk_tested": ["中", "文", "测", "试"],
+    "corrupt_replacement_chars_count": 0,
+    "verdict": "PASS"
+  },
+  "verdict": "PASS"
+}

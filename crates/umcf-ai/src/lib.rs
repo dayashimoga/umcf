@@ -4,16 +4,20 @@
 
 pub mod backend_loader;
 pub mod backend_selector;
+pub mod engine;
 pub mod error;
 pub mod ffi_bridge;
+pub mod kv_cache;
 
 pub use backend_loader::{DynamicBackendLoader, GgmlBackendDescriptor};
 pub use backend_selector::{
     BackendExecutionPlan, BackendKind, CpuBackend, CpuIsaFlags, FallbackExecutor, FallbackTier,
     GpuBackend, HardwareBackendSelector,
 };
+pub use engine::{InferenceEngine, SamplingConfig, StreamEvent, Utf8TokenAssembler};
 pub use error::EngineError;
 pub use ffi_bridge::{
     ContextParams, LlamaBackendGuard, LlamaBackendManager, ModelLoadParams, SafeLlamaBatch,
     SafeLlamaContext, SafeLlamaModel, SafeSamplerChain,
 };
+pub use kv_cache::{KvCacheManager, KvSlot, SerializedKvSlot};

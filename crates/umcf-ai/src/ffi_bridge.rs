@@ -557,6 +557,12 @@ impl SafeLlamaContext {
         unsafe { llama_kv_cache_seq_cp(self.ctx_ptr.as_ptr(), seq_id_src, seq_id_dst, p0, p1) }
     }
 
+    /// Shifts sequence positions by delta in range [p0, p1).
+    pub fn shift_kv_cache_seq(&mut self, seq_id: i32, p0: i32, p1: i32, delta: i32) {
+        // SAFETY: ctx_ptr is valid
+        unsafe { llama_kv_cache_seq_shift(self.ctx_ptr.as_ptr(), seq_id, p0, p1, delta) }
+    }
+
     /// Triggers immediate cancellation of active and upcoming decode calls.
     pub fn abort(&self) {
         self.abort_signal.store(true, Ordering::SeqCst);
